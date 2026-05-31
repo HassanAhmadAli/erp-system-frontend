@@ -1,11 +1,11 @@
 import { Lock, UserRound } from "lucide-react"
-import { Link } from "react-router-dom"
+import { Link, NavLink } from "react-router-dom"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-
+import { saveTokens } from "@/utils/auth-storage"
 import { Button } from "@/view/components/ui/button"
 import { loginUser } from "@/services/auth-service"
-
+import { getAccessToken } from "@/utils/auth-storage"
 export function LoginCard() {
   const [userType, setUserType] = useState("admin")
   const [email, setEmail] = useState("")
@@ -16,16 +16,36 @@ export function LoginCard() {
   const handleLogin = async () => {
     try {
       const result = await loginUser(userType, email, password)
-      setLoginMessage("تم تسجيل الدخول بنجاح")
-      console.log("Access Token:", result.access_token)
 
-      if (userType === "admin") {
-        navigate("/dashboard")
-      }
+      saveTokens(result.access_token, result.refresh_token)
+
+      setLoginMessage("تم تسجيل الدخول بنجاح")
+
+      // 👇 هذا الصحيح
+      navigate("/dashboard")
     } catch (error) {
-      setLoginMessage("فشل تسجيل الدخول. يرجى التحقق من البيانات المدخلة.")
+      setLoginMessage("فشل تسجيل الدخول")
     }
   }
+
+  //   const handleLogin = async () => {
+  //     try {
+  //       const result = await loginUser(userType, email, password)
+  //       setLoginMessage("تم تسجيل الدخول بنجاح")
+
+  //       // store tokens and navigate to dashboard
+  // saveTokens(
+  //   result.access_token,
+  //   result.refresh_token
+  // )
+  //       if (userType === "admin") {
+  //         <NavLink to="/categoriesPage" />
+  //         // navigate("/categoriesPage")
+  //       }
+  //     } catch (error) {
+  //       setLoginMessage("فشل تسجيل الدخول. يرجى التحقق من البيانات المدخلة.")
+  //     }
+  //   }
 
   return (
     <section className="w-full max-w-md rounded-[24px] bg-[var(--erp-card)] p-8 shadow-[var(--erp-shadow)]">
@@ -55,9 +75,10 @@ export function LoginCard() {
             value={userType}
             onChange={(e) => setUserType(e.target.value)}
           >
-            <option value="admin"> admin</option>
+            <option value="store-manager">store-manager</option>
             <option value="manager"> مدير</option>
             <option value="accountant">محاسب</option>
+            <option value="warehouse-worker">عامل مستودع</option>
           </select>
         </label>
 
@@ -102,6 +123,15 @@ export function LoginCard() {
         </p>
       )}
 
+      <p className="mt-4 text-center text-sm text-[var(--erp-muted)]">
+        للدخول السريع للتصميم:{" "}
+        <Link
+          to="/CategoriesPage"
+          className="font-semibold text-[var(--erp-brand)]"
+        >
+          متابعة بدون تسجيل
+        </Link>
+      </p>
       <p className="mt-4 text-center text-sm text-[var(--erp-muted)]">
         للدخول السريع للتصميم:{" "}
         <Link to="/dashboard" className="font-semibold text-[var(--erp-brand)]">
