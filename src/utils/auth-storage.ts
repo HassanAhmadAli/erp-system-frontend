@@ -2,6 +2,9 @@ const ACCESS_TOKEN_KEY = "token"
 const REFRESH_TOKEN_KEY = "refresh_token"
 
 export function saveTokens(accessToken: string, refreshToken: string) {
+  if (!accessToken?.trim() || !refreshToken?.trim()) {
+    throw new Error("Invalid token response from server")
+  }
   localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
   localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
 }

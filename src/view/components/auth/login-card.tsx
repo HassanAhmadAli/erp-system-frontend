@@ -1,51 +1,54 @@
-import { Lock, UserRound } from "lucide-react"
-import { Link, NavLink } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
-import { useNavigate } from "react-router-dom"
+
+import {
+  AUTH_USER_TYPES,
+  type AuthUserType,
+  loginUser,
+} from "@/services/auth-service"
 import { saveTokens } from "@/utils/auth-storage"
-import { Button } from "@/view/components/ui/button"
-import { loginUser } from "@/services/auth-service"
-import { getAccessToken } from "@/utils/auth-storage"
+
+const USER_TYPE_LABELS: Record<AuthUserType, string> = {
+  "store-manager": "مدير متجر",
+  manager: "مدير",
+  accountant: "محاسب",
+  "warehouse-worker": "عامل مستودع",
+}
+
 export function LoginCard() {
-  const [userType, setUserType] = useState("admin")
+  const [userType, setUserType] = useState<AuthUserType>("warehouse-worker")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loginMessage, setLoginMessage] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
 
   const handleLogin = async () => {
+    const trimmedEmail = email.trim()
+
+    if (!trimmedEmail || !password) {
+      setLoginMessage("يرجى إدخال البريد الإلكتروني وكلمة المرور")
+      return
+    }
+
+    if (isSubmitting) return
+
+    setIsSubmitting(true)
+    setLoginMessage("")
+
     try {
-      const result = await loginUser(userType, email, password)
-
+      const result = await loginUser(userType, trimmedEmail, password)
       saveTokens(result.access_token, result.refresh_token)
-
       setLoginMessage("تم تسجيل الدخول بنجاح")
-
-      // 👇 هذا الصحيح
-      navigate("/dashboard")
+      navigate("/dashboard", { replace: true })
     } catch (error) {
-      setLoginMessage("فشل تسجيل الدخول")
+      const message =
+        error instanceof Error ? error.message : "فشل تسجيل الدخول"
+      setLoginMessage(message || "فشل تسجيل الدخول")
+    } finally {
+      setIsSubmitting(false)
     }
   }
-
-  //   const handleLogin = async () => {
-  //     try {
-  //       const result = await loginUser(userType, email, password)
-  //       setLoginMessage("تم تسجيل الدخول بنجاح")
-
-  //       // store tokens and navigate to dashboard
-  // saveTokens(
-  //   result.access_token,
-  //   result.refresh_token
-  // )
-  //       if (userType === "admin") {
-  //         <NavLink to="/categoriesPage" />
-  //         // navigate("/categoriesPage")
-  //       }
-  //     } catch (error) {
-  //       setLoginMessage("فشل تسجيل الدخول. يرجى التحقق من البيانات المدخلة.")
-  //     }
-  //   }
 
   return (
     <section className="w-full max-w-md rounded-[24px] bg-[var(--erp-card)] p-8 shadow-[var(--erp-shadow)]">
@@ -65,7 +68,7 @@ export function LoginCard() {
         className="space-y-4"
         onSubmit={(e) => {
           e.preventDefault()
-          handleLogin()
+          void handleLogin()
         }}
       >
         <label className="block">
@@ -73,12 +76,14 @@ export function LoginCard() {
           <select
             className="h-11 w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[color-mix(in_srgb,var(--erp-sidebar)_82%,white)] px-3 dark:bg-[color-mix(in_srgb,var(--erp-card)_70%,#000)]"
             value={userType}
-            onChange={(e) => setUserType(e.target.value)}
+            onChange={(e) => setUserType(e.target.value as AuthUserType)}
+            disabled={isSubmitting}
           >
-            <option value="store-manager">store-manager</option>
-            <option value="manager"> مدير</option>
-            <option value="accountant">محاسب</option>
-            <option value="warehouse-worker">عامل مستودع</option>
+            {AUTH_USER_TYPES.map((type) => (
+              <option key={type} value={type}>
+                {USER_TYPE_LABELS[type]}
+              </option>
+            ))}
           </select>
         </label>
 
@@ -88,10 +93,13 @@ export function LoginCard() {
           </span>
           <div className="flex items-center rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[color-mix(in_srgb,var(--erp-sidebar)_82%,white)] px-3 dark:bg-[color-mix(in_srgb,var(--erp-card)_70%,#000)]">
             <input
+              type="email"
+              autoComplete="email"
               className="h-11 w-full bg-transparent text-right outline-none placeholder:text-[var(--erp-muted)]"
               placeholder="أدخل البريد الالكتروني"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
         </label>
@@ -101,24 +109,30 @@ export function LoginCard() {
           <div className="flex items-center rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[color-mix(in_srgb,var(--erp-sidebar)_82%,white)] px-3 dark:bg-[color-mix(in_srgb,var(--erp-card)_70%,#000)]">
             <input
               type="password"
+              autoComplete="current-password"
               className="h-11 w-full bg-transparent text-right outline-none placeholder:text-[var(--erp-muted)]"
               placeholder="•••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isSubmitting}
             />
           </div>
         </label>
 
         <button
           type="submit"
-          className="h-11 w-full rounded-2xl bg-[var(--erp-top-bar)] text-base text-white hover:bg-[color-mix(in_srgb,var(--erp-top-bar)_88%,#000)]"
+          disabled={isSubmitting}
+          className="h-11 w-full rounded-2xl bg-[var(--erp-top-bar)] text-base text-white hover:bg-[color-mix(in_srgb,var(--erp-top-bar)_88%,#000)] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          تسجيل الدخول
+          {isSubmitting ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
         </button>
       </form>
 
       {loginMessage && (
-        <p className="mt-4 text-center text-sm text-[var(--erp-muted)]">
+        <p
+          className="mt-4 text-center text-sm text-[var(--erp-muted)]"
+          role="alert"
+        >
           {loginMessage}
         </p>
       )}
@@ -126,15 +140,9 @@ export function LoginCard() {
       <p className="mt-4 text-center text-sm text-[var(--erp-muted)]">
         للدخول السريع للتصميم:{" "}
         <Link
-          to="/CategoriesPage"
+          to="/categories"
           className="font-semibold text-[var(--erp-brand)]"
         >
-          متابعة بدون تسجيل
-        </Link>
-      </p>
-      <p className="mt-4 text-center text-sm text-[var(--erp-muted)]">
-        للدخول السريع للتصميم:{" "}
-        <Link to="/dashboard" className="font-semibold text-[var(--erp-brand)]">
           متابعة بدون تسجيل
         </Link>
       </p>
