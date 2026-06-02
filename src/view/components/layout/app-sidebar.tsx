@@ -85,6 +85,7 @@ import {
   Boxes,
   Home,
   LogOut,
+  Package,
   Settings,
   Truck,
   Users,
@@ -143,6 +144,8 @@ export function AppSidebar() {
         <SidebarNavItem icon={Boxes} label="المخزون" to="/inventory" />
 
         <SidebarNavItem icon={Tags} label="التصنيفات" to="/categories" />
+
+        <SidebarNavItem icon={Package} label="المنتجات" to="/products" />
 
         <SidebarNavItem
           icon={Truck}

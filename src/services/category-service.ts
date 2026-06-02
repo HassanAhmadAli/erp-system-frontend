@@ -23,7 +23,9 @@ export function getCategories(params?: {
   if (params?.page) query.append("page", String(params.page))
   if (params?.limit) query.append("limit", String(params.limit))
 
-  return apiRequest<CategoryListResponse>(`/category?${query.toString()}`)
+  const qs = query.toString()
+  const endpoint = qs ? `/category?${qs}` : "/category"
+  return apiRequest<CategoryListResponse | Category[]>(endpoint)
 }
 
 export function createCategory(data: { name: string; description?: string }) {
