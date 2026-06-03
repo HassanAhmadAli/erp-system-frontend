@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
-import { createSupplier, getSuppliers } from "@/services/supplier-service"
+import { createSupplier } from "@/services/supplier-service"
 
 export function useCreateSupplier() {
   const queryClient = useQueryClient()

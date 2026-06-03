@@ -1,9 +1,5 @@
-import { CreateSupplierForm } from "@/view/components/suppliers/create-supplier-form"
 import { SuppliersTable } from "@/view/components/suppliers/SuppliersTable"
-import { useNavigate } from "react-router-dom"
-
 import { useState } from "react"
-import { useSuppliers } from "@/hooks/useSuppliers"
 import { EditSupplierForm } from "@/view/components/suppliers/EditSupplierForm"
 // EditSupplierForm import removed because the module was not found.
 // A placeholder is rendered in the modal instead.
