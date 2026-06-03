@@ -107,37 +107,110 @@ export function ProductDetailsPage() {
         </div>
       </div>
 
-      <div className="rounded-2xl border p-6">
+      <section className="rounded-2xl bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
         <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
           <div>
             <h2 className="text-2xl font-bold">{data.name}</h2>
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              {data.barcode}
+              {data.description?.trim() || "لا يوجد وصف"}
             </p>
           </div>
           {status && <StatusBadge status={status} />}
         </div>
+      </section>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-3">
-          <div>
-            <p className="text-sm text-[var(--erp-muted)]">سعر البيع</p>
-            <p className="text-lg">{data.sellingPrice ?? "-"}</p>
+      <section className="grid gap-4 md:grid-cols-2">
+        <article className="rounded-2xl bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
+          <h3 className="mb-3 text-lg font-bold">معلومات المنتج</h3>
+          <div className="space-y-2 text-sm">
+            <p>
+              <span className="text-[var(--erp-muted)]">المعرف:</span> {data.id}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">الباركود:</span>{" "}
+              {data.barcode || "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">رابط الصورة:</span>{" "}
+              {data.imageUrl || "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">أنشئ بتاريخ:</span>{" "}
+              {data.createdAt ? new Date(data.createdAt).toLocaleString() : "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">آخر تحديث:</span>{" "}
+              {data.updatedAt ? new Date(data.updatedAt).toLocaleString() : "-"}
+            </p>
           </div>
-          <div>
-            <p className="text-sm text-[var(--erp-muted)]">الكمية</p>
-            <p className="text-lg">
+        </article>
+
+        <article className="rounded-2xl bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
+          <h3 className="mb-3 text-lg font-bold">الأسعار والمخزون</h3>
+          <div className="space-y-2 text-sm">
+            <p>
+              <span className="text-[var(--erp-muted)]">سعر الشراء:</span>{" "}
+              {data.purchasePrice ?? "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">سعر البيع:</span>{" "}
+              {data.sellingPrice ?? "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">الكمية الحالية:</span>{" "}
               {data.quantityInStock ?? 0}
-              {data.minQuantity ? ` (حد أدنى: ${data.minQuantity})` : ""}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">الحد الأدنى:</span>{" "}
+              {data.minQuantity ?? "-"}
             </p>
           </div>
-          <div>
-            <p className="text-sm text-[var(--erp-muted)]">التصنيف</p>
-            <p className="text-lg">
-              {data.category?.name ?? data.categoryId ?? "-"}
+        </article>
+
+        <article className="rounded-2xl bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
+          <h3 className="mb-3 text-lg font-bold">التصنيف</h3>
+          <div className="space-y-2 text-sm">
+            <p>
+              <span className="text-[var(--erp-muted)]">Category ID:</span>{" "}
+              {data.categoryId ?? "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">الاسم:</span>{" "}
+              {data.category?.name ?? "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">الوصف:</span>{" "}
+              {data.category?.description || "-"}
             </p>
           </div>
-        </div>
-      </div>
+        </article>
+
+        <article className="rounded-2xl bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
+          <h3 className="mb-3 text-lg font-bold">المورد</h3>
+          <div className="space-y-2 text-sm">
+            <p>
+              <span className="text-[var(--erp-muted)]">Supplier ID:</span>{" "}
+              {data.supplierId ?? "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">الاسم:</span>{" "}
+              {data.supplier?.fullName ?? "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">الهاتف:</span>{" "}
+              {data.supplier?.phone ?? "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">البريد:</span>{" "}
+              {data.supplier?.email ?? "-"}
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">العنوان:</span>{" "}
+              {data.supplier?.address ?? "-"}
+            </p>
+          </div>
+        </article>
+      </section>
 
       <form onSubmit={handleUpdateStock} className="rounded-2xl border p-6">
         <h3 className="mb-3 text-xl font-bold">تحديث مخزون المنتج</h3>

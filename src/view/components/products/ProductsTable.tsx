@@ -45,6 +45,7 @@ export function ProductsTable() {
               <tr>
                 <th className="p-3">المنتج</th>
                 <th className="p-3">التصنيف</th>
+                <th className="p-3">المورد</th>
                 <th className="p-3">السعر</th>
                 <th className="p-3">الكمية</th>
                 <th className="p-3">الحالة</th>
@@ -62,6 +63,9 @@ export function ProductsTable() {
                   </td>
                   <td className="p-3">
                     {p.category?.name ?? p.categoryId ?? "-"}
+                  </td>
+                  <td className="p-3">
+                    {p.supplier?.fullName ?? p.supplierId ?? "-"}
                   </td>
                   <td className="p-3">{p.sellingPrice ?? "-"}</td>
                   <td className="p-3">
@@ -98,7 +102,7 @@ export function ProductsTable() {
 
               {products.length === 0 && (
                 <tr>
-                  <td className="p-6 text-center" colSpan={6}>
+                  <td className="p-6 text-center" colSpan={7}>
                     لا يوجد منتجات
                   </td>
                 </tr>

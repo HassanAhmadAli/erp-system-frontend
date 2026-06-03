@@ -4,17 +4,27 @@ import { getAccessToken } from "@/utils/auth-storage"
 export type Product = {
   id: number
   name: string
+  description?: string | null
   barcode: string
-  purchasePrice?: number
-  sellingPrice?: number
+  purchasePrice?: number | string
+  sellingPrice?: number | string
   quantityInStock?: number
   minQuantity?: number
   categoryId?: number
   supplierId?: number
+  imageUrl?: string | null
+  createdAt?: string
+  updatedAt?: string
 
   // Some backend responses may include nested objects; we keep it optional.
-  category?: { id: number; name: string } | null
-  supplier?: { id: number; fullName: string } | null
+  category?: { id: number; name: string; description?: string | null } | null
+  supplier?: {
+    id: number
+    fullName: string
+    phone?: string
+    email?: string
+    address?: string
+  } | null
 }
 
 export type ProductListResponse =
