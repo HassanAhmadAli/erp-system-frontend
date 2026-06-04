@@ -5,10 +5,10 @@ import {
   type CreateProductInput,
   type UpdateProductInput,
 } from "@/services/product-service"
-import { useCreateProduct } from "@/hooks/useCreateProduct"
-import { useCategoriesForSelect } from "@/hooks/useCategoriesForSelect"
-import { useSuppliers } from "@/hooks/useSuppliers"
-import { useUpdateProduct } from "@/hooks/useUpdateProduct"
+import { useCreateProduct } from "@/hooks/Products/useCreateProduct"
+import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
+import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
+import { useUpdateProduct } from "@/hooks/Products/useUpdateProduct"
 
 type FormState = {
   name: string

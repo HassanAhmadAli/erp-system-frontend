@@ -47,8 +47,8 @@
 //   )
 // }
 
-import { useSuppliers } from "@/hooks/useSuppliers"
-import { useDeleteSupplier } from "@/hooks/useDeleteSupplier"
+import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
+import { useDeleteSupplier } from "@/hooks/Suppliers/useDeleteSupplier"
 
 export function SuppliersTable({ onEdit }: { onEdit: (id: number) => void }) {
   const { data, isLoading, error } = useSuppliers()

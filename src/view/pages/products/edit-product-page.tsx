@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from "react-router-dom"
 
 import { ProductForm } from "@/view/components/products/ProductForm"
-import { useProductById } from "@/hooks/useProductById"
+import { useProductById } from "@/hooks/Products/useProductById"
 
 export function EditProductPage() {
   const { id } = useParams()

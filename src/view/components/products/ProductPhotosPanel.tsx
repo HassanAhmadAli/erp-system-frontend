@@ -6,7 +6,7 @@ import {
   useDeleteProductPhoto,
   useProductPhotos,
   useUploadProductPhoto,
-} from "@/hooks/useProductPhotos"
+} from "@/hooks/Products/useProductPhotos"
 
 export function ProductPhotosPanel({ productId }: { productId: number }) {
   const { data, isLoading, error } = useProductPhotos(productId)
@@ -66,15 +66,31 @@ export function ProductPhotosPanel({ productId }: { productId: number }) {
           <label className="block text-right text-sm text-[var(--erp-muted)]">
             رفع صورة
           </label>
-          <input
-            type="file"
-            accept="image/*"
-            disabled={uploadMutation.isPending}
-            onChange={(e) => {
-              const file = e.target.files?.[0] ?? null
-              setSelectedFile(file)
-            }}
-          />
+
+          <label
+            htmlFor="photo-upload"
+            className={`relative block cursor-pointer rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-6 text-right transition hover:border-gray-400 hover:bg-gray-50 ${
+              uploadMutation.isPending ? "pointer-events-none opacity-60" : ""
+            }`}
+          >
+            <span className="block text-sm text-[var(--erp-muted)]">
+              انقر لاختيار صورة أو اسحبها هنا
+            </span>
+            <span className="mt-2 block text-sm font-semibold text-gray-700">
+              {selectedFile?.name ?? "لم يتم اختيار أي ملف"}
+            </span>
+            <input
+              id="photo-upload"
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={uploadMutation.isPending}
+              onChange={(e) => {
+                const file = e.target.files?.[0] ?? null
+                setSelectedFile(file)
+              }}
+            />
+          </label>
 
           <button
             className="rounded-xl bg-green-600 px-4 py-2 text-white disabled:opacity-60"

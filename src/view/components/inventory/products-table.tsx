@@ -1,5 +1,5 @@
 import { StatusBadge } from "@/view/components/common/status-badge"
-import { useLowStockProducts } from "@/hooks/useLowStockProducts"
+import { useLowStockProducts } from "@/hooks/Products/useLowStockProducts"
 import type { Product } from "@/services/product-service"
 
 type StockStatus = "متوفر" | "منخفض" | "نافد"

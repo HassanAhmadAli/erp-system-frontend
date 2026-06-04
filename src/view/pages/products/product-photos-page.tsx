@@ -28,10 +28,6 @@ export function ProductPhotosPage() {
         </button>
       </div>
 
-      <p className="text-sm text-[var(--erp-muted)]">
-        عرض الصور عبر API: list product photos by product id
-      </p>
-
       <ProductPhotosPanel productId={productId} />
     </div>
   )

@@ -3,8 +3,8 @@ import { useNavigate, useParams } from "react-router-dom"
 
 import { StatusBadge } from "@/view/components/common/status-badge"
 import { ProductPhotosPanel } from "@/view/components/products/ProductPhotosPanel"
-import { useProductById } from "@/hooks/useProductById"
-import { useUpdateProductStock } from "@/hooks/useUpdateProductStock"
+import { useProductById } from "@/hooks/Products/useProductById"
+import { useUpdateProductStock } from "@/hooks/Products/useUpdateProductStock"
 
 import type { Product } from "@/services/product-service"
 
