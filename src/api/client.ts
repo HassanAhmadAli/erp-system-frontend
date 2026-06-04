@@ -1,6 +1,6 @@
 import { getAccessToken } from "@/utils/auth-storage"
 
-const BASE_URL = "http://localhost:3000"
+export const BASE_URL = "http://localhost:3000"
 
 export async function apiRequest<T>(
   endpoint: string,
@@ -10,7 +10,14 @@ export async function apiRequest<T>(
 
   const headers = new Headers(options.headers || {})
 
-  headers.set("Content-Type", "application/json")
+  const body = options.body
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData
+
+  // For multipart uploads, let the browser set the Content-Type boundary.
+  // For JSON requests, keep existing behavior.
+  if (!isFormData && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json")
+  }
 
   if (token) {
     headers.set("Authorization", `Bearer ${token}`)

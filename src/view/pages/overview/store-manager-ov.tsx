@@ -15,24 +15,11 @@ export function StoreManagerOverviewPage() {
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <MetricCard
-          label="عدد العملاء"
-          value="47"
-          icon={Users}
-        />
+        <MetricCard label="عدد العملاء" value="47" icon={Users} />
 
-        <MetricCard
-          label="عدد الطلبات"
-          value="32"
-          icon={ShoppingCart}
-        />
+        <MetricCard label="عدد الطلبات" value="32" icon={ShoppingCart} />
 
-        <MetricCard
-          label="الأرباح"
-          value="720"
-          unit="SP"
-          icon={DollarSign}
-        />
+        <MetricCard label="الأرباح" value="720" unit="SP" icon={DollarSign} />
 
         <MetricCard
           label="إجمالي المبيعات"

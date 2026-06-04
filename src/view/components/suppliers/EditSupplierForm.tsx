@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
-import { useSupplierById } from "@/hooks/useSupplierById"
-import { useUpdateSupplier } from "@/hooks/useUpdateSupplier"
+import { useSupplierById } from "@/hooks/Suppliers/useSupplierById"
+import { useUpdateSupplier } from "@/hooks/Suppliers/useUpdateSupplier"
 
 export function EditSupplierForm({
   supplierId,

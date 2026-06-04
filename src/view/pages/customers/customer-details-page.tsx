@@ -79,9 +79,18 @@ export function CustomerDetailsPage() {
 
       <section className="grid gap-4 lg:grid-cols-2">
         <CustomerInfoCard title="المعلومات الشخصية">
-          <CustomerInfoRow label="الاسم الكامل" value={customer.user.fullName} />
-          <CustomerInfoRow label="البريد الإلكتروني" value={customer.user.email} />
-          <CustomerInfoRow label="رقم الهاتف" value={customer.user.phoneNumber} />
+          <CustomerInfoRow
+            label="الاسم الكامل"
+            value={customer.user.fullName}
+          />
+          <CustomerInfoRow
+            label="البريد الإلكتروني"
+            value={customer.user.email}
+          />
+          <CustomerInfoRow
+            label="رقم الهاتف"
+            value={customer.user.phoneNumber}
+          />
           <CustomerInfoRow label="العنوان" value={customer.address ?? "—"} />
         </CustomerInfoCard>
 

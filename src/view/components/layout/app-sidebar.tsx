@@ -4,6 +4,7 @@ import {
   Boxes,
   Home,
   LogOut,
+  Package,
   Settings,
   Truck,
   Users,
@@ -71,15 +72,34 @@ export function AppSidebar() {
 
         <SidebarNavItem icon={Megaphone} label="الإعلانات والعروض" to="/ads" />
 
-        <SidebarNavItem icon={ClipboardList} label="سجل النشاطات" to="/audit-logs" />
+        <SidebarNavItem
+          icon={ClipboardList}
+          label="سجل النشاطات"
+          to="/audit-logs"
+        />
 
-        <SidebarNavItem icon={DatabaseBackup} label="النسخ الاحتياطي" to="/backup" />
+        <SidebarNavItem
+          icon={DatabaseBackup}
+          label="النسخ الاحتياطي"
+          to="/backup"
+        />
 
         {/* Keep these if you still want warehouse/testing pages visible for now */}
         <SidebarNavItem icon={Boxes} label="المخزون" to="/inventory" />
 
         <SidebarNavItem icon={Tags} label="التصنيفات" to="/categories" />
 
+        <SidebarNavItem icon={Package} label="المنتجات" to="/products" />
+
+        <SidebarNavItem
+          icon={Truck}
+          label="الاستلام والتوريد"
+          to="/inventory"
+        />
+
+        <SidebarNavItem icon={Users} label="الموظفين" to="/dashboard" />
+
+        <SidebarNavItem icon={Bell} label="الإشعارات" to="/dashboard" />
         <SidebarNavItem icon={Truck} label="الموردون" to="/suppliers" />
       </nav>
 

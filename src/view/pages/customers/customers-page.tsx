@@ -37,7 +37,9 @@ export function CustomersPage() {
   const customers = response?.data ?? []
 
   const activeCustomers = customers.filter((customer) => customer.user.isActive)
-  const inactiveCustomers = customers.filter((customer) => !customer.user.isActive)
+  const inactiveCustomers = customers.filter(
+    (customer) => !customer.user.isActive
+  )
 
   const totalLoyaltyPoints = customers.reduce(
     (sum, customer) => sum + customer.loyaltyPoints,
@@ -146,13 +148,9 @@ export function CustomersPage() {
 
                       <td className="px-4 py-3">{customer.user.email}</td>
 
-                      <td className="px-4 py-3">
-                        {customer.user.phoneNumber}
-                      </td>
+                      <td className="px-4 py-3">{customer.user.phoneNumber}</td>
 
-                      <td className="px-4 py-3">
-                        {customer.address ?? "—"}
-                      </td>
+                      <td className="px-4 py-3">{customer.address ?? "—"}</td>
 
                       <td className="px-4 py-3">
                         <span className="rounded-full bg-slate-100 px-3 py-1 text-xs">

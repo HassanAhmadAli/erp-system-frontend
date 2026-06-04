@@ -10,9 +10,28 @@ export type Category = {
 export type CategoryListResponse = {
   data: Category[]
   total: number
+  limit?: number
+  offset?: number
+  isFinalPage?: boolean
 }
 
-export function getCategories(params?: {
+function normalizeCategoryResponse(
+  response: CategoryListResponse | Category[]
+): CategoryListResponse {
+  if (Array.isArray(response)) {
+    return {
+      data: response,
+      total: response.length,
+      limit: response.length,
+      offset: 0,
+      isFinalPage: true,
+    }
+  }
+
+  return response
+}
+
+export async function getCategories(params?: {
   search?: string
   page?: number
   limit?: number
@@ -23,7 +42,10 @@ export function getCategories(params?: {
   if (params?.page) query.append("page", String(params.page))
   if (params?.limit) query.append("limit", String(params.limit))
 
-  return apiRequest<CategoryListResponse>(`/category?${query.toString()}`)
+  const qs = query.toString()
+  const endpoint = qs ? `/category?${qs}` : "/category"
+  const response = await apiRequest<CategoryListResponse | Category[]>(endpoint)
+  return normalizeCategoryResponse(response)
 }
 
 export function createCategory(data: { name: string; description?: string }) {

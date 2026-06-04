@@ -1,5 +1,8 @@
 import { useState } from "react"
-import { useCategories, useDeleteCategory } from "@/hooks/useCategories"
+import {
+  useCategories,
+  useDeleteCategory,
+} from "@/hooks/Categories/useCategories"
 import { CategoriesSkeleton } from "./categories-skeleton"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
 import { useNavigate } from "react-router-dom"

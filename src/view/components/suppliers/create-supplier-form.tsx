@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useCreateSupplier } from "@/hooks/useCreateSupplier"
+import { useCreateSupplier } from "@/hooks/Suppliers/useCreateSupplier"
 
 export function CreateSupplierForm() {
   const mutation = useCreateSupplier()
