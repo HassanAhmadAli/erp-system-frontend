@@ -29,9 +29,9 @@ export type Product = {
 
 export type ProductListResponse =
   | {
-      data: Product[]
-      total?: number
-    }
+    data: Product[]
+    total?: number
+  }
   | Product[]
 
 export type ProductPhoto = {
@@ -43,9 +43,9 @@ export type ProductPhoto = {
 
 export type ProductPhotoListResponse =
   | {
-      data: ProductPhoto[]
-      total?: number
-    }
+    data: ProductPhoto[]
+    total?: number
+  }
   | ProductPhoto[]
 
 export type ImportJob = {
@@ -60,9 +60,9 @@ export type ImportJob = {
 
 export type ImportJobListResponse =
   | {
-      data: ImportJob[]
-      total?: number
-    }
+    data: ImportJob[]
+    total?: number
+  }
   | ImportJob[]
 
 export type CreateProductInput = {

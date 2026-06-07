@@ -1,7 +1,7 @@
 import { ArrowRight, BadgeDollarSign, MapPin, Star, User } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
 
-import { useCustomer } from "@/hooks/useCustomers"
+import { useCustomer } from "@/hooks/Suppliers/useCustomers"
 import { CustomerInfoCard } from "@/view/components/customers/customer-info-card"
 import { CustomerInfoRow } from "@/view/components/customers/customer-info-row"
 import { CustomerStatusBadge } from "@/view/components/customers/customer-status-badge"

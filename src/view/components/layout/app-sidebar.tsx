@@ -2,16 +2,16 @@ import type { ComponentType } from "react"
 import {
   Bell,
   Boxes,
-  Home,
-  LogOut,
-  Package,
-  Settings,
-  Truck,
-  Users,
-  Tags,
-  Megaphone,
   ClipboardList,
   DatabaseBackup,
+  Home,
+  LogOut,
+  Megaphone,
+  Package,
+  Settings,
+  Tags,
+  Truck,
+  Users,
 } from "lucide-react"
 import { NavLink, useNavigate } from "react-router-dom"
 
@@ -70,7 +70,7 @@ export function AppSidebar() {
 
         <SidebarNavItem icon={Bell} label="الإشعارات" to="/notifications" />
 
-        <SidebarNavItem icon={Megaphone} label="الإعلانات والعروض" to="/ads" />
+        <SidebarNavItem icon={Megaphone} label="الإعلانات" to="/ads" />
 
         <SidebarNavItem
           icon={ClipboardList}
@@ -84,22 +84,12 @@ export function AppSidebar() {
           to="/backup"
         />
 
-        {/* Keep these if you still want warehouse/testing pages visible for now */}
         <SidebarNavItem icon={Boxes} label="المخزون" to="/inventory" />
 
         <SidebarNavItem icon={Tags} label="التصنيفات" to="/categories" />
 
         <SidebarNavItem icon={Package} label="المنتجات" to="/products" />
 
-        <SidebarNavItem
-          icon={Truck}
-          label="الاستلام والتوريد"
-          to="/inventory"
-        />
-
-        <SidebarNavItem icon={Users} label="الموظفين" to="/dashboard" />
-
-        <SidebarNavItem icon={Bell} label="الإشعارات" to="/dashboard" />
         <SidebarNavItem icon={Truck} label="الموردون" to="/suppliers" />
       </nav>
 

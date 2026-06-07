@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useNavigate } from "react-router-dom"
+import { Navigate, Route, Routes, useNavigate } from "react-router-dom"
 
 import { AppShell } from "@/view/components/layout/app-shell"
 import { ProtectedRoute } from "./ProtectedRoute"
@@ -14,6 +14,7 @@ import { CategoryDetailsPage } from "@/view/pages/categories/CategoryDetailsPage
 
 import { SuppliersPage } from "@/view/pages/suppliers/SuppliersPage"
 import { CreateSupplierPage } from "@/view/pages/suppliers/create-supplier-page"
+
 import { ProductsPage } from "@/view/pages/products/products-page"
 import { ProductImportPage } from "@/view/pages/products/product-import-page"
 import { CreateProductPage } from "@/view/pages/products/create-product-page"
@@ -23,6 +24,9 @@ import { ProductPhotosPage } from "@/view/pages/products/product-photos-page"
 
 import { CustomersPage } from "@/view/pages/customers/customers-page"
 import { CustomerDetailsPage } from "@/view/pages/customers/customer-details-page"
+
+import { AdsPage } from "@/view/pages/ads/ads-page"
+import { CreateAdPage } from "@/view/pages/ads/create-ad-page"
 
 function CreateCategoryPage() {
   const navigate = useNavigate()
@@ -61,6 +65,10 @@ export function AppRoutes() {
         <Route path="customers" element={<CustomersPage />} />
         <Route path="customers/:id" element={<CustomerDetailsPage />} />
 
+        {/* Ads Module */}
+        <Route path="ads" element={<AdsPage />} />
+        <Route path="ads/create" element={<CreateAdPage />} />
+
         {/* Current Existing Modules */}
         <Route path="inventory" element={<InventoryPage />} />
 
@@ -71,6 +79,7 @@ export function AppRoutes() {
 
         <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="suppliers/create" element={<CreateSupplierPage />} />
+
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/import" element={<ProductImportPage />} />
         <Route path="products/create" element={<CreateProductPage />} />

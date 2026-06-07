@@ -2,7 +2,7 @@ import { Eye, UserCheck, UserX, Users } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useState } from "react"
 
-import { useCustomers, useUpdateCustomerStatus } from "@/hooks/useCustomers"
+import { useCustomers, useUpdateCustomerStatus } from "@/hooks/Suppliers/useCustomers"
 
 type Customer = {
   id: number
