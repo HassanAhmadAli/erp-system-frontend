@@ -40,7 +40,7 @@ export function LoginCard() {
       const result = await loginUser(userType, trimmedEmail, password)
       saveTokens(result.access_token, result.refresh_token)
       setLoginMessage("تم تسجيل الدخول بنجاح")
-      navigate("/dashboard", { replace: true })
+      navigate("/overview", { replace: true })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "فشل تسجيل الدخول"

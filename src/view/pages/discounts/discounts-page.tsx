@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 
@@ -6,6 +6,8 @@ import {
   getDiscounts,
   deleteDiscount,
   toggleDiscount,
+  type DiscountType,
+  type DiscountScope,
 } from "@/services/discount-service"
 
 import { Button } from "@/view/components/ui/button"
@@ -29,25 +31,19 @@ export function DiscountsPage() {
       getDiscounts({
         page,
         limit,
+        search: search || undefined,
+        type: (typeFilter || undefined) as DiscountType | undefined,
+        scope: (scopeFilter || undefined) as DiscountScope | undefined,
       }),
   })
 
-  // frontend filtering
-  const filteredDiscounts = useMemo(() => {
-    if (!data?.data) return []
+  // Reset to first page when any filter changes so results stay consistent.
+  useEffect(() => {
+    setPage(1)
+  }, [search, typeFilter, scopeFilter])
 
-    return data.data.filter((discount) => {
-      const matchesSearch = discount.name
-        .toLowerCase()
-        .includes(search.toLowerCase())
-
-      const matchesType = typeFilter ? discount.type === typeFilter : true
-
-      const matchesScope = scopeFilter ? discount.scope === scopeFilter : true
-
-      return matchesSearch && matchesType && matchesScope
-    })
-  }, [data, search, typeFilter, scopeFilter])
+  // Server already applies search/type/scope; render the returned page as-is.
+  const discounts = data?.data ?? []
 
   async function handleDelete() {
     if (!deleteId) return
@@ -159,7 +155,7 @@ export function DiscountsPage() {
           </thead>
 
           <tbody>
-            {filteredDiscounts.map((discount) => (
+            {discounts.map((discount) => (
               <tr key={discount.id} className="border-t">
                 <td className="p-3">{discount.name}</td>
 
@@ -196,6 +192,14 @@ export function DiscountsPage() {
                 </td>
               </tr>
             ))}
+
+            {discounts.length === 0 && (
+              <tr>
+                <td className="p-6 text-center" colSpan={6}>
+                  لا توجد خصومات مطابقة
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

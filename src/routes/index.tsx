@@ -31,13 +31,6 @@ import { EditDiscountPage } from "@/view/pages/discounts/update-discount-page"
 import { BestDiscountPage } from "@/view/pages/discounts/best-discount-page"
 import { CalculateDiscountPage } from "@/view/pages/discounts/calculate-discount-page"
 
-// If the real EditDiscountPage module is missing, use a minimal local fallback
-// to avoid build-time module resolution errors. Replace this with the
-// real import once the module/file is present.
-// function EditDiscountPage() {
-//   return null
-// }
-
 function CreateCategoryPage() {
   const navigate = useNavigate()
 
