@@ -12,7 +12,7 @@ export function AppShell() {
 
   return (
     <div
-      className="flex min-h-svh flex-col bg-[var(--erp-page)] text-[var(--erp-text)]"
+      className="flex h-svh flex-col overflow-hidden bg-[var(--erp-page)] text-[var(--erp-text)]"
       dir="rtl"
       lang="ar"
     >

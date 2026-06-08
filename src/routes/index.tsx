@@ -23,6 +23,13 @@ import { ProductPhotosPage } from "@/view/pages/products/product-photos-page"
 
 import { CustomersPage } from "@/view/pages/customers/customers-page"
 import { CustomerDetailsPage } from "@/view/pages/customers/customer-details-page"
+import { DiscountsPage } from "@/view/pages/discounts/discounts-page"
+import { ActiveDiscountsPage } from "@/view/pages/discounts/active-discounts-page"
+import { DiscountDetailsPage } from "@/view/pages/discounts/discount-details-page"
+import { CreateDiscountPage } from "@/view/pages/discounts/create-discount-page"
+import { EditDiscountPage } from "@/view/pages/discounts/update-discount-page"
+import { BestDiscountPage } from "@/view/pages/discounts/best-discount-page"
+import { CalculateDiscountPage } from "@/view/pages/discounts/calculate-discount-page"
 
 function CreateCategoryPage() {
   const navigate = useNavigate()
@@ -77,6 +84,15 @@ export function AppRoutes() {
         <Route path="products/:id" element={<ProductDetailsPage />} />
         <Route path="products/:id/edit" element={<EditProductPage />} />
         <Route path="products/:id/photos" element={<ProductPhotosPage />} />
+
+        {/* Discounts */}
+        <Route path="discounts" element={<DiscountsPage />} />
+        <Route path="discounts/active" element={<ActiveDiscountsPage />} />
+        <Route path="discounts/best" element={<BestDiscountPage />} />
+        <Route path="discounts/calculate" element={<CalculateDiscountPage />} />
+        <Route path="discounts/create" element={<CreateDiscountPage />} />
+        <Route path="discounts/:id" element={<DiscountDetailsPage />} />
+        <Route path="discounts/:id/edit" element={<EditDiscountPage />} />
       </Route>
 
       {/* Fallback */}
