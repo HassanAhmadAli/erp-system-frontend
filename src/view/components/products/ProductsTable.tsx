@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
 import { StatusBadge } from "@/view/components/common/status-badge"
@@ -24,6 +24,8 @@ function getProductStatus(p: Product): Status {
   return "متوفر"
 }
 
+const PAGE_SIZE = 10
+
 export function ProductsTable() {
   const navigate = useNavigate()
   const [deleteId, setDeleteId] = useState<number | null>(null)
@@ -33,6 +35,7 @@ export function ProductsTable() {
   >("all")
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [supplierId, setSupplierId] = useState<number | null>(null)
+  const [page, setPage] = useState(1)
 
   const { data, isLoading, error } = useProducts()
   const { data: lowStockData, isLoading: isLoadingLowStock } =
@@ -76,6 +79,19 @@ export function ProductsTable() {
 
     return filteredProducts
   }, [data, lowStockData, categoryData, supplierData, filterType, searchQuery])
+
+  // Reset to first page whenever the filtered result set changes.
+  useEffect(() => {
+    setPage(1)
+  }, [filterType, searchQuery, categoryId, supplierId])
+
+  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const paginatedProducts = useMemo(
+    () =>
+      products.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE),
+    [products, currentPage]
+  )
 
   const isLoadingData =
     isLoading ||
@@ -192,7 +208,7 @@ export function ProductsTable() {
               </tr>
             </thead>
             <tbody>
-              {products.map((p) => (
+              {paginatedProducts.map((p) => (
                 <tr key={p.id} className="border-t">
                   <td className="p-3">
                     <div className="font-semibold">{p.name}</div>
@@ -248,6 +264,30 @@ export function ProductsTable() {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {!isLoadingData && !error && products.length > 0 && (
+        <div className="flex items-center justify-center gap-3">
+          <button
+            disabled={currentPage === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className="rounded-xl bg-gray-600 px-4 py-2 text-white disabled:opacity-50"
+          >
+            السابق
+          </button>
+
+          <span className="text-sm">
+            الصفحة {currentPage} من {totalPages}
+          </span>
+
+          <button
+            disabled={currentPage >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className="rounded-xl bg-gray-600 px-4 py-2 text-white disabled:opacity-50"
+          >
+            التالي
+          </button>
         </div>
       )}
 

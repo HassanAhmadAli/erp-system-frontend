@@ -1,17 +1,27 @@
 import { useEffect, useMemo, useState } from "react"
 
-import {
-  type Product,
-  type CreateProductInput,
-  type UpdateProductInput,
+import type {
+  CreateProductInput,
+  Product,
+  UpdateProductInput,
 } from "@/services/product-service"
 import { useCreateProduct } from "@/hooks/Products/useCreateProduct"
+import { useUpdateProduct } from "@/hooks/Products/useUpdateProduct"
 import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
 import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
-import { useUpdateProduct } from "@/hooks/Products/useUpdateProduct"
+
+import { Button } from "@/view/components/ui/button"
+
+type Props = {
+  mode: "create" | "edit"
+  productId?: number
+  initialValues?: Product
+  onSuccess?: () => void
+}
 
 type FormState = {
   name: string
+  description: string
   barcode: string
   purchasePrice: string
   sellingPrice: string
@@ -21,300 +31,330 @@ type FormState = {
   supplierId: string
 }
 
-function toNumberOrNaN(value: string) {
-  if (value === "") return NaN
-  return Number(value)
+const EMPTY_FORM: FormState = {
+  name: "",
+  description: "",
+  barcode: "",
+  purchasePrice: "",
+  sellingPrice: "",
+  quantityInStock: "",
+  minQuantity: "",
+  categoryId: "",
+  supplierId: "",
 }
 
-function getInitialCategoryId(initialValues?: Partial<Product> | null) {
-  return initialValues?.categoryId ?? (initialValues?.category as any)?.id ?? 0
+function toFormState(product?: Product): FormState {
+  if (!product) return EMPTY_FORM
+
+  return {
+    name: product.name ?? "",
+    description: product.description ?? "",
+    barcode: product.barcode ?? "",
+    purchasePrice:
+      product.purchasePrice != null ? String(product.purchasePrice) : "",
+    sellingPrice:
+      product.sellingPrice != null ? String(product.sellingPrice) : "",
+    quantityInStock:
+      product.quantityInStock != null ? String(product.quantityInStock) : "",
+    minQuantity: product.minQuantity != null ? String(product.minQuantity) : "",
+    categoryId:
+      product.categoryId != null
+        ? String(product.categoryId)
+        : product.category?.id != null
+          ? String(product.category.id)
+          : "",
+    supplierId:
+      product.supplierId != null
+        ? String(product.supplierId)
+        : product.supplier?.id != null
+          ? String(product.supplier.id)
+          : "",
+  }
 }
 
-function getInitialSupplierId(initialValues?: Partial<Product> | null) {
-  return initialValues?.supplierId ?? (initialValues?.supplier as any)?.id ?? 0
-}
+const inputClass =
+  "h-11 w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-3 text-right outline-none"
 
 export function ProductForm({
   mode,
   productId,
   initialValues,
   onSuccess,
-}: {
-  mode: "create" | "edit"
-  productId?: number
-  initialValues?: Partial<Product> | null
-  onSuccess: () => void
-}) {
-  const createMutation = useCreateProduct()
-  const updateMutation = useUpdateProduct()
-
-  const suppliersQuery = useSuppliers()
-
-  const categoriesQuery = useCategoriesForSelect()
-
-  const defaultState: FormState = useMemo(
-    () => ({
-      name: initialValues?.name ?? "",
-      barcode: initialValues?.barcode ?? "",
-      purchasePrice:
-        initialValues?.purchasePrice !== undefined
-          ? String(initialValues.purchasePrice)
-          : "",
-      sellingPrice:
-        initialValues?.sellingPrice !== undefined
-          ? String(initialValues.sellingPrice)
-          : "",
-      quantityInStock:
-        initialValues?.quantityInStock !== undefined
-          ? String(initialValues.quantityInStock)
-          : "",
-      minQuantity:
-        initialValues?.minQuantity !== undefined
-          ? String(initialValues.minQuantity)
-          : "",
-      categoryId: String(getInitialCategoryId(initialValues)),
-      supplierId: String(getInitialSupplierId(initialValues)),
-    }),
-    [initialValues]
-  )
-
-  const [form, setForm] = useState<FormState>(defaultState)
-  const [message, setMessage] = useState<{
-    type: "success" | "error"
-    text: string
-  } | null>(null)
+}: Props) {
+  const [form, setForm] = useState<FormState>(() => toFormState(initialValues))
+  const [errors, setErrors] = useState<
+    Partial<Record<keyof FormState, string>>
+  >({})
+  const [submitError, setSubmitError] = useState("")
 
   useEffect(() => {
-    setForm(defaultState)
-  }, [defaultState])
+    if (mode === "edit") setForm(toFormState(initialValues))
+  }, [mode, initialValues])
 
-  const isSubmitting =
-    mode === "create" ? createMutation.isPending : updateMutation.isPending
+  const {
+    data: categoriesData,
+    isLoading: categoriesLoading,
+    error: categoriesError,
+  } = useCategoriesForSelect()
+  const {
+    data: suppliersData,
+    isLoading: suppliersLoading,
+    error: suppliersError,
+  } = useSuppliers()
+
+  const categories = categoriesData?.data ?? []
+  const suppliers = suppliersData?.data ?? []
+
+  const createMutation = useCreateProduct()
+  const updateMutation = useUpdateProduct()
+  const isSaving = createMutation.isPending || updateMutation.isPending
+
+  function setField(key: keyof FormState, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const validation = useMemo(() => {
+    const next: Partial<Record<keyof FormState, string>> = {}
+
+    if (!form.name.trim()) next.name = "اسم المنتج مطلوب"
+    if (!form.barcode.trim()) next.barcode = "الباركود مطلوب"
+
+    const numericFields: (keyof FormState)[] = [
+      "purchasePrice",
+      "sellingPrice",
+      "quantityInStock",
+      "minQuantity",
+    ]
+    for (const key of numericFields) {
+      const value = form[key]
+      if (value === "") {
+        next[key] = "هذا الحقل مطلوب"
+      } else if (Number.isNaN(Number(value)) || Number(value) < 0) {
+        next[key] = "أدخل رقمًا صحيحًا"
+      }
+    }
+
+    if (!form.categoryId) next.categoryId = "اختر التصنيف"
+    if (!form.supplierId) next.supplierId = "اختر المورد"
+
+    return next
+  }, [form])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setMessage(null)
+    setSubmitError("")
 
-    const name = form.name.trim()
-    const barcode = form.barcode.trim()
-    const categoryId = Number(form.categoryId)
-    const supplierId = Number(form.supplierId)
-
-    const purchasePrice = toNumberOrNaN(form.purchasePrice)
-    const sellingPrice = toNumberOrNaN(form.sellingPrice)
-    const quantityInStock = toNumberOrNaN(form.quantityInStock)
-    const minQuantity = toNumberOrNaN(form.minQuantity)
-
-    if (!name) return setMessage({ type: "error", text: "اسم المنتج مطلوب" })
-    if (!barcode) return setMessage({ type: "error", text: "الباركود مطلوب" })
-    if (!Number.isFinite(categoryId) || categoryId <= 0)
-      return setMessage({ type: "error", text: "يرجى اختيار التصنيف" })
-    if (!Number.isFinite(supplierId) || supplierId <= 0)
-      return setMessage({ type: "error", text: "يرجى اختيار المورد" })
-
-    if (!Number.isFinite(purchasePrice) || purchasePrice < 0)
-      return setMessage({ type: "error", text: "سعر الشراء غير صالح" })
-    if (!Number.isFinite(sellingPrice) || sellingPrice < 0)
-      return setMessage({ type: "error", text: "سعر البيع غير صالح" })
-    if (!Number.isFinite(quantityInStock) || quantityInStock < 0)
-      return setMessage({ type: "error", text: "الكمية في المخزون غير صالحة" })
-    if (!Number.isFinite(minQuantity) || minQuantity < 0)
-      return setMessage({ type: "error", text: "الحد الأدنى غير صالح" })
-
-    const payload: CreateProductInput & UpdateProductInput = {
-      name,
-      barcode,
-      purchasePrice,
-      sellingPrice,
-      quantityInStock,
-      minQuantity,
-      categoryId,
-      supplierId,
+    if (Object.keys(validation).length > 0) {
+      setErrors(validation)
+      return
     }
+    setErrors({})
+
+    const payload: CreateProductInput & { description?: string } = {
+      name: form.name.trim(),
+      barcode: form.barcode.trim(),
+      purchasePrice: Number(form.purchasePrice),
+      sellingPrice: Number(form.sellingPrice),
+      quantityInStock: Number(form.quantityInStock),
+      minQuantity: Number(form.minQuantity),
+      categoryId: Number(form.categoryId),
+      supplierId: Number(form.supplierId),
+    }
+
+    const description = form.description.trim()
+    if (description) payload.description = description
 
     try {
       if (mode === "create") {
-        await createMutation.mutateAsync(payload as CreateProductInput)
-      } else {
-        if (!productId) throw new Error("Missing productId")
+        await createMutation.mutateAsync(payload)
+      } else if (productId != null) {
         await updateMutation.mutateAsync({
           id: productId,
           data: payload as UpdateProductInput,
         })
       }
-
-      setMessage({ type: "success", text: "تم الحفظ بنجاح" })
-      onSuccess()
-    } catch (err: any) {
-      setMessage({
-        type: "error",
-        text: err?.message || "حدث خطأ أثناء حفظ المنتج",
-      })
+      onSuccess?.()
+    } catch (err) {
+      setSubmitError(
+        err instanceof Error ? err.message : "حدث خطأ أثناء حفظ المنتج"
+      )
     }
   }
 
-  const categories = categoriesQuery.data?.data ?? []
-
-  const suppliers = suppliersQuery.data?.data ?? []
-
-  const submitLabel = mode === "create" ? "إضافة المنتج" : "حفظ التعديلات"
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border p-6">
-      {message && (
-        <div
-          className={`rounded-xl p-3 text-center text-sm font-medium ${
-            message.type === "success"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
-          }`}
-          role="alert"
-        >
-          {message.text}
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-6 rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-6 text-right"
+    >
+      <div className="grid gap-5 md:grid-cols-2">
+        {/* NAME */}
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium">اسم المنتج</label>
+          <input
+            className={inputClass}
+            value={form.name}
+            onChange={(e) => setField("name", e.target.value)}
+          />
+          {errors.name && (
+            <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+          )}
         </div>
+
+        {/* DESCRIPTION */}
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium">الوصف</label>
+          <textarea
+            className="min-h-[88px] w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-3 py-2 text-right outline-none"
+            value={form.description}
+            onChange={(e) => setField("description", e.target.value)}
+          />
+        </div>
+
+        {/* BARCODE */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">الباركود</label>
+          <input
+            className={inputClass}
+            value={form.barcode}
+            onChange={(e) => setField("barcode", e.target.value)}
+          />
+          {errors.barcode && (
+            <p className="mt-1 text-sm text-red-500">{errors.barcode}</p>
+          )}
+        </div>
+
+        {/* CATEGORY */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">التصنيف</label>
+          <select
+            className={inputClass}
+            value={form.categoryId}
+            onChange={(e) => setField("categoryId", e.target.value)}
+            disabled={categoriesLoading}
+          >
+            <option value="">
+              {categoriesLoading ? "جاري التحميل..." : "اختر التصنيف"}
+            </option>
+            {categories.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+          {categoriesError && (
+            <p className="mt-1 text-sm text-red-500">فشل تحميل التصنيفات</p>
+          )}
+          {errors.categoryId && (
+            <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
+          )}
+        </div>
+
+        {/* SUPPLIER */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">المورد</label>
+          <select
+            className={inputClass}
+            value={form.supplierId}
+            onChange={(e) => setField("supplierId", e.target.value)}
+            disabled={suppliersLoading}
+          >
+            <option value="">
+              {suppliersLoading ? "جاري التحميل..." : "اختر المورد"}
+            </option>
+            {suppliers.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.fullName}
+              </option>
+            ))}
+          </select>
+          {suppliersError && (
+            <p className="mt-1 text-sm text-red-500">فشل تحميل الموردين</p>
+          )}
+          {errors.supplierId && (
+            <p className="mt-1 text-sm text-red-500">{errors.supplierId}</p>
+          )}
+        </div>
+
+        {/* PURCHASE PRICE */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">سعر الشراء</label>
+          <input
+            type="number"
+            step="0.01"
+            className={inputClass}
+            value={form.purchasePrice}
+            onChange={(e) => setField("purchasePrice", e.target.value)}
+          />
+          {errors.purchasePrice && (
+            <p className="mt-1 text-sm text-red-500">{errors.purchasePrice}</p>
+          )}
+        </div>
+
+        {/* SELLING PRICE */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">سعر البيع</label>
+          <input
+            type="number"
+            step="0.01"
+            className={inputClass}
+            value={form.sellingPrice}
+            onChange={(e) => setField("sellingPrice", e.target.value)}
+          />
+          {errors.sellingPrice && (
+            <p className="mt-1 text-sm text-red-500">{errors.sellingPrice}</p>
+          )}
+        </div>
+
+        {/* QUANTITY */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            الكمية في المخزون
+          </label>
+          <input
+            type="number"
+            className={inputClass}
+            value={form.quantityInStock}
+            onChange={(e) => setField("quantityInStock", e.target.value)}
+          />
+          {errors.quantityInStock && (
+            <p className="mt-1 text-sm text-red-500">
+              {errors.quantityInStock}
+            </p>
+          )}
+        </div>
+
+        {/* MIN QUANTITY */}
+        <div>
+          <label className="mb-2 block text-sm font-medium">
+            الحد الأدنى للكمية
+          </label>
+          <input
+            type="number"
+            className={inputClass}
+            value={form.minQuantity}
+            onChange={(e) => setField("minQuantity", e.target.value)}
+          />
+          {errors.minQuantity && (
+            <p className="mt-1 text-sm text-red-500">{errors.minQuantity}</p>
+          )}
+        </div>
+      </div>
+
+      {submitError && (
+        <p className="rounded-xl bg-red-100 p-3 text-sm text-red-700">
+          {submitError}
+        </p>
       )}
 
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="space-y-2">
-          <span className="block text-right text-sm">اسم المنتج</span>
-          <input
-            className="w-full rounded-xl border p-3"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            placeholder="اسم المنتج"
-            disabled={isSubmitting}
-          />
-        </label>
-
-        <label className="space-y-2">
-          <span className="block text-right text-sm">الباركود</span>
-          <input
-            className="w-full rounded-xl border p-3"
-            value={form.barcode}
-            onChange={(e) => setForm({ ...form, barcode: e.target.value })}
-            placeholder="الباركود"
-            disabled={isSubmitting}
-          />
-        </label>
+      <div className="flex justify-start gap-3">
+        <Button type="submit" disabled={isSaving}>
+          {isSaving
+            ? "جاري الحفظ..."
+            : mode === "create"
+              ? "إضافة المنتج"
+              : "حفظ التعديلات"}
+        </Button>
       </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="space-y-2">
-          <span className="block text-right text-sm">سعر الشراء</span>
-          <input
-            type="number"
-            className="w-full rounded-xl border p-3"
-            value={form.purchasePrice}
-            onChange={(e) =>
-              setForm({ ...form, purchasePrice: e.target.value })
-            }
-            disabled={isSubmitting}
-          />
-        </label>
-
-        <label className="space-y-2">
-          <span className="block text-right text-sm">سعر البيع</span>
-          <input
-            type="number"
-            className="w-full rounded-xl border p-3"
-            value={form.sellingPrice}
-            onChange={(e) => setForm({ ...form, sellingPrice: e.target.value })}
-            disabled={isSubmitting}
-          />
-        </label>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="space-y-2">
-          <span className="block text-right text-sm">الكمية في المخزون</span>
-          <input
-            type="number"
-            className="w-full rounded-xl border p-3"
-            value={form.quantityInStock}
-            onChange={(e) =>
-              setForm({ ...form, quantityInStock: e.target.value })
-            }
-            disabled={isSubmitting}
-          />
-        </label>
-
-        <label className="space-y-2">
-          <span className="block text-right text-sm">الحد الأدنى</span>
-          <input
-            type="number"
-            className="w-full rounded-xl border p-3"
-            value={form.minQuantity}
-            onChange={(e) => setForm({ ...form, minQuantity: e.target.value })}
-            disabled={isSubmitting}
-          />
-        </label>
-      </div>
-
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="space-y-2">
-          <span className="block text-right text-sm">التصنيف</span>
-          {categoriesQuery.isLoading ? (
-            <div className="rounded-xl border p-3 text-right text-sm">
-              جاري تحميل التصنيفات...
-            </div>
-          ) : categoriesQuery.error ? (
-            <div className="rounded-xl border border-red-200 p-3 text-right text-sm text-red-700">
-              فشل تحميل التصنيفات
-            </div>
-          ) : (
-            <select
-              className="h-11 w-full rounded-xl border p-3"
-              value={form.categoryId}
-              onChange={(e) => setForm({ ...form, categoryId: e.target.value })}
-              disabled={isSubmitting}
-            >
-              <option value="0">-- اختر التصنيف --</option>
-              {categories.map((c: any) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          )}
-        </label>
-
-        <label className="space-y-2">
-          <span className="block text-right text-sm">المورد</span>
-          {suppliersQuery.isLoading ? (
-            <div className="rounded-xl border p-3 text-right text-sm">
-              جاري تحميل الموردين...
-            </div>
-          ) : suppliersQuery.error ? (
-            <div className="rounded-xl border border-red-200 p-3 text-right text-sm text-red-700">
-              فشل تحميل الموردين
-            </div>
-          ) : (
-            <select
-              className="h-11 w-full rounded-xl border p-3"
-              value={form.supplierId}
-              onChange={(e) => setForm({ ...form, supplierId: e.target.value })}
-              disabled={isSubmitting}
-            >
-              <option value="0">-- اختر المورد --</option>
-              {suppliers.map((s: any) => (
-                <option key={s.id} value={s.id}>
-                  {s.fullName}
-                </option>
-              ))}
-            </select>
-          )}
-        </label>
-      </div>
-
-      <button
-        type="submit"
-        disabled={
-          isSubmitting || categoriesQuery.isLoading || suppliersQuery.isLoading
-        }
-        className="w-full rounded-xl bg-green-600 px-5 py-3 text-white disabled:cursor-not-allowed disabled:opacity-60"
-      >
-        {isSubmitting ? "جاري الحفظ..." : submitLabel}
-      </button>
     </form>
   )
 }

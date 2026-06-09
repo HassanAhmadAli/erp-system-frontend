@@ -8,6 +8,7 @@ import {
   LogOut,
   Megaphone,
   Package,
+  Percent,
   Settings,
   Tags,
   Truck,
@@ -60,7 +61,7 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="flex w-[280px] flex-col bg-[var(--erp-sidebar)] px-5 py-6">
+    <aside className="erp-scrollbar flex w-[280px] shrink-0 flex-col overflow-y-auto bg-[var(--erp-sidebar)] px-5 py-6">
       <nav className="flex flex-1 flex-col gap-2">
         <SidebarNavItem icon={Home} label="نظرة عامة" to="/overview" />
 
@@ -91,6 +92,8 @@ export function AppSidebar() {
         <SidebarNavItem icon={Package} label="المنتجات" to="/products" />
 
         <SidebarNavItem icon={Truck} label="الموردون" to="/suppliers" />
+
+        <SidebarNavItem icon={Percent} label="الخصومات" to="/discounts" />
       </nav>
 
       <div className="mt-8 border-t pt-4">
