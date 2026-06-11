@@ -24,6 +24,9 @@ import { ProductPhotosPage } from "@/view/pages/products/product-photos-page"
 
 import { CustomersPage } from "@/view/pages/customers/customers-page"
 import { CustomerDetailsPage } from "@/view/pages/customers/customer-details-page"
+
+import { OrdersPage } from "@/view/pages/orders/orders-page"
+
 import { DiscountsPage } from "@/view/pages/discounts/discounts-page"
 import { ActiveDiscountsPage } from "@/view/pages/discounts/active-discounts-page"
 import { DiscountDetailsPage } from "@/view/pages/discounts/discount-details-page"
@@ -71,6 +74,9 @@ export function AppRoutes() {
         {/* Store Manager Modules */}
         <Route path="customers" element={<CustomersPage />} />
         <Route path="customers/:id" element={<CustomerDetailsPage />} />
+
+        {/* Orders Module */}
+        <Route path="orders" element={<OrdersPage />} />
 
         {/* Ads Module */}
         <Route path="ads" element={<AdsPage />} />
