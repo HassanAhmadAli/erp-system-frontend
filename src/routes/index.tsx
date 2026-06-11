@@ -37,7 +37,10 @@ import { AdsPage } from "@/view/pages/ads/ads-page"
 import { CreateAdPage } from "@/view/pages/ads/create-ad-page"
 
 import { OrdersPage } from "@/view/pages/orders/orders-page"
-import { OrderDetailsPage } from "@/view/pages/orders/order-details-page" // NEW
+import { OrderDetailsPage } from "@/view/pages/orders/order-details-page"
+
+import { SalesInvoicesPage } from "@/view/pages/sales-invoices/sales-invoices-page"
+import { SalesInvoiceDetailsPage } from "@/view/pages/sales-invoices/sales-invoice-details-page"
 
 function CreateCategoryPage() {
   const navigate = useNavigate()
@@ -79,6 +82,13 @@ export function AppRoutes() {
         {/* Orders */}
         <Route path="orders" element={<OrdersPage />} />
         <Route path="orders/:id" element={<OrderDetailsPage />} />
+
+        {/* Sales Invoices */}
+        <Route path="sales-invoices" element={<SalesInvoicesPage />} />
+        <Route
+          path="sales-invoices/:id"
+          element={<SalesInvoiceDetailsPage />}
+        />
 
         {/* Ads */}
         <Route path="ads" element={<AdsPage />} />

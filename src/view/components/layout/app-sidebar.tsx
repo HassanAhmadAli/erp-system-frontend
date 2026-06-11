@@ -9,6 +9,7 @@ import {
   Megaphone,
   Package,
   Percent,
+  ReceiptText,
   Settings,
   ShoppingCart,
   Tags,
@@ -71,6 +72,12 @@ export function AppSidebar() {
         <SidebarNavItem icon={Users} label="العملاء" to="/customers" />
 
         <SidebarNavItem icon={ShoppingCart} label="الطلبات" to="/orders" />
+
+        <SidebarNavItem
+          icon={ReceiptText}
+          label="فواتير المبيعات"
+          to="/sales-invoices"
+        />
 
         <SidebarNavItem icon={Bell} label="الإشعارات" to="/notifications" />
 
