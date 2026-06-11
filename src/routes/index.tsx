@@ -24,6 +24,7 @@ import { ProductPhotosPage } from "@/view/pages/products/product-photos-page"
 
 import { CustomersPage } from "@/view/pages/customers/customers-page"
 import { CustomerDetailsPage } from "@/view/pages/customers/customer-details-page"
+
 import { DiscountsPage } from "@/view/pages/discounts/discounts-page"
 import { ActiveDiscountsPage } from "@/view/pages/discounts/active-discounts-page"
 import { DiscountDetailsPage } from "@/view/pages/discounts/discount-details-page"
@@ -34,6 +35,9 @@ import { CalculateDiscountPage } from "@/view/pages/discounts/calculate-discount
 
 import { AdsPage } from "@/view/pages/ads/ads-page"
 import { CreateAdPage } from "@/view/pages/ads/create-ad-page"
+
+import { OrdersPage } from "@/view/pages/orders/orders-page"
+import { OrderDetailsPage } from "@/view/pages/orders/order-details-page" // NEW
 
 function CreateCategoryPage() {
   const navigate = useNavigate()
@@ -68,25 +72,32 @@ export function AppRoutes() {
         {/* Overview */}
         <Route path="overview" element={<StoreManagerOverviewPage />} />
 
-        {/* Store Manager Modules */}
+        {/* Customers */}
         <Route path="customers" element={<CustomersPage />} />
         <Route path="customers/:id" element={<CustomerDetailsPage />} />
 
-        {/* Ads Module */}
+        {/* Orders */}
+        <Route path="orders" element={<OrdersPage />} />
+        <Route path="orders/:id" element={<OrderDetailsPage />} />
+
+        {/* Ads */}
         <Route path="ads" element={<AdsPage />} />
         <Route path="ads/create" element={<CreateAdPage />} />
 
-        {/* Current Existing Modules */}
+        {/* Inventory */}
         <Route path="inventory" element={<InventoryPage />} />
 
+        {/* Categories */}
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="categories/create" element={<CreateCategoryPage />} />
         <Route path="categories/:id" element={<CategoryDetailsPage />} />
         <Route path="categories/:id/edit" element={<EditCategoryPage />} />
 
+        {/* Suppliers */}
         <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="suppliers/create" element={<CreateSupplierPage />} />
 
+        {/* Products */}
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/import" element={<ProductImportPage />} />
         <Route path="products/create" element={<CreateProductPage />} />

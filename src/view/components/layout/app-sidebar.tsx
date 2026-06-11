@@ -10,6 +10,7 @@ import {
   Package,
   Percent,
   Settings,
+  ShoppingCart,
   Tags,
   Truck,
   Users,
@@ -68,6 +69,8 @@ export function AppSidebar() {
         <SidebarNavItem icon={Users} label="إدارة الموظفين" to="/staff" />
 
         <SidebarNavItem icon={Users} label="العملاء" to="/customers" />
+
+        <SidebarNavItem icon={ShoppingCart} label="الطلبات" to="/orders" />
 
         <SidebarNavItem icon={Bell} label="الإشعارات" to="/notifications" />
 
