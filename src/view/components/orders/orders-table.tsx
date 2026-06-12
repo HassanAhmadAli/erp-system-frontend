@@ -1,6 +1,11 @@
-import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { Eye, Loader2, PackageCheck, RefreshCw } from "lucide-react"
+import {
+  CheckCircle,
+  Eye,
+  Loader2,
+  PackageCheck,
+  XCircle,
+} from "lucide-react"
 
 import { useUpdateOrderStatus } from "@/hooks/useOrders"
 import type { Order } from "@/services/orders-service"
@@ -15,14 +20,39 @@ type OrdersTableProps = {
 const statusLabels: Record<string, string> = {
   PENDING: "قيد الانتظار",
   PREPARING: "قيد التحضير",
+  OUT_FOR_DELIVERY: "قيد التوصيل",
   DELIVERED: "تم التوصيل",
   CANCELLED: "ملغي",
 }
 
-const statusOptions = ["PREPARING", "DELIVERED", "CANCELLED"]
+const nextStatusByStatus: Record<string, string | null> = {
+  PENDING: "PREPARING",
+  PREPARING: "OUT_FOR_DELIVERY",
+  OUT_FOR_DELIVERY: "DELIVERED",
+  DELIVERED: null,
+  CANCELLED: null,
+}
+
+const proceedButtonLabels: Record<string, string> = {
+  PENDING: "بدء التحضير",
+  PREPARING: "إرسال للتوصيل",
+  OUT_FOR_DELIVERY: "تأكيد التوصيل",
+}
 
 function formatStatus(status: string) {
   return statusLabels[status] ?? status
+}
+
+function getNextStatus(status: string) {
+  return nextStatusByStatus[status] ?? null
+}
+
+function canCancelOrder(status: string) {
+  return status !== "DELIVERED" && status !== "CANCELLED"
+}
+
+function getProceedButtonLabel(status: string) {
+  return proceedButtonLabels[status] ?? "متابعة"
 }
 
 export function OrdersTable({
@@ -32,16 +62,29 @@ export function OrdersTable({
 }: OrdersTableProps) {
   const navigate = useNavigate()
 
-  const [statusByOrder, setStatusByOrder] = useState<Record<number, string>>({})
-
   const updateStatusMutation = useUpdateOrderStatus()
 
-  function handleUpdateStatus(order: Order) {
-    const status = statusByOrder[order.id] ?? order.status
+  function handleProceed(order: Order) {
+    const nextStatus = getNextStatus(order.status)
+
+    if (!nextStatus) {
+      return
+    }
 
     updateStatusMutation.mutate({
       id: order.id,
-      status,
+      status: nextStatus,
+    })
+  }
+
+  function handleCancel(order: Order) {
+    if (!canCancelOrder(order.status)) {
+      return
+    }
+
+    updateStatusMutation.mutate({
+      id: order.id,
+      status: "CANCELLED",
     })
   }
 
@@ -72,10 +115,12 @@ export function OrdersTable({
       {orders.length === 0 ? (
         <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 text-center">
           <PackageCheck className="h-12 w-12 text-[var(--erp-muted)]" />
+
           <div>
             <h3 className="text-lg font-semibold text-[var(--erp-text)]">
               لا توجد طلبات حالياً
             </h3>
+
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
               ستظهر الطلبات هنا عند إضافتها من النظام.
             </p>
@@ -83,7 +128,7 @@ export function OrdersTable({
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[900px] text-right">
+          <table className="w-full min-w-[950px] text-right">
             <thead>
               <tr className="border-b border-[var(--erp-border)] text-sm text-[var(--erp-muted)]">
                 <th className="px-4 py-3 font-medium">رقم الطلب</th>
@@ -91,81 +136,96 @@ export function OrdersTable({
                 <th className="px-4 py-3 font-medium">العنوان</th>
                 <th className="px-4 py-3 font-medium">الحالة</th>
                 <th className="px-4 py-3 font-medium">المجموع</th>
-                <th className="px-4 py-3 font-medium">تحديث الحالة</th>
+                <th className="px-4 py-3 font-medium">الإجراء</th>
                 <th className="px-4 py-3 font-medium">تفاصيل</th>
               </tr>
             </thead>
 
             <tbody>
-              {orders.map((order) => (
-                <tr
-                  key={order.id}
-                  className="border-b border-[var(--erp-border)] last:border-0"
-                >
-                  <td className="px-4 py-4 text-sm font-semibold text-[var(--erp-text)]">
-                    #{order.id}
-                  </td>
+              {orders.map((order) => {
+                const nextStatus = getNextStatus(order.status)
+                const canProceed = Boolean(nextStatus)
+                const canCancel = canCancelOrder(order.status)
+                const isFinalStatus =
+                  order.status === "DELIVERED" ||
+                  order.status === "CANCELLED"
 
-                  <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
-                    {order.customer?.user?.fullName ?? order.customerId ?? "-"}
-                  </td>
+                return (
+                  <tr
+                    key={order.id}
+                    className="border-b border-[var(--erp-border)] last:border-0"
+                  >
+                    <td className="px-4 py-4 text-sm font-semibold text-[var(--erp-text)]">
+                      #{order.id}
+                    </td>
 
-                  <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
-                    {order.deliveryAddress ?? "-"}
-                  </td>
+                    <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
+                      {order.customer?.user?.fullName ??
+                        order.customerId ??
+                        "-"}
+                    </td>
 
-                  <td className="px-4 py-4">
-                    <span className="rounded-full bg-[var(--erp-accent)]/10 px-3 py-1 text-xs font-medium text-[var(--erp-accent)]">
-                      {formatStatus(order.status)}
-                    </span>
-                  </td>
+                    <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
+                      {order.deliveryAddress ?? "-"}
+                    </td>
 
-                  <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
-                    {order.total ?? "-"}
-                  </td>
+                    <td className="px-4 py-4">
+                      <span className="rounded-full bg-[var(--erp-accent)]/10 px-3 py-1 text-xs font-medium text-[var(--erp-accent)]">
+                        {formatStatus(order.status)}
+                      </span>
+                    </td>
 
-                  <td className="px-4 py-4">
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={statusByOrder[order.id] ?? order.status}
-                        onChange={(event) =>
-                          setStatusByOrder((previous) => ({
-                            ...previous,
-                            [order.id]: event.target.value,
-                          }))
-                        }
-                        className="rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-2 text-sm outline-none"
-                      >
-                        {statusOptions.map((status) => (
-                          <option key={status} value={status}>
-                            {formatStatus(status)}
-                          </option>
-                        ))}
-                      </select>
+                    <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
+                      {order.total ?? "-"}
+                    </td>
 
+                    <td className="px-4 py-4">
+                      {isFinalStatus ? (
+                        <span className="text-sm text-[var(--erp-muted)]">
+                          لا يوجد إجراء
+                        </span>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          {canProceed && (
+                            <Button
+                              size="sm"
+                              disabled={updateStatusMutation.isPending}
+                              onClick={() => handleProceed(order)}
+                              className="bg-green-600 text-white hover:bg-green-700"
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                              {getProceedButtonLabel(order.status)}
+                            </Button>
+                          )}
+
+                          {canCancel && (
+                            <Button
+                              size="sm"
+                              disabled={updateStatusMutation.isPending}
+                              onClick={() => handleCancel(order)}
+                              className="bg-red-600 text-white hover:bg-red-700"
+                            >
+                              <XCircle className="h-4 w-4" />
+                              إلغاء
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </td>
+
+                    <td className="px-4 py-4">
                       <Button
                         size="sm"
-                        disabled={updateStatusMutation.isPending}
-                        onClick={() => handleUpdateStatus(order)}
+                        variant="outline"
+                        onClick={() => navigate(`/orders/${order.id}`)}
                       >
-                        <RefreshCw className="h-4 w-4" />
-                        تحديث
+                        <Eye className="h-4 w-4" />
+                        عرض
                       </Button>
-                    </div>
-                  </td>
-
-                  <td className="px-4 py-4">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate(`/orders/${order.id}`)}
-                    >
-                      <Eye className="h-4 w-4" />
-                      عرض
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </div>

@@ -2,6 +2,7 @@ import type { ComponentType } from "react"
 import {
   Bell,
   Boxes,
+  Calculator,
   ClipboardList,
   DatabaseBackup,
   Home,
@@ -66,6 +67,8 @@ export function AppSidebar() {
     <aside className="erp-scrollbar flex w-[280px] shrink-0 flex-col overflow-y-auto bg-[var(--erp-sidebar)] px-5 py-6">
       <nav className="flex flex-1 flex-col gap-2">
         <SidebarNavItem icon={Home} label="نظرة عامة" to="/overview" />
+
+        <SidebarNavItem icon={Calculator} label="نقطة البيع" to="/pos" />
 
         <SidebarNavItem icon={Users} label="إدارة الموظفين" to="/staff" />
 

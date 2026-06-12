@@ -42,6 +42,8 @@ import { OrderDetailsPage } from "@/view/pages/orders/order-details-page"
 import { SalesInvoicesPage } from "@/view/pages/sales-invoices/sales-invoices-page"
 import { SalesInvoiceDetailsPage } from "@/view/pages/sales-invoices/sales-invoice-details-page"
 
+import { PosPage } from "@/view/pages/pos/pos-page"
+
 function CreateCategoryPage() {
   const navigate = useNavigate()
 
@@ -74,6 +76,9 @@ export function AppRoutes() {
 
         {/* Overview */}
         <Route path="overview" element={<StoreManagerOverviewPage />} />
+
+        {/* POS */}
+        <Route path="pos" element={<PosPage />} />
 
         {/* Customers */}
         <Route path="customers" element={<CustomersPage />} />
