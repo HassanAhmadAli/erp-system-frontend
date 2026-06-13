@@ -2,21 +2,22 @@ import { useMemo, useState } from "react"
 import { Plus, ReceiptText, RefreshCw, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { useSalesInvoices } from "@/hooks/useSalesInvoices"
-import { normalizeSalesInvoices } from "@/services/sales-invoices-service"
-import { CreateSalesInvoiceForm } from "@/view/components/sales-invoices/create-sales-invoice-form"
-import { SalesInvoicesTable } from "@/view/components/sales-invoices/sales-invoices-table"
+import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices"
+import { normalizePurchaseInvoices } from "@/services/purchase-invoices-service"
+import { CreatePurchaseInvoiceForm } from "@/view/components/purchase-invoices/create-purchase-invoice-form"
+import { PurchaseInvoicesTable } from "@/view/components/purchase-invoices/purchase-invoices-table"
 import {
   formatNumber,
   NumberText,
-} from "@/view/components/sales-invoices/sales-invoice-format"
+} from "@/view/components/purchase-invoices/purchase-invoice-format"
 
-export function SalesInvoicesPage() {
+export function PurchaseInvoicesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
 
-  const { data, isLoading, isError, refetch, isFetching } = useSalesInvoices()
+  const { data, isLoading, isError, refetch, isFetching } =
+    usePurchaseInvoices()
 
-  const invoices = useMemo(() => normalizeSalesInvoices(data), [data])
+  const invoices = useMemo(() => normalizePurchaseInvoices(data), [data])
 
   return (
     <main className="space-y-6" dir="rtl">
@@ -25,12 +26,12 @@ export function SalesInvoicesPage() {
           <div className="flex items-center gap-2">
             <ReceiptText className="size-6 text-[var(--erp-brand-solid)]" />
             <h1 className="text-2xl font-bold text-[var(--erp-text)]">
-              فواتير المبيعات
+              فواتير الشراء
             </h1>
           </div>
 
           <p className="text-sm text-[var(--erp-muted)]">
-            عرض الفواتير، إنشاء فاتورة جديدة، وتحديث حالة الفاتورة.
+            إنشاء وعرض فواتير الشراء وتحديث حالتها.
           </p>
         </div>
 
@@ -62,14 +63,14 @@ export function SalesInvoicesPage() {
       </section>
 
       {isCreateOpen && (
-        <CreateSalesInvoiceForm onCreated={() => setIsCreateOpen(false)} />
+        <CreatePurchaseInvoiceForm onCreated={() => setIsCreateOpen(false)} />
       )}
 
       <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="text-right">
             <h2 className="text-lg font-bold text-[var(--erp-text)]">
-              قائمة الفواتير
+              قائمة فواتير الشراء
             </h2>
 
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
@@ -79,7 +80,7 @@ export function SalesInvoicesPage() {
           </div>
         </div>
 
-        <SalesInvoicesTable
+        <PurchaseInvoicesTable
           invoices={invoices}
           isLoading={isLoading}
           isError={isError}

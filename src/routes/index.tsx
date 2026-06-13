@@ -42,6 +42,9 @@ import { OrderDetailsPage } from "@/view/pages/orders/order-details-page"
 import { SalesInvoicesPage } from "@/view/pages/sales-invoices/sales-invoices-page"
 import { SalesInvoiceDetailsPage } from "@/view/pages/sales-invoices/sales-invoice-details-page"
 
+import { PurchaseInvoicesPage } from "@/view/pages/purchase-invoices/purchase-invoices-page"
+import { PurchaseInvoiceDetailsPage } from "@/view/pages/purchase-invoices/purchase-invoice-details-page"
+
 import { PosPage } from "@/view/pages/pos/pos-page"
 
 function CreateCategoryPage() {
@@ -93,6 +96,13 @@ export function AppRoutes() {
         <Route
           path="sales-invoices/:id"
           element={<SalesInvoiceDetailsPage />}
+        />
+
+        {/* Purchase Invoices */}
+        <Route path="purchase-invoices" element={<PurchaseInvoicesPage />} />
+        <Route
+          path="purchase-invoices/:id"
+          element={<PurchaseInvoiceDetailsPage />}
         />
 
         {/* Ads */}

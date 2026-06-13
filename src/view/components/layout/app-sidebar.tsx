@@ -82,6 +82,12 @@ export function AppSidebar() {
           to="/sales-invoices"
         />
 
+        <SidebarNavItem
+          icon={ReceiptText}
+          label="فواتير الشراء"
+          to="/purchase-invoices"
+        />
+
         <SidebarNavItem icon={Bell} label="الإشعارات" to="/notifications" />
 
         <SidebarNavItem icon={Megaphone} label="الإعلانات" to="/ads" />
