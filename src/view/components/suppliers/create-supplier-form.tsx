@@ -1,7 +1,14 @@
 import { useState } from "react"
+import { useNavigate } from "react-router-dom"
+
 import { useCreateSupplier } from "@/hooks/Suppliers/useCreateSupplier"
+import { Button } from "@/view/components/ui/button"
+
+const inputClass =
+  "w-full rounded-xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-3 text-right outline-none"
 
 export function CreateSupplierForm() {
+  const navigate = useNavigate()
   const mutation = useCreateSupplier()
 
   const [fullName, setFullName] = useState("")
@@ -9,13 +16,11 @@ export function CreateSupplierForm() {
   const [email, setEmail] = useState("")
   const [address, setAddress] = useState("")
 
-  const [successMessage, setSuccessMessage] = useState("")
   const [errorMessage, setErrorMessage] = useState("")
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
 
-    setSuccessMessage("")
     setErrorMessage("")
 
     if (!fullName.trim()) {
@@ -41,52 +46,83 @@ export function CreateSupplierForm() {
         address,
       })
 
-      setFullName("")
-      setPhone("")
-      setEmail("")
-      setAddress("")
-
-      setSuccessMessage("تم إنشاء المورد بنجاح")
-    } catch (error: any) {
-      setErrorMessage(error?.message || "حدث خطأ أثناء إنشاء المورد")
+      navigate("/suppliers")
+    } catch (error: unknown) {
+      const message =
+        error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء المورد"
+      setErrorMessage(message)
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-2xl border p-6">
-      <input
-        value={fullName}
-        onChange={(e) => setFullName(e.target.value)}
-        placeholder="اسم المورد"
-        className="w-full rounded-xl border p-3"
-      />
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-5 rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-6 text-right"
+    >
+      <div>
+        <label
+          htmlFor="supplier-fullName"
+          className="mb-2 block text-sm font-medium"
+        >
+          اسم المورد
+        </label>
+        <input
+          id="supplier-fullName"
+          value={fullName}
+          onChange={(e) => setFullName(e.target.value)}
+          placeholder="أدخل اسم المورد"
+          className={inputClass}
+        />
+      </div>
 
-      <input
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-        placeholder="رقم الهاتف"
-        className="w-full rounded-xl border p-3"
-      />
+      <div>
+        <label
+          htmlFor="supplier-phone"
+          className="mb-2 block text-sm font-medium"
+        >
+          رقم الهاتف
+        </label>
+        <input
+          id="supplier-phone"
+          value={phone}
+          onChange={(e) => setPhone(e.target.value)}
+          placeholder="أدخل رقم الهاتف"
+          className={inputClass}
+        />
+      </div>
 
-      <input
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="البريد الإلكتروني"
-        className="w-full rounded-xl border p-3"
-      />
+      <div>
+        <label
+          htmlFor="supplier-email"
+          className="mb-2 block text-sm font-medium"
+        >
+          البريد الإلكتروني
+        </label>
+        <input
+          id="supplier-email"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="أدخل البريد الإلكتروني"
+          className={inputClass}
+        />
+      </div>
 
-      <input
-        value={address}
-        onChange={(e) => setAddress(e.target.value)}
-        placeholder="العنوان"
-        className="w-full rounded-xl border p-3"
-      />
-
-      {successMessage && (
-        <div className="rounded-xl bg-green-100 p-3 text-green-700">
-          {successMessage}
-        </div>
-      )}
+      <div>
+        <label
+          htmlFor="supplier-address"
+          className="mb-2 block text-sm font-medium"
+        >
+          العنوان
+        </label>
+        <input
+          id="supplier-address"
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="أدخل عنوان المورد"
+          className={inputClass}
+        />
+      </div>
 
       {errorMessage && (
         <div className="rounded-xl bg-red-100 p-3 text-red-700">
@@ -94,13 +130,18 @@ export function CreateSupplierForm() {
         </div>
       )}
 
-      <button
-        type="submit"
-        disabled={mutation.isPending}
-        className="rounded-xl bg-green-600 px-5 py-2 text-white disabled:opacity-50"
-      >
-        {mutation.isPending ? "جاري الحفظ..." : "إضافة المورد"}
-      </button>
+      <div className="flex gap-2">
+        <Button type="submit" disabled={mutation.isPending}>
+          {mutation.isPending ? "جاري الحفظ..." : "إضافة المورد"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => navigate("/suppliers")}
+        >
+          إلغاء
+        </Button>
+      </div>
     </form>
   )
 }
