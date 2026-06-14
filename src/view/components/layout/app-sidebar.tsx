@@ -99,6 +99,12 @@ export function AppSidebar() {
 
         <SidebarNavItem icon={Truck} label="الموردون" to="/suppliers" />
 
+        <SidebarNavItem
+          icon={ShoppingCart}
+          label="الطلبات"
+          to="/orders"
+        />
+
         <SidebarNavItem icon={Percent} label="الخصومات" to="/discounts" />
 
         <SidebarNavItem icon={DollarSign} label="المصروفات" to="/expenses" />
