@@ -55,7 +55,12 @@ export function CategoriesTable() {
                 <td>{cat._count?.products}</td>
 
                 <td className="flex gap-2 p-3">
-                  <button className="text-blue-500">تعديل</button>
+                  <button
+                    onClick={() => navigate(`/categories/${cat.id}/edit`)}
+                    className="text-blue-500"
+                  >
+                    تعديل
+                  </button>
 
                   <button
                     onClick={() => navigate(`/categories/${cat.id}`)}

@@ -1,53 +1,220 @@
-import { useParams } from "react-router-dom"
+import {
+  ArrowRight,
+  Barcode,
+  FolderOpen,
+  Hash,
+  Package,
+  Pencil,
+  Tag,
+} from "lucide-react"
+import { Link, useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
+
 import { getCategoryById } from "@/services/category-service"
+import { CustomerInfoCard } from "@/view/components/customers/customer-info-card"
+import { CustomerInfoRow } from "@/view/components/customers/customer-info-row"
+import { Button } from "@/view/components/ui/button"
 
 export function CategoryDetailsPage() {
   const { id } = useParams()
+  const categoryId = Number(id)
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ["category", id],
-    queryFn: () => getCategoryById(Number(id)),
-    enabled: !!id,
+    queryFn: () => getCategoryById(categoryId),
+    enabled: Number.isFinite(categoryId),
   })
 
-  if (isLoading) return <p className="text-center">جاري التحميل...</p>
+  if (!Number.isFinite(categoryId)) {
+    return <ErrorMessage message="رقم التصنيف غير صالح." />
+  }
 
-  if (!data) return <p>لا يوجد بيانات</p>
+  if (isLoading) {
+    return (
+      <div className="space-y-6 p-6 text-right" dir="rtl">
+        <p className="text-[var(--erp-muted)]">جاري تحميل بيانات التصنيف...</p>
+      </div>
+    )
+  }
+
+  if (isError || !data) {
+    return <ErrorMessage message="تعذر تحميل بيانات التصنيف." />
+  }
+
+  const productCount = data._count?.products ?? data.products?.length ?? 0
+  const totalStock = data.products.reduce(
+    (sum, product) => sum + product.quantityInStock,
+    0
+  )
 
   return (
-    <div className="space-y-6">
-      {/* HEADER */}
-      <div className="text-right">
-        <h2 className="text-3xl font-bold">{data.name}</h2>
-        <p className="text-gray-500">{data.description}</p>
+    <div className="space-y-6 p-6 text-right" dir="rtl">
+      <header className="flex flex-col gap-4 sm:flex-row-reverse sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold">{data.name}</h1>
+          <p className="mt-2 text-[var(--erp-muted)]">
+            {data.description || "لا يوجد وصف لهذا التصنيف."}
+          </p>
+        </div>
 
-        <p className="mt-2 text-sm text-gray-400">
-          عدد المنتجات: {data._count.products}
-        </p>
-      </div>
-
-      {/* PRODUCTS */}
-      <div className="space-y-3">
-        <h3 className="text-right text-xl font-bold">المنتجات</h3>
-
-        {data.products.map((p) => (
-          <div
-            key={p.id}
-            className="flex items-center justify-between rounded-xl border p-3"
+        <div className="flex flex-wrap gap-2">
+          <Link to={`/categories/${categoryId}/edit`}>
+            <Button className="gap-2">
+              <Pencil className="size-4" />
+              تعديل التصنيف
+            </Button>
+          </Link>
+          <Link
+            to="/categories"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border bg-white px-4 py-2 text-sm transition hover:bg-slate-50"
           >
-            <div className="text-right">
-              <p className="font-bold">{p.name}</p>
-              <p className="text-sm text-gray-500">{p.barcode}</p>
-            </div>
+            <ArrowRight className="size-4" />
+            العودة إلى التصنيفات
+          </Link>
+        </div>
+      </header>
 
-            <div className="text-left text-sm">
-              <p>السعر: {p.sellingPrice}</p>
-              <p>الكمية: {p.quantityInStock}</p>
-            </div>
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <SummaryCard
+          label="عدد المنتجات"
+          value={productCount}
+          icon={<Package className="size-5" />}
+        />
+        <SummaryCard
+          label="إجمالي الكمية في المخزون"
+          value={totalStock}
+          icon={<Tag className="size-5" />}
+        />
+        <SummaryCard
+          label="رقم التصنيف"
+          value={data.id}
+          icon={<Hash className="size-5" />}
+        />
+      </section>
+
+      <section className="grid gap-4 lg:grid-cols-2">
+        <CustomerInfoCard title="معلومات التصنيف">
+          <CustomerInfoRow label="اسم التصنيف" value={data.name} />
+          <CustomerInfoRow label="الوصف" value={data.description || "—"} />
+          <CustomerInfoRow label="رقم التصنيف" value={data.id} />
+          <CustomerInfoRow label="عدد المنتجات" value={productCount} />
+        </CustomerInfoCard>
+
+        <div className="rounded-3xl bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-end gap-2">
+            <h2 className="text-xl font-semibold">ملخص المخزون</h2>
+            <FolderOpen className="size-5 text-[var(--erp-brand)]" />
           </div>
-        ))}
+          <div className="space-y-3 text-sm">
+            <p>
+              <span className="text-[var(--erp-muted)]">
+                المنتجات المرتبطة:{" "}
+              </span>
+              <span className="font-medium">{productCount}</span>
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">إجمالي الوحدات: </span>
+              <span className="font-medium">{totalStock}</span>
+            </p>
+            <p>
+              <span className="text-[var(--erp-muted)]">
+                متوسط الكمية لكل منتج:{" "}
+              </span>
+              <span className="font-medium">
+                {productCount > 0 ? Math.round(totalStock / productCount) : 0}
+              </span>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-3xl bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center justify-between">
+          <span className="text-sm text-[var(--erp-muted)]">
+            {productCount} منتج
+          </span>
+          <h2 className="text-xl font-semibold">المنتجات في هذا التصنيف</h2>
+        </div>
+
+        {data.products.length === 0 ? (
+          <div className="rounded-2xl border border-dashed p-8 text-center text-[var(--erp-muted)]">
+            لا توجد منتجات مرتبطة بهذا التصنيف حالياً.
+          </div>
+        ) : (
+          <div className="overflow-x-auto rounded-2xl border">
+            <table className="w-full min-w-[600px] text-right">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-3">#</th>
+                  <th className="p-3">اسم المنتج</th>
+                  <th className="p-3">الباركود</th>
+                  <th className="p-3">سعر البيع</th>
+                  <th className="p-3">الكمية</th>
+                  <th className="p-3">العمليات</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.products.map((product) => (
+                  <tr key={product.id} className="border-t">
+                    <td className="p-3">{product.id}</td>
+                    <td className="p-3 font-medium">{product.name}</td>
+                    <td className="p-3">
+                      <span className="inline-flex items-center gap-1 text-sm text-[var(--erp-muted)]">
+                        <Barcode className="size-3.5" />
+                        {product.barcode}
+                      </span>
+                    </td>
+                    <td className="p-3">{product.sellingPrice}</td>
+                    <td className="p-3">{product.quantityInStock}</td>
+                    <td className="p-3">
+                      <Link to={`/products/${product.id}`}>
+                        <Button variant="outline" size="sm">
+                          عرض المنتج
+                        </Button>
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function SummaryCard({
+  label,
+  value,
+  icon,
+}: {
+  label: string
+  value: string | number
+  icon: React.ReactNode
+}) {
+  return (
+    <div className="rounded-3xl bg-white p-5 shadow-sm">
+      <div className="flex items-center justify-between">
+        <span className="text-[var(--erp-brand)]">{icon}</span>
+        <p className="text-sm text-[var(--erp-muted)]">{label}</p>
       </div>
+      <p className="mt-3 text-2xl font-bold">{value}</p>
+    </div>
+  )
+}
+
+function ErrorMessage({ message }: { message: string }) {
+  return (
+    <div className="space-y-6 p-6 text-right" dir="rtl">
+      <p className="text-red-500">{message}</p>
+      <Link
+        to="/categories"
+        className="inline-flex items-center gap-2 rounded-2xl border bg-white px-4 py-2 text-sm transition hover:bg-slate-50"
+      >
+        <ArrowRight className="size-4" />
+        العودة إلى التصنيفات
+      </Link>
     </div>
   )
 }

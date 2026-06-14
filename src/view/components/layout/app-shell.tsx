@@ -6,9 +6,21 @@ import { TopBar } from "@/view/components/layout/top-bar"
 export function AppShell() {
   const location = useLocation()
 
+  const accountantRoutes = [
+    "/expenses",
+    "/purchases",
+    "/sales",
+    "/reports",
+    "/financial",
+    "/loyalty-rewards",
+    "/accountant",
+  ]
+
   const headerTitle = location.pathname.startsWith("/inventory")
     ? "مدير المخزون"
-    : "مدير المتجر"
+    : accountantRoutes.some((route) => location.pathname.startsWith(route))
+      ? "المحاسب"
+      : "مدير المتجر"
 
   return (
     <div

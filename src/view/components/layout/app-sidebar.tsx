@@ -5,15 +5,20 @@ import {
   Calculator,
   ClipboardList,
   DatabaseBackup,
+  DollarSign,
+  FileText,
+  Gift,
   Home,
   LogOut,
   Megaphone,
   Package,
   Percent,
   ReceiptText,
+  Receipt,
   Settings,
   ShoppingCart,
   Tags,
+  TrendingUp,
   Truck,
   Users,
 } from "lucide-react"
@@ -112,7 +117,32 @@ export function AppSidebar() {
 
         <SidebarNavItem icon={Truck} label="الموردون" to="/suppliers" />
 
+        <SidebarNavItem
+          icon={ShoppingCart}
+          label="الطلبات"
+          to="/orders"
+        />
+
         <SidebarNavItem icon={Percent} label="الخصومات" to="/discounts" />
+
+        <SidebarNavItem icon={DollarSign} label="المصروفات" to="/expenses" />
+        <SidebarNavItem icon={Receipt} label="فواتير الشراء" to="/purchases" />
+        <SidebarNavItem
+          icon={ShoppingCart}
+          label="فواتير المبيعات"
+          to="/sales"
+        />
+        <SidebarNavItem icon={FileText} label="التقارير" to="/reports" />
+        <SidebarNavItem
+          icon={TrendingUp}
+          label="التحليل المالي"
+          to="/financial"
+        />
+        <SidebarNavItem
+          icon={Gift}
+          label="مكافآت الولاء"
+          to="/loyalty-rewards"
+        />
       </nav>
 
       <div className="mt-8 border-t pt-4">

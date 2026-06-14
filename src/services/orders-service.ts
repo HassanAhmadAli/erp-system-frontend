@@ -1,84 +1,65 @@
 import { apiRequest } from "@/api/client"
 
-export type OrderStatus = "PENDING" | "PREPARING" | string
+export type OrderStatus =
+    | "PENDING"
+    | "PREPARING"
+    | "READY"
+    | "DELIVERED"
+    | "CANCELLED"
+
+export type OrderProduct = {
+    id: number
+    name: string
+}
 
 export type OrderItem = {
     id: number
-    orderId: number
     productId: number
     quantity: number
-    unitPrice: string
-    subtotal: string
-    product?: {
-        id: number
-        name: string
-        barcode: string
-    }
+    price?: string
+    product?: OrderProduct
+}
+
+export type OrderCustomerUser = {
+    id: number
+    fullName: string
+    email: string
+    phoneNumber: string
+    isActive?: boolean
+}
+
+export type OrderCustomer = {
+    id: number
+    userId?: number
+    address?: string
+    loyaltyPoints?: number
+    totalSpent?: string
+    user?: OrderCustomerUser
 }
 
 export type Order = {
     id: number
-    customerId: number
-    appliedDiscountId: number | null
-    subtotal: string
-    discountAmount: string
-    total: string
+    customerId?: number
+    discountId?: number | null
     loyaltyPointsUsed: number
-    deliveryAddress: string
+    deliveryAddress?: string | null
     status: OrderStatus
-    createdAt: string
-    updatedAt: string
+    total?: string
+    createdAt?: string
+    updatedAt?: string
     items?: OrderItem[]
-    customer?: {
-        id: number
-        userId: number
-        address: string
-        loyaltyPoints: number
-        totalSpent: string
-        user?: {
-            id: number
-            fullName: string
-            email: string
-        }
-    }
-    appliedDiscount?: unknown
-}
-
-export type OrdersResponse = {
-    data: Order[]
-    total: number
-    limit: number
-    offset: number
-    isFinalPage: boolean
-}
-
-export type CreateOrderPayload = {
-    customerId: number
-    discountId: number | null
-    loyaltyPointsUsed: number
-    deliveryAddress: string
-    items: {
-        productId: number
-        quantity: number
-    }[]
+    customer?: OrderCustomer
 }
 
 export async function getOrders() {
-    return apiRequest<OrdersResponse>("/orders/cashier/")
+    return apiRequest<Order[]>("/orders/cashier/")
 }
 
 export async function getOrder(id: number) {
     return apiRequest<Order>(`/orders/cashier/${id}`)
 }
 
-export async function createOrder(payload: CreateOrderPayload) {
-    return apiRequest<Order>("/orders/cashier/", {
-        method: "POST",
-        body: JSON.stringify(payload),
-    })
-}
-
-export async function updateOrderStatus(id: number, status: string) {
+export async function updateOrderStatus(id: number, status: OrderStatus) {
     return apiRequest<Order>(`/orders/cashier/${id}/status`, {
         method: "PATCH",
         body: JSON.stringify({ status }),

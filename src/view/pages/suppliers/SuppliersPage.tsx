@@ -1,28 +1,19 @@
+import { Link } from "react-router-dom"
+
 import { SuppliersTable } from "@/view/components/suppliers/SuppliersTable"
-import { useState } from "react"
-import { EditSupplierForm } from "@/view/components/suppliers/EditSupplierForm"
-// EditSupplierForm import removed because the module was not found.
-// A placeholder is rendered in the modal instead.
+import { Button } from "@/view/components/ui/button"
 
 export function SuppliersPage() {
-  const [editId, setEditId] = useState<number | null>(null)
-
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold">الموردين</h1>
+    <div className="space-y-6" dir="rtl">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold">الموردين</h1>
+        <Link to="/suppliers/create">
+          <Button>إضافة مورد</Button>
+        </Link>
+      </div>
 
-      <SuppliersTable onEdit={(id) => setEditId(id)} />
-
-      {editId && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40">
-          <div className="w-[400px] rounded-xl bg-white p-4">
-            <EditSupplierForm
-              supplierId={editId}
-              onClose={() => setEditId(null)}
-            />
-          </div>
-        </div>
-      )}
+      <SuppliersTable />
     </div>
   )
 }

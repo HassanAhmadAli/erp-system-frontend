@@ -65,3 +65,40 @@ export async function loginUser(
 
   return data
 }
+
+export async function refreshTokens(
+  refreshToken: string
+): Promise<LoginResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/authentication/refresh-tokens`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ refresh_token: refreshToken }),
+    }
+  )
+
+  const body = await response.text()
+
+  if (!response.ok) {
+    throw new Error(formatLoginError(response.status, body))
+  }
+
+  return JSON.parse(body) as LoginResponse
+}
+
+export async function signOut(email: string, refreshToken: string) {
+  const response = await fetch(`${API_BASE_URL}/authentication/signout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: email.trim(),
+      refresh_token: refreshToken,
+    }),
+  })
+
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(formatLoginError(response.status, body))
+  }
+}

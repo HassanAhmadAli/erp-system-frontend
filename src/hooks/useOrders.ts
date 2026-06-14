@@ -1,11 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import {
-    createOrder,
     getOrder,
     getOrders,
     updateOrderStatus,
-    type CreateOrderPayload,
+    type OrderStatus,
 } from "@/services/orders-service"
 
 export function useOrders() {
@@ -23,26 +22,14 @@ export function useOrder(id: number) {
     })
 }
 
-export function useCreateOrder() {
-    const queryClient = useQueryClient()
-
-    return useMutation({
-        mutationFn: (payload: CreateOrderPayload) => createOrder(payload),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["orders"] })
-        },
-    })
-}
-
 export function useUpdateOrderStatus() {
     const queryClient = useQueryClient()
 
     return useMutation({
-        mutationFn: ({ id, status }: { id: number; status: string }) =>
+        mutationFn: ({ id, status }: { id: number; status: OrderStatus }) =>
             updateOrderStatus(id, status),
-        onSuccess: (_, variables) => {
+        onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["orders"] })
-            queryClient.invalidateQueries({ queryKey: ["orders", variables.id] })
         },
     })
 }
