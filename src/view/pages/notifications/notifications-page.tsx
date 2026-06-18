@@ -1,76 +1,76 @@
-import {
-  useMarkNotificationRead,
-  useMarkNotificationUnread,
-  useMyNotifications,
-} from "@/hooks/Notifications/useNotifications"
+import { useState } from "react"
+
+import { NotificationHistoryTable } from "@/view/components/notifications/notification-history-table"
+import { NotificationsInbox } from "@/view/components/notifications/notifications-inbox"
+import { SendNotificationForm } from "@/view/components/notifications/send-notification-form"
 import { Button } from "@/view/components/ui/button"
 
+type NotificationsTab = "inbox" | "send" | "history"
+
+const tabs: { id: NotificationsTab; label: string }[] = [
+  { id: "inbox", label: "صندوق الوارد" },
+  { id: "send", label: "إرسال إشعار" },
+  { id: "history", label: "سجل الإرسال" },
+]
+
 export function NotificationsPage() {
-  const { data: notifications = [], isLoading, isError } = useMyNotifications()
-  const markRead = useMarkNotificationRead()
-  const markUnread = useMarkNotificationUnread()
+  const [activeTab, setActiveTab] = useState<NotificationsTab>("inbox")
+  const [unreadOnly, setUnreadOnly] = useState(false)
 
   return (
-    <div className="space-y-6 p-6" dir="rtl">
+    <main className="space-y-6" dir="rtl">
       <header>
-        <h1 className="text-2xl font-bold">الإشعارات</h1>
-        <p className="text-[var(--erp-muted)]">إشعاراتك الشخصية</p>
+        <h1 className="text-2xl font-bold text-[var(--erp-text)]">الإشعارات</h1>
+        <p className="mt-1 text-sm text-[var(--erp-muted)]">
+          إدارة الإشعارات الشخصية وإرسال الإشعارات الداخلية.
+        </p>
       </header>
 
-      {isLoading ? (
-        <p>جاري التحميل...</p>
-      ) : isError ? (
-        <p className="text-red-500">حدث خطأ أثناء تحميل الإشعارات</p>
-      ) : notifications.length === 0 ? (
-        <p className="text-[var(--erp-muted)]">لا توجد إشعارات</p>
-      ) : (
-        <div className="space-y-3">
-          {notifications.map((notification) => (
-            <div
-              key={notification.id}
-              className={`rounded-2xl border p-4 ${
-                notification.isRead
-                  ? "opacity-70"
-                  : "bg-[var(--erp-nav-active-bg)]"
-              }`}
-            >
-              <div className="flex items-start justify-between gap-4">
-                <div className="text-right">
-                  <h3 className="font-semibold">{notification.title}</h3>
-                  <p className="mt-1 text-sm text-[var(--erp-muted)]">
-                    {notification.message}
-                  </p>
-                  <p className="mt-2 text-xs text-[var(--erp-muted)]">
-                    {new Date(notification.createdAt).toLocaleString("ar-SY")}
-                  </p>
-                </div>
+      <div className="flex flex-wrap gap-2">
+        {tabs.map((tab) => (
+          <Button
+            key={tab.id}
+            type="button"
+            variant={activeTab === tab.id ? "default" : "outline"}
+            onClick={() => setActiveTab(tab.id)}
+          >
+            {tab.label}
+          </Button>
+        ))}
+      </div>
 
-                <div className="flex shrink-0 gap-2">
-                  {notification.isRead ? (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={markUnread.isPending}
-                      onClick={() => markUnread.mutate(notification.id)}
-                    >
-                      غير مقروء
-                    </Button>
-                  ) : (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={markRead.isPending}
-                      onClick={() => markRead.mutate(notification.id)}
-                    >
-                      مقروء
-                    </Button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
+      {activeTab === "inbox" && (
+        <section className="space-y-4 rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="text-lg font-semibold text-[var(--erp-text)]">
+              إشعاراتي
+            </h2>
+
+            <label className="flex items-center gap-2 text-sm text-[var(--erp-muted)]">
+              <input
+                type="checkbox"
+                checked={unreadOnly}
+                onChange={(event) => setUnreadOnly(event.target.checked)}
+              />
+              عرض غير المقروء فقط
+            </label>
+          </div>
+
+          <NotificationsInbox unreadOnly={unreadOnly} />
+        </section>
       )}
-    </div>
+
+      {activeTab === "send" && <SendNotificationForm />}
+
+      {activeTab === "history" && (
+        <section className="rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
+          <h2 className="mb-5 text-lg font-semibold text-[var(--erp-text)]">
+            سجل الإشعارات المرسلة
+          </h2>
+
+          <NotificationHistoryTable />
+        </section>
+      )}
+    </main>
   )
 }

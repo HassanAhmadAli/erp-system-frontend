@@ -1,9 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import {
+  createOrder,
   getOrder,
   getOrders,
   updateOrderStatus,
+  type CreateOrderPayload,
   type OrderStatus,
 } from "@/services/orders-service"
 
@@ -18,7 +20,18 @@ export function useOrder(id: number) {
   return useQuery({
     queryKey: ["orders", id],
     queryFn: () => getOrder(id),
-    enabled: Boolean(id),
+    enabled: Number.isFinite(id) && id > 0,
+  })
+}
+
+export function useCreateOrder() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: CreateOrderPayload) => createOrder(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] })
+    },
   })
 }
 
@@ -28,8 +41,9 @@ export function useUpdateOrderStatus() {
   return useMutation({
     mutationFn: ({ id, status }: { id: number; status: OrderStatus }) =>
       updateOrderStatus(id, status),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["orders"] })
+      queryClient.invalidateQueries({ queryKey: ["orders", variables.id] })
     },
   })
 }

@@ -2,6 +2,7 @@ import type { ComponentType } from "react"
 import {
   Bell,
   Boxes,
+  Calculator,
   ClipboardList,
   DatabaseBackup,
   DollarSign,
@@ -12,6 +13,7 @@ import {
   Megaphone,
   Package,
   Percent,
+  ReceiptText,
   Receipt,
   Settings,
   ShoppingCart,
@@ -71,9 +73,25 @@ export function AppSidebar() {
       <nav className="flex flex-1 flex-col gap-2">
         <SidebarNavItem icon={Home} label="نظرة عامة" to="/overview" />
 
+        <SidebarNavItem icon={Calculator} label="نقطة البيع" to="/pos" />
+
         <SidebarNavItem icon={Users} label="إدارة الموظفين" to="/staff" />
 
         <SidebarNavItem icon={Users} label="العملاء" to="/customers" />
+
+        <SidebarNavItem icon={ShoppingCart} label="الطلبات" to="/orders" />
+
+        <SidebarNavItem
+          icon={ReceiptText}
+          label="فواتير المبيعات"
+          to="/sales-invoices"
+        />
+
+        <SidebarNavItem
+          icon={ReceiptText}
+          label="فواتير الشراء"
+          to="/purchase-invoices"
+        />
 
         <SidebarNavItem icon={Bell} label="الإشعارات" to="/notifications" />
 
@@ -104,12 +122,12 @@ export function AppSidebar() {
         <SidebarNavItem icon={Percent} label="الخصومات" to="/discounts" />
 
         <SidebarNavItem icon={DollarSign} label="المصروفات" to="/expenses" />
-        <SidebarNavItem icon={Receipt} label="فواتير الشراء" to="/purchases" />
-        <SidebarNavItem
+        {/* <SidebarNavItem icon={Receipt} label="فواتير الشراء" to="/purchases" /> */}
+        {/* <SidebarNavItem
           icon={ShoppingCart}
           label="فواتير المبيعات"
           to="/sales"
-        />
+        /> */}
         <SidebarNavItem icon={FileText} label="التقارير" to="/reports" />
         <SidebarNavItem
           icon={TrendingUp}

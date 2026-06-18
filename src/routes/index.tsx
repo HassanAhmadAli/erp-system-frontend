@@ -40,14 +40,23 @@ import { CalculateDiscountPage } from "@/view/pages/discounts/calculate-discount
 import { AdsPage } from "@/view/pages/ads/ads-page"
 import { CreateAdPage } from "@/view/pages/ads/create-ad-page"
 
+import { OrderDetailsPage } from "@/view/pages/orders/order-details-page"
+
+import { SalesInvoicesPage } from "@/view/pages/sales-invoices/sales-invoices-page"
+import { SalesInvoiceDetailsPage } from "@/view/pages/sales-invoices/sales-invoice-details-page"
+
+import { PurchaseInvoicesPage } from "@/view/pages/purchase-invoices/purchase-invoices-page"
+import { PurchaseInvoiceDetailsPage } from "@/view/pages/purchase-invoices/purchase-invoice-details-page"
+
+import { PosPage } from "@/view/pages/pos/pos-page"
 import { AccountantOverviewPage } from "@/view/pages/overview/accountant-ov"
 import { ExpensesPage } from "@/view/pages/expenses/expenses-page"
 import { CreateExpensePage } from "@/view/pages/expenses/create-expense-page"
 import { ExpenseDetailsPage } from "@/view/pages/expenses/expense-details-page"
 import { EditExpensePage } from "@/view/pages/expenses/edit-expense-page"
-import { PurchasesPage } from "@/view/pages/purchases/purchases-page"
-import { CreatePurchasePage } from "@/view/pages/purchases/create-purchase-page"
-import { PurchaseDetailsPage } from "@/view/pages/purchases/purchase-details-page"
+// import { PurchasesPage } from "@/view/pages/purchases/purchases-page"
+// import { CreatePurchasePage } from "@/view/pages/purchases/create-purchase-page"
+// import { PurchaseDetailsPage } from "@/view/pages/purchases/purchase-details-page"
 import { ReportsPage } from "@/view/pages/reports/reports-page"
 import { ReportSummaryPage } from "@/view/pages/reports/report-summary-page"
 import { ReportDashboardPage } from "@/view/pages/reports/report-dashboard-page"
@@ -64,8 +73,8 @@ import { SupplierReportPage } from "@/view/pages/financial/supplier-report-page"
 import { RecalculateCostsPage } from "@/view/pages/financial/recalculate-costs-page"
 import { AuditLogsPage } from "@/view/pages/audit-logs/audit-logs-page"
 import { AuditLogDetailsPage } from "@/view/pages/audit-logs/audit-log-details-page"
-import { SalesPage } from "@/view/pages/sales/sales-page"
-import { SalesDetailsPage } from "@/view/pages/sales/sales-details-page"
+// import { SalesPage } from "@/view/pages/sales/sales-page"
+// import { SalesDetailsPage } from "@/view/pages/sales/sales-details-page"
 import { NotificationsPage } from "@/view/pages/notifications/notifications-page"
 
 function CreateCategoryPage() {
@@ -105,30 +114,55 @@ export function AppRoutes() {
           element={<AccountantOverviewPage />}
         />
 
-        {/* Store Manager Modules */}
+        {/* POS */}
+        <Route path="pos" element={<PosPage />} />
+
+        {/* Customers */}
         <Route path="customers" element={<CustomersPage />} />
         <Route path="customers/:id" element={<CustomerDetailsPage />} />
 
-        {/* Orders Module */}
+        {/* Orders */}
         <Route path="orders" element={<OrdersPage />} />
+        <Route path="orders/:id" element={<OrderDetailsPage />} />
+
+        {/* Sales Invoices */}
+        <Route path="sales-invoices" element={<SalesInvoicesPage />} />
+        <Route
+          path="sales-invoices/:id"
+          element={<SalesInvoiceDetailsPage />}
+        />
+
+        {/* Purchase Invoices */}
+        <Route path="purchase-invoices" element={<PurchaseInvoicesPage />} />
+        <Route
+          path="purchase-invoices/:id"
+          element={<PurchaseInvoiceDetailsPage />}
+        />
+
+        {/* Ads */}
+        {/* Orders Module */}
+        {/* <Route path="orders" element={<OrdersPage />} /> */}
 
         {/* Ads Module */}
         <Route path="ads" element={<AdsPage />} />
         <Route path="ads/create" element={<CreateAdPage />} />
 
-        {/* Current Existing Modules */}
+        {/* Inventory */}
         <Route path="inventory" element={<InventoryPage />} />
 
+        {/* Categories */}
         <Route path="categories" element={<CategoriesPage />} />
         <Route path="categories/create" element={<CreateCategoryPage />} />
         <Route path="categories/:id" element={<CategoryDetailsPage />} />
         <Route path="categories/:id/edit" element={<EditCategoryPage />} />
 
+        {/* Suppliers */}
         <Route path="suppliers" element={<SuppliersPage />} />
         <Route path="suppliers/create" element={<CreateSupplierPage />} />
         <Route path="suppliers/:id" element={<SupplierDetailsPage />} />
         <Route path="suppliers/:id/edit" element={<EditSupplierPage />} />
 
+        {/* Products */}
         <Route path="products" element={<ProductsPage />} />
         <Route path="products/import" element={<ProductImportPage />} />
         <Route path="products/create" element={<CreateProductPage />} />
@@ -150,13 +184,13 @@ export function AppRoutes() {
         <Route path="expenses/create" element={<CreateExpensePage />} />
         <Route path="expenses/:id" element={<ExpenseDetailsPage />} />
         <Route path="expenses/:id/edit" element={<EditExpensePage />} />
-
+        {/* 
         <Route path="purchases" element={<PurchasesPage />} />
         <Route path="purchases/create" element={<CreatePurchasePage />} />
         <Route path="purchases/:id" element={<PurchaseDetailsPage />} />
 
         <Route path="sales" element={<SalesPage />} />
-        <Route path="sales/:id" element={<SalesDetailsPage />} />
+        <Route path="sales/:id" element={<SalesDetailsPage />} /> */}
 
         <Route path="reports" element={<ReportsPage />} />
         <Route path="reports/summary" element={<ReportSummaryPage />} />
