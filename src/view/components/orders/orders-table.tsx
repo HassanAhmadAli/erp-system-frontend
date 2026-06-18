@@ -1,14 +1,8 @@
 import { useNavigate } from "react-router-dom"
-import {
-  CheckCircle,
-  Eye,
-  Loader2,
-  PackageCheck,
-  XCircle,
-} from "lucide-react"
+import { CheckCircle, Eye, Loader2, PackageCheck, XCircle } from "lucide-react"
 
 import { useUpdateOrderStatus } from "@/hooks/useOrders"
-import type { Order } from "@/services/orders-service"
+import type { Order, OrderStatus } from "@/services/orders-service"
 import { Button } from "@/view/components/ui/button"
 
 type OrdersTableProps = {
@@ -17,49 +11,47 @@ type OrdersTableProps = {
   isError: boolean
 }
 
-const statusLabels: Record<string, string> = {
+const statusLabels: Record<OrderStatus, string> = {
   PENDING: "قيد الانتظار",
   PREPARING: "قيد التحضير",
-  OUT_FOR_DELIVERY: "قيد التوصيل",
-  DELIVERED: "تم التوصيل",
+  READY: "جاهز",
+  DELIVERED: "تم التسليم",
   CANCELLED: "ملغي",
 }
 
-const nextStatusByStatus: Record<string, string | null> = {
+const nextStatusByStatus: Record<OrderStatus, OrderStatus | null> = {
   PENDING: "PREPARING",
-  PREPARING: "OUT_FOR_DELIVERY",
-  OUT_FOR_DELIVERY: "DELIVERED",
+  PREPARING: "READY",
+  READY: "DELIVERED",
   DELIVERED: null,
   CANCELLED: null,
 }
 
-const proceedButtonLabels: Record<string, string> = {
+const proceedButtonLabels: Record<OrderStatus, string> = {
   PENDING: "بدء التحضير",
-  PREPARING: "إرسال للتوصيل",
-  OUT_FOR_DELIVERY: "تأكيد التوصيل",
+  PREPARING: "تعيين كجاهز",
+  READY: "تأكيد التسليم",
+  DELIVERED: "متابعة",
+  CANCELLED: "متابعة",
 }
 
-function formatStatus(status: string) {
+function formatStatus(status: OrderStatus) {
   return statusLabels[status] ?? status
 }
 
-function getNextStatus(status: string) {
+function getNextStatus(status: OrderStatus) {
   return nextStatusByStatus[status] ?? null
 }
 
-function canCancelOrder(status: string) {
+function canCancelOrder(status: OrderStatus) {
   return status !== "DELIVERED" && status !== "CANCELLED"
 }
 
-function getProceedButtonLabel(status: string) {
+function getProceedButtonLabel(status: OrderStatus) {
   return proceedButtonLabels[status] ?? "متابعة"
 }
 
-export function OrdersTable({
-  orders,
-  isLoading,
-  isError,
-}: OrdersTableProps) {
+export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
   const navigate = useNavigate()
 
   const updateStatusMutation = useUpdateOrderStatus()
@@ -99,9 +91,7 @@ export function OrdersTable({
   if (isError) {
     return (
       <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
-        <p className="text-sm text-red-500">
-          حدث خطأ أثناء تحميل الطلبات.
-        </p>
+        <p className="text-sm text-red-500">حدث خطأ أثناء تحميل الطلبات.</p>
       </section>
     )
   }
@@ -147,8 +137,7 @@ export function OrdersTable({
                 const canProceed = Boolean(nextStatus)
                 const canCancel = canCancelOrder(order.status)
                 const isFinalStatus =
-                  order.status === "DELIVERED" ||
-                  order.status === "CANCELLED"
+                  order.status === "DELIVERED" || order.status === "CANCELLED"
 
                 return (
                   <tr
@@ -176,7 +165,7 @@ export function OrdersTable({
                     </td>
 
                     <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
-                      {order.total ?? "-"}
+                      {order.subtotal ?? order.total ?? "-"}
                     </td>
 
                     <td className="px-4 py-4">

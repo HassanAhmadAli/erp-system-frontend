@@ -10,14 +10,17 @@ type OrderDetailsCardProps = {
   onClose: () => void
 }
 
-const statusLabels: Record<string, string> = {
+import type { OrderStatus } from "@/services/orders-service"
+
+const statusLabels: Record<OrderStatus, string> = {
   PENDING: "قيد الانتظار",
   PREPARING: "قيد التحضير",
-  COMPLETED: "مكتمل",
+  READY: "جاهز",
+  DELIVERED: "تم التسليم",
   CANCELLED: "ملغي",
 }
 
-function formatStatus(status: string) {
+function formatStatus(status: OrderStatus) {
   return statusLabels[status] ?? status
 }
 
@@ -74,7 +77,7 @@ export function OrderDetailsCard({
           <div className="rounded-2xl border border-[var(--erp-border)] p-4">
             <p className="text-[var(--erp-muted)]">المجموع</p>
             <p className="mt-1 font-semibold text-[var(--erp-text)]">
-              {order.total ?? "-"}
+              {order.subtotal ?? order.total ?? "-"}
             </p>
           </div>
 

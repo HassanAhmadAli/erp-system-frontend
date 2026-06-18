@@ -2,7 +2,8 @@ import { Loader2, Receipt, ShoppingCart } from "lucide-react"
 
 import { Button } from "@/view/components/ui/button"
 import { formatCurrency, toEnglishDigits } from "@/utils/number-formatters"
-import type { CartItem } from "../types"
+import { PosCustomerSelect } from "@/view/components/pos/pos-customer-select"
+import type { CartItem } from "./types"
 import { PosCartItem } from "./pos-cart-item"
 
 type PosCartPanelProps = {
@@ -52,23 +53,7 @@ export function PosCartPanel({
       </div>
 
       <div className="space-y-4">
-        <label className="block">
-          <span className="mb-2 block text-sm text-[var(--erp-muted)]">
-            رقم العميل
-          </span>
-
-          <input
-            value={customerId}
-            onChange={(event) =>
-              onCustomerIdChange(toEnglishDigits(event.target.value))
-            }
-            type="text"
-            inputMode="numeric"
-            dir="ltr"
-            placeholder="Example: 1"
-            className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-left text-sm text-[var(--erp-text)] outline-none placeholder:text-[var(--erp-muted)]"
-          />
-        </label>
+        <PosCustomerSelect value={customerId} onChange={onCustomerIdChange} />
 
         <div className="max-h-[340px] space-y-3 overflow-y-auto pr-1">
           {cart.length === 0 ? (

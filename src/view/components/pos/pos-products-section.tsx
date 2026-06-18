@@ -34,7 +34,7 @@ export function PosProductsSection({
         </div>
 
         <div className="relative w-full md:w-[320px]">
-          <PackageSearch className="absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--erp-muted)]" />
+          <PackageSearch className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 text-[var(--erp-muted)]" />
           <input
             value={search}
             onChange={(event) =>

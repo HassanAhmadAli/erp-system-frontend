@@ -52,10 +52,7 @@ export function CreateOrderForm() {
         </h2>
       </div>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid gap-4 md:grid-cols-3"
-      >
+      <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-3">
         <input
           required
           type="number"
@@ -108,10 +105,7 @@ export function CreateOrderForm() {
           className="rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none"
         />
 
-        <Button
-          type="submit"
-          disabled={createOrderMutation.isPending}
-        >
+        <Button type="submit" disabled={createOrderMutation.isPending}>
           {createOrderMutation.isPending
             ? "جارِ إنشاء الطلب..."
             : "إنشاء الطلب"}

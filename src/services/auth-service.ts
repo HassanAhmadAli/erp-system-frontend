@@ -11,6 +11,7 @@ export const AUTH_USER_TYPES = [
   "manager",
   "accountant",
   "warehouse-worker",
+  "cashier",
 ] as const
 
 export type AuthUserType = (typeof AUTH_USER_TYPES)[number]

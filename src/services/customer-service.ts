@@ -1,4 +1,4 @@
-import { apiRequest } from "@/api/client"
+import { apiRequest, buildQuery } from "@/api/client"
 
 export type CustomerUser = {
   id: number
@@ -25,8 +25,23 @@ export type CustomersResponse = {
   isFinalPage: boolean
 }
 
-export async function getCustomers() {
-  return apiRequest<CustomersResponse>("/customer")
+export type CustomersQuery = {
+  limit?: number
+  offset?: number
+}
+
+export function normalizeCustomers(
+  response?: CustomersResponse | Customer[] | null
+) {
+  if (!response) return []
+
+  if (Array.isArray(response)) return response
+
+  return response.data ?? []
+}
+
+export async function getCustomers(params?: CustomersQuery) {
+  return apiRequest<CustomersResponse>(`/customer${buildQuery(params)}`)
 }
 
 export async function getCustomer(id: number) {

@@ -13,6 +13,7 @@ const USER_TYPE_LABELS: Record<AuthUserType, string> = {
   manager: "مدير",
   accountant: "محاسب",
   "warehouse-worker": "عامل مستودع",
+  cashier: "كاشير",
 }
 
 export function LoginCard() {
