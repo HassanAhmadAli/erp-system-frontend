@@ -1,9 +1,9 @@
+import { BASE_URL } from "@/api/client"
 export type LoginResponse = {
   access_token: string
   refresh_token: string
 }
 
-const API_BASE_URL = "http://localhost:3000"
 
 /** Path segments for POST /authentication/{role}/signin */
 export const AUTH_USER_TYPES = [
@@ -34,7 +34,7 @@ export async function loginUser(
   password: string
 ): Promise<LoginResponse> {
   const response = await fetch(
-    `${API_BASE_URL}/authentication/${userType}/signin`,
+    `${BASE_URL}/authentication/${userType}/signin`,
     {
       method: "POST",
       headers: {
@@ -71,7 +71,7 @@ export async function refreshTokens(
   refreshToken: string
 ): Promise<LoginResponse> {
   const response = await fetch(
-    `${API_BASE_URL}/authentication/refresh-tokens`,
+    `${BASE_URL}/authentication/refresh-tokens`,
     {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -89,7 +89,7 @@ export async function refreshTokens(
 }
 
 export async function signOut(email: string, refreshToken: string) {
-  const response = await fetch(`${API_BASE_URL}/authentication/signout`, {
+  const response = await fetch(`${BASE_URL}/authentication/signout`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
