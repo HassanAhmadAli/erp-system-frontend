@@ -5,23 +5,22 @@ import {
   toNumber,
   unwrapData,
 } from "@/lib/report-parsers"
-import { formatId, toEnglishDigits } from "@/utils/number-formatters"
+import {
+  formatDate,
+  formatId,
+  toEnglishDigits,
+} from "@/utils/number-formatters"
 
-export function formatShortDate(value?: string | null): string {
-  if (!value) return "—"
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return "—"
+function labelText(value: unknown, fallback = "—") {
+  if (value === null || value === undefined || value === "") {
+    return fallback
   }
 
-  return toEnglishDigits(
-    date.toLocaleDateString("en-GB", {
-      month: "short",
-      day: "2-digit",
-    })
-  )
+  return toEnglishDigits(String(value))
+}
+
+export function formatShortDate(value?: string | null): string {
+  return formatDate(value)
 }
 
 export function getMetricUnit(key: string): string {
@@ -53,9 +52,9 @@ export function getMetricUnit(key: string): string {
 /** Parts-of-a-whole only: non-negative values that sum to a positive total. */
 export function isCompositionData(data: ChartPoint[]): boolean {
   if (data.length < 2) return false
-  if (data.some((d) => d.value < 0)) return false
+  if (data.some((item) => item.value < 0)) return false
 
-  const total = data.reduce((sum, d) => sum + d.value, 0)
+  const total = data.reduce((sum, item) => sum + item.value, 0)
 
   return total > 0
 }
@@ -190,7 +189,7 @@ export function extractSummaryCostComposition(payload: unknown): ChartPoint[] {
         if (value === null || value <= 0) return null
 
         return {
-          label: String(item.category ?? item.name ?? item.label ?? "—"),
+          label: labelText(item.category ?? item.name ?? item.label),
           value,
         }
       })
@@ -244,8 +243,8 @@ export function extractCompositionBreakdown(payload: unknown): ChartPoint[] {
 
         if (value === null || value < 0) return null
 
-        const label = String(
-          row.category ?? row.name ?? row.label ?? row.type ?? row.status ?? "—"
+        const label = labelText(
+          row.category ?? row.name ?? row.label ?? row.type ?? row.status
         )
 
         return { label, value }
@@ -297,11 +296,15 @@ export function extractTimeSeries(payload: unknown): ChartPoint[] {
     rows.length > 0
       ? rows
       : (() => {
-        const obj = unwrapData(payload) as Record<string, unknown>
+        const obj = unwrapData(payload)
+
+        if (!obj || typeof obj !== "object") return []
+
+        const source = obj as Record<string, unknown>
 
         for (const key of ["trends", "series", "timeline", "history"]) {
-          if (Array.isArray(obj?.[key])) {
-            return obj[key] as Record<string, unknown>[]
+          if (Array.isArray(source[key])) {
+            return source[key] as Record<string, unknown>[]
           }
         }
 
@@ -355,7 +358,7 @@ export function extractProfitMarginSeries(payload: unknown): ChartPoint[] {
 
       if (value === null) return null
 
-      const label = String(
+      const label = labelText(
         row.productName ??
         row.name ??
         `منتج #${formatId(String(row.productId ?? row.id ?? "?"))}`
@@ -511,8 +514,8 @@ export function extractCostBreakdownSeries(payload: unknown): ChartPoint[] {
 
       if (value === null || value < 0) return null
 
-      const label = String(
-        row.category ?? row.name ?? row.label ?? row.type ?? row.source ?? "—"
+      const label = labelText(
+        row.category ?? row.name ?? row.label ?? row.type ?? row.source
       )
 
       return { label, value }
@@ -535,7 +538,7 @@ export function extractInventoryQuantityBars(payload: unknown): ChartPoint[] {
 
       if (value === null) return null
 
-      const label = String(
+      const label = labelText(
         row.productName ?? row.name ?? `منتج #${formatId(String(row.id ?? "?"))}`
       )
 
@@ -576,7 +579,7 @@ export function extractInventoryStatusComposition(
   const statusMap = new Map<string, number>()
 
   for (const row of rows) {
-    const status = String(row.stockStatus ?? row.status ?? "")
+    const status = labelText(row.stockStatus ?? row.status, "")
     const qty =
       toNumber(row.quantityInStock) ??
       toNumber(row.quantity) ??
@@ -629,7 +632,7 @@ export function buildInvoiceCharts(invoices: InvoiceLike[]) {
   const statusCounts = new Map<string, number>()
 
   for (const invoice of invoices) {
-    const status = invoice.status ?? "غير محدد"
+    const status = labelText(invoice.status, "غير محدد")
     const amount = toNumber(invoice.totalAmount) ?? 0
 
     statusAmounts.set(status, (statusAmounts.get(status) ?? 0) + amount)

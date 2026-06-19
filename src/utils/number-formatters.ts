@@ -93,63 +93,88 @@ export function getProductPrice(product: { sellingPrice: FormatValue }) {
   return price
 }
 
-export function formatDate(value: string | Date | null | undefined) {
+function padDatePart(value: number) {
+  return String(value).padStart(2, "0")
+}
+
+function parseDateValue(value: string | Date | null | undefined) {
   if (!value) {
-    return "—"
+    return null
   }
 
-  const date = value instanceof Date ? value : new Date(value)
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value
+  }
+
+  /**
+   * Handles date-only strings like "2026-06-19" as local dates
+   * instead of letting JS parse them as UTC.
+   */
+  const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+
+  if (dateOnlyMatch) {
+    const [, year, month, day] = dateOnlyMatch
+    const localDate = new Date(Number(year), Number(month) - 1, Number(day))
+
+    return Number.isNaN(localDate.getTime()) ? null : localDate
+  }
+
+  /**
+   * For ISO strings with time, JS automatically converts them
+   * to the browser/local PC timezone.
+   */
+  const date = new Date(value)
 
   if (Number.isNaN(date.getTime())) {
+    return null
+  }
+
+  return date
+}
+
+function getTwoDigitYear(date: Date) {
+  return String(date.getFullYear()).slice(-2)
+}
+
+export function formatDate(value: string | Date | null | undefined) {
+  const date = parseDateValue(value)
+
+  if (!date) {
     return "—"
   }
 
-  return toEnglishDigits(
-    date.toLocaleDateString("en-GB", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    })
-  )
+  const day = padDatePart(date.getDate())
+  const month = padDatePart(date.getMonth() + 1)
+  const year = getTwoDigitYear(date)
+
+  return toEnglishDigits(`${day}/${month}/${year}`)
 }
 
 export function formatDateTime(value: string | Date | null | undefined) {
-  if (!value) {
+  const date = parseDateValue(value)
+
+  if (!date) {
     return "—"
   }
 
-  const date = value instanceof Date ? value : new Date(value)
+  const day = padDatePart(date.getDate())
+  const month = padDatePart(date.getMonth() + 1)
+  const year = getTwoDigitYear(date)
+  const hours = padDatePart(date.getHours())
+  const minutes = padDatePart(date.getMinutes())
 
-  if (Number.isNaN(date.getTime())) {
-    return "—"
-  }
-
-  return toEnglishDigits(
-    date.toLocaleString("en-GB", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  )
+  return toEnglishDigits(`${day}/${month}/${year} ${hours}:${minutes}`)
 }
 
 export function formatTime(value: string | Date | null | undefined) {
-  if (!value) {
+  const date = parseDateValue(value)
+
+  if (!date) {
     return "—"
   }
 
-  const date = value instanceof Date ? value : new Date(value)
+  const hours = padDatePart(date.getHours())
+  const minutes = padDatePart(date.getMinutes())
 
-  if (Number.isNaN(date.getTime())) {
-    return "—"
-  }
-
-  return toEnglishDigits(
-    date.toLocaleTimeString("en-GB", {
-      hour: "2-digit",
-      minute: "2-digit",
-    })
-  )
+  return toEnglishDigits(`${hours}:${minutes}`)
 }
