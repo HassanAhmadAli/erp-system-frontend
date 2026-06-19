@@ -83,7 +83,10 @@ export function LoyaltyRewardsPage() {
       return
     }
 
-    if (!Number.isFinite(parsedCurrencyPerPoint) || parsedCurrencyPerPoint <= 0) {
+    if (
+      !Number.isFinite(parsedCurrencyPerPoint) ||
+      parsedCurrencyPerPoint <= 0
+    ) {
       setPolicyError("قيمة كل نقطة يجب أن تكون أكبر من صفر")
       return
     }
@@ -481,9 +484,7 @@ function RewardsTable({
                       variant={reward.isActive ? "destructive" : "success"}
                       size="sm"
                       disabled={isUpdating}
-                      onClick={() =>
-                        onToggleReward(reward.id, reward.isActive)
-                      }
+                      onClick={() => onToggleReward(reward.id, reward.isActive)}
                     >
                       {reward.isActive ? "تعطيل" : "تفعيل"}
                     </Button>

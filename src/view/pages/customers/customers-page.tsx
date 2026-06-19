@@ -3,7 +3,10 @@ import { useState } from "react"
 import { Eye, UserCheck, UserX, Users } from "lucide-react"
 import { Link } from "react-router-dom"
 
-import { useCustomers, useUpdateCustomerStatus } from "@/hooks/Suppliers/useCustomers"
+import {
+  useCustomers,
+  useUpdateCustomerStatus,
+} from "@/hooks/Suppliers/useCustomers"
 import { CustomerStatusBadge } from "@/view/components/customers/customer-status-badge"
 import { formatCurrency, formatNumber } from "@/utils/number-formatters"
 
@@ -109,7 +112,7 @@ export function CustomersPage() {
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="ابحث عن عميل..."
-            className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 sm:w-72"
+            className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2 text-right text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 sm:w-72"
           />
         </div>
 
@@ -191,22 +194,22 @@ export function CustomersPage() {
                               عرض
                             </Link>
 
-                           <button
-  disabled={updateStatus.isPending}
-  onClick={() => {
-    updateStatus.mutate({
-      id: customer.id,
-      status: isActive ? "inactive" : "active",
-    })
-  }}
-  className={
-    isActive
-      ? "rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25"
-      : "rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25"
-  }
->
-  {isActive ? "تعطيل" : "تفعيل"}
-</button>
+                            <button
+                              disabled={updateStatus.isPending}
+                              onClick={() => {
+                                updateStatus.mutate({
+                                  id: customer.id,
+                                  status: isActive ? "inactive" : "active",
+                                })
+                              }}
+                              className={
+                                isActive
+                                  ? "rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25"
+                                  : "rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25"
+                              }
+                            >
+                              {isActive ? "تعطيل" : "تفعيل"}
+                            </button>
                           </div>
                         </td>
                       </tr>

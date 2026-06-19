@@ -27,7 +27,6 @@ import { ProductPhotosPage } from "@/view/pages/products/product-photos-page"
 import { CustomersPage } from "@/view/pages/customers/customers-page"
 import { CustomerDetailsPage } from "@/view/pages/customers/customer-details-page"
 
-
 import { DiscountsPage } from "@/view/pages/discounts/discounts-page"
 import { ActiveDiscountsPage } from "@/view/pages/discounts/active-discounts-page"
 import { DiscountDetailsPage } from "@/view/pages/discounts/discount-details-page"

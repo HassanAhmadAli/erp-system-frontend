@@ -153,7 +153,7 @@ export function CreateSalesInvoiceForm({
               onChange={(event) => setCustomerId(event.target.value)}
               placeholder="مثال: 1"
               inputMode="numeric"
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+              className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
             />
           </label>
 
@@ -166,7 +166,7 @@ export function CreateSalesInvoiceForm({
               onChange={(event) => setDiscountId(event.target.value)}
               placeholder="اتركه فارغاً بدون خصم"
               inputMode="numeric"
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+              className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
             />
           </label>
 
@@ -179,7 +179,7 @@ export function CreateSalesInvoiceForm({
               onChange={(event) => setAmountPaid(event.target.value)}
               placeholder="0"
               inputMode="decimal"
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+              className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
             />
           </label>
 
@@ -229,7 +229,7 @@ export function CreateSalesInvoiceForm({
                     }
                     placeholder="مثال: 1"
                     inputMode="numeric"
-                    className="w-full rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-2 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+                    className="w-full rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-2 text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
                   />
                 </label>
 
@@ -244,7 +244,7 @@ export function CreateSalesInvoiceForm({
                     }
                     placeholder="1"
                     inputMode="numeric"
-                    className="w-full rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-2 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+                    className="w-full rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-2 text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
                   />
                 </label>
 
@@ -252,7 +252,7 @@ export function CreateSalesInvoiceForm({
                   type="button"
                   onClick={() => removeItem(index)}
                   disabled={items.length === 1}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25 md:self-end"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40 md:self-end dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25"
                 >
                   <Trash2 className="size-4" />
                   حذف

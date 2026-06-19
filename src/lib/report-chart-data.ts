@@ -296,20 +296,20 @@ export function extractTimeSeries(payload: unknown): ChartPoint[] {
     rows.length > 0
       ? rows
       : (() => {
-        const obj = unwrapData(payload)
+          const obj = unwrapData(payload)
 
-        if (!obj || typeof obj !== "object") return []
+          if (!obj || typeof obj !== "object") return []
 
-        const source = obj as Record<string, unknown>
+          const source = obj as Record<string, unknown>
 
-        for (const key of ["trends", "series", "timeline", "history"]) {
-          if (Array.isArray(source[key])) {
-            return source[key] as Record<string, unknown>[]
+          for (const key of ["trends", "series", "timeline", "history"]) {
+            if (Array.isArray(source[key])) {
+              return source[key] as Record<string, unknown>[]
+            }
           }
-        }
 
-        return []
-      })()
+          return []
+        })()
 
   const points = candidates
     .map((row) => {
@@ -360,8 +360,8 @@ export function extractProfitMarginSeries(payload: unknown): ChartPoint[] {
 
       const label = labelText(
         row.productName ??
-        row.name ??
-        `منتج #${formatId(String(row.productId ?? row.id ?? "?"))}`
+          row.name ??
+          `منتج #${formatId(String(row.productId ?? row.id ?? "?"))}`
       )
 
       return { label, value }
@@ -539,7 +539,9 @@ export function extractInventoryQuantityBars(payload: unknown): ChartPoint[] {
       if (value === null) return null
 
       const label = labelText(
-        row.productName ?? row.name ?? `منتج #${formatId(String(row.id ?? "?"))}`
+        row.productName ??
+          row.name ??
+          `منتج #${formatId(String(row.id ?? "?"))}`
       )
 
       return { label, value }

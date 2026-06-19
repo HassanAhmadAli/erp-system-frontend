@@ -246,7 +246,9 @@ function BestDiscountResultCard({
       <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-center text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <Percent className="mx-auto mb-3 size-10 text-[var(--erp-muted)]" />
 
-        <h2 className="text-lg font-bold text-[var(--erp-text)]">لا يوجد خصم</h2>
+        <h2 className="text-lg font-bold text-[var(--erp-text)]">
+          لا يوجد خصم
+        </h2>
 
         <p className="mt-2 text-sm text-[var(--erp-muted)]">
           لا يوجد خصم مناسب لهذه الفاتورة.

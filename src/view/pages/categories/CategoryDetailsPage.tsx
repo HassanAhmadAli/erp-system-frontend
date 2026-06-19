@@ -111,7 +111,10 @@ export function CategoryDetailsPage() {
         <CustomerInfoCard title="معلومات التصنيف">
           <CustomerInfoRow label="اسم التصنيف" value={data.name} />
           <CustomerInfoRow label="الوصف" value={data.description || "—"} />
-          <CustomerInfoRow label="رقم التصنيف" value={`#${formatId(data.id)}`} />
+          <CustomerInfoRow
+            label="رقم التصنيف"
+            value={`#${formatId(data.id)}`}
+          />
           <CustomerInfoRow
             label="عدد المنتجات"
             value={formatNumber(productCount)}
@@ -133,10 +136,7 @@ export function CategoryDetailsPage() {
               value={formatNumber(productCount)}
             />
 
-            <InfoLine
-              label="إجمالي الوحدات"
-              value={formatNumber(totalStock)}
-            />
+            <InfoLine label="إجمالي الوحدات" value={formatNumber(totalStock)} />
 
             <InfoLine
               label="متوسط الكمية لكل منتج"
@@ -203,7 +203,7 @@ export function CategoryDetailsPage() {
                     <td className="px-3 py-3">
                       <span
                         dir="ltr"
-                        className="inline-flex items-center gap-1 text-sm tabular-nums text-[var(--erp-muted)]"
+                        className="inline-flex items-center gap-1 text-sm text-[var(--erp-muted)] tabular-nums"
                       >
                         <Barcode className="size-3.5" />
                         {product.barcode || "—"}

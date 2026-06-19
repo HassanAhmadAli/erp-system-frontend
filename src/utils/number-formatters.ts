@@ -11,10 +11,7 @@ export function toEnglishDigits(value: FormatValue) {
 }
 
 function normalizeNumericValue(value: FormatValue) {
-  return toEnglishDigits(value)
-    .trim()
-    .replace(/[٬,]/g, "")
-    .replace(/٫/g, ".")
+  return toEnglishDigits(value).trim().replace(/[٬,]/g, "").replace(/٫/g, ".")
 }
 
 export function formatId(value: FormatValue) {

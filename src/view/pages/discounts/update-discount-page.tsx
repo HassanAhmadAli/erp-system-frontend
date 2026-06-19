@@ -110,7 +110,10 @@ export function EditDiscountPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div
+      className="mx-auto max-w-4xl space-y-6 text-right text-[var(--erp-text)]"
+      dir="rtl"
+    >
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">

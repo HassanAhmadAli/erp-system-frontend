@@ -112,12 +112,7 @@ function getCustomerName(order: OrderWithOptionalDetails) {
 }
 
 function getItemUnitPrice(item: OrderItemLike) {
-  return (
-    item.unitPrice ??
-    item.price ??
-    item.priceAtPurchase ??
-    null
-  )
+  return item.unitPrice ?? item.price ?? item.priceAtPurchase ?? null
 }
 
 function getItemTotal(item: OrderItemLike) {
@@ -396,7 +391,7 @@ function SummaryCard({
 
       <div
         dir={ltr ? "ltr" : "rtl"}
-        className="mt-3 font-semibold tabular-nums text-[var(--erp-text)]"
+        className="mt-3 font-semibold text-[var(--erp-text)] tabular-nums"
       >
         {value}
       </div>
@@ -428,7 +423,7 @@ function InfoCard({
 
       <div
         dir={ltr ? "ltr" : "rtl"}
-        className="font-semibold tabular-nums text-[var(--erp-text)]"
+        className="font-semibold text-[var(--erp-text)] tabular-nums"
       >
         {value}
       </div>

@@ -39,7 +39,9 @@ const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 function ErrorText({ message }: { message?: string }) {
   if (!message) return null
 
-  return <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  return (
+    <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  )
 }
 
 export function DiscountForm({ register, errors, watch }: DiscountFormProps) {

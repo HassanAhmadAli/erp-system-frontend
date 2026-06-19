@@ -2,7 +2,11 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
 import { formatExpenseAmount, type Expense } from "@/services/expense-service"
-import { formatId, formatNumber, toEnglishDigits } from "@/utils/number-formatters"
+import {
+  formatId,
+  formatNumber,
+  toEnglishDigits,
+} from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
 const PAGE_SIZE = 15
@@ -82,7 +86,7 @@ export function ExpensesTable({
             onSearchChange(event.target.value)
             setPage(1)
           }}
-          className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 md:max-w-sm"
+          className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 md:max-w-sm"
         />
       </div>
 
@@ -119,9 +123,7 @@ export function ExpensesTable({
                 </td>
 
                 <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
-                  <span className="block truncate">
-                    {expense.description}
-                  </span>
+                  <span className="block truncate">{expense.description}</span>
                 </td>
 
                 <td className="px-3 py-3 text-[var(--erp-muted)]">

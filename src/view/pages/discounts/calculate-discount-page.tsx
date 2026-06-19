@@ -254,7 +254,9 @@ function ResultCard({
   }
 
   const safeResult =
-    result && typeof result === "object" ? (result as Record<string, unknown>) : {}
+    result && typeof result === "object"
+      ? (result as Record<string, unknown>)
+      : {}
 
   const discountAmount = safeResult.discountAmount
   const finalAmount = safeResult.finalAmount

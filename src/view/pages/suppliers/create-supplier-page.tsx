@@ -5,7 +5,10 @@ import { CreateSupplierForm } from "@/view/components/suppliers/create-supplier-
 
 export function CreateSupplierPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div
+      className="mx-auto max-w-3xl space-y-6 text-right text-[var(--erp-text)]"
+      dir="rtl"
+    >
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
