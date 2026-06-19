@@ -4,7 +4,6 @@ import {
   Boxes,
   Calculator,
   ClipboardList,
-  DatabaseBackup,
   DollarSign,
   FileText,
   Gift,
@@ -14,7 +13,6 @@ import {
   Package,
   Percent,
   ReceiptText,
-  Settings,
   ShoppingCart,
   Tags,
   TrendingUp,
@@ -26,12 +24,107 @@ import { NavLink, useNavigate } from "react-router-dom"
 import { cn } from "@/lib/utils"
 import { clearTokens } from "@/utils/auth-storage"
 
-type NavItemProps = {
+type NavItem = {
   icon: ComponentType<{ className?: string }>
   label: string
   to: string
   showDot?: boolean
 }
+
+type NavItemProps = NavItem
+
+const sidebarItems: NavItem[] = [
+  {
+    icon: Home,
+    label: "نظرة عامة",
+    to: "/overview",
+  },
+  {
+    icon: Calculator,
+    label: "نقطة البيع",
+    to: "/pos",
+  },
+  {
+    icon: Users,
+    label: "العملاء",
+    to: "/customers",
+  },
+  {
+    icon: ShoppingCart,
+    label: "الطلبات",
+    to: "/orders",
+  },
+  {
+    icon: ReceiptText,
+    label: "فواتير المبيعات",
+    to: "/sales-invoices",
+  },
+  {
+    icon: ReceiptText,
+    label: "فواتير الشراء",
+    to: "/purchase-invoices",
+  },
+  {
+    icon: Bell,
+    label: "الإشعارات",
+    to: "/notifications",
+  },
+  {
+    icon: Megaphone,
+    label: "الإعلانات",
+    to: "/ads",
+  },
+  {
+    icon: ClipboardList,
+    label: "سجل النشاطات",
+    to: "/audit-logs",
+  },
+  {
+    icon: Boxes,
+    label: "المخزون",
+    to: "/inventory",
+  },
+  {
+    icon: Tags,
+    label: "التصنيفات",
+    to: "/categories",
+  },
+  {
+    icon: Package,
+    label: "المنتجات",
+    to: "/products",
+  },
+  {
+    icon: Truck,
+    label: "الموردون",
+    to: "/suppliers",
+  },
+  {
+    icon: Percent,
+    label: "الخصومات",
+    to: "/discounts",
+  },
+  {
+    icon: DollarSign,
+    label: "المصروفات",
+    to: "/expenses",
+  },
+  {
+    icon: FileText,
+    label: "التقارير",
+    to: "/reports",
+  },
+  {
+    icon: TrendingUp,
+    label: "التحليل المالي",
+    to: "/financial",
+  },
+  {
+    icon: Gift,
+    label: "مكافآت الولاء",
+    to: "/loyalty-rewards",
+  },
+]
 
 function SidebarNavItem({ icon: Icon, label, to, showDot }: NavItemProps) {
   return (
@@ -70,91 +163,18 @@ export function AppSidebar() {
   return (
     <aside className="erp-scrollbar flex w-[280px] shrink-0 flex-col overflow-y-auto bg-[var(--erp-sidebar)] px-5 py-6">
       <nav className="flex flex-1 flex-col gap-2">
-        <SidebarNavItem icon={Home} label="نظرة عامة" to="/overview" />
-
-        <SidebarNavItem icon={Calculator} label="نقطة البيع" to="/pos" />
-
-        <SidebarNavItem icon={Users} label="إدارة الموظفين" to="/staff" />
-
-        <SidebarNavItem icon={Users} label="العملاء" to="/customers" />
-
-        <SidebarNavItem icon={ShoppingCart} label="الطلبات" to="/orders" />
-
-        <SidebarNavItem
-          icon={ReceiptText}
-          label="فواتير المبيعات"
-          to="/sales-invoices"
-        />
-
-        <SidebarNavItem
-          icon={ReceiptText}
-          label="فواتير الشراء"
-          to="/purchase-invoices"
-        />
-
-        <SidebarNavItem icon={Bell} label="الإشعارات" to="/notifications" />
-
-        <SidebarNavItem icon={Megaphone} label="الإعلانات" to="/ads" />
-
-        <SidebarNavItem
-          icon={ClipboardList}
-          label="سجل النشاطات"
-          to="/audit-logs"
-        />
-
-        <SidebarNavItem
-          icon={DatabaseBackup}
-          label="النسخ الاحتياطي"
-          to="/backup"
-        />
-
-        <SidebarNavItem icon={Boxes} label="المخزون" to="/inventory" />
-
-        <SidebarNavItem icon={Tags} label="التصنيفات" to="/categories" />
-
-        <SidebarNavItem icon={Package} label="المنتجات" to="/products" />
-
-        <SidebarNavItem icon={Truck} label="الموردون" to="/suppliers" />
-
-        <SidebarNavItem icon={ShoppingCart} label="الطلبات" to="/orders" />
-
-        <SidebarNavItem icon={Percent} label="الخصومات" to="/discounts" />
-
-        <SidebarNavItem icon={DollarSign} label="المصروفات" to="/expenses" />
-        {/* <SidebarNavItem icon={Receipt} label="فواتير الشراء" to="/purchases" /> */}
-        {/* <SidebarNavItem
-          icon={ShoppingCart}
-          label="فواتير المبيعات"
-          to="/sales"
-        /> */}
-        <SidebarNavItem icon={FileText} label="التقارير" to="/reports" />
-        <SidebarNavItem
-          icon={TrendingUp}
-          label="التحليل المالي"
-          to="/financial"
-        />
-        <SidebarNavItem
-          icon={Gift}
-          label="مكافآت الولاء"
-          to="/loyalty-rewards"
-        />
+        {sidebarItems.map((item) => (
+          <SidebarNavItem key={item.to} {...item} />
+        ))}
       </nav>
 
-      <div className="mt-8 border-t pt-4">
-        <button
-          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm"
-          onClick={() => navigate("/profile")}
-        >
-          <Settings className="size-[18px]" />
-          <span className="flex-1 text-right">الملف الشخصي</span>
-        </button>
-
+      <div className="mt-8 border-t border-[var(--erp-border)] pt-4">
         <button
           onClick={handleLogout}
-          className="mt-2 flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-red-500"
+          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
         >
+          <span className="min-w-0 flex-1 text-right">تسجيل الخروج</span>
           <LogOut className="size-[18px]" />
-          <span className="flex-1 text-right">تسجيل الخروج</span>
         </button>
       </div>
     </aside>
