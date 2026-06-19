@@ -62,10 +62,10 @@ export function ProductDetailsPage() {
         data: { quantityInStock: qty },
       })
       setMessage({ type: "success", text: "تم تحديث المخزون بنجاح" })
-    } catch (err: any) {
+    } catch (err: unknown) {
       setMessage({
         type: "error",
-        text: err?.message || "فشل تحديث المخزون",
+        text: err instanceof Error ? err.message : "فشل تحديث المخزون",
       })
     }
   }

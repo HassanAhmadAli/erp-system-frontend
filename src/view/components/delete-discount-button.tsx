@@ -26,7 +26,7 @@ export function DeleteDiscountButton({ id }: { id: number }) {
       setTimeout(() => {
         navigate("/discounts")
       }, 1200)
-    } catch (error) {
+    } catch {
       setMessage("فشل حذف الخصم")
     } finally {
       setLoading(false)

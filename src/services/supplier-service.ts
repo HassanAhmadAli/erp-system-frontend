@@ -46,8 +46,8 @@ export type Supplier = {
   email: string
   address: string
 
-  products?: any[]
-  purchaseInvoices?: any[]
+  products?: unknown[]
+  purchaseInvoices?: unknown[]
 
   _count?: {
     products: number

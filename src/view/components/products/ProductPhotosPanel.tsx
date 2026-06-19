@@ -33,8 +33,8 @@ export function ProductPhotosPanel({ productId }: { productId: number }) {
       })
       setSelectedFile(null)
       setMessage("تم رفع الصورة بنجاح")
-    } catch (err: any) {
-      setMessage(err?.message || "فشل رفع الصورة")
+    } catch (err: unknown) {
+      setMessage(err instanceof Error ? err.message : "فشل رفع الصورة")
     }
   }
 
@@ -50,8 +50,8 @@ export function ProductPhotosPanel({ productId }: { productId: number }) {
       a.click()
       a.remove()
       URL.revokeObjectURL(url)
-    } catch (err: any) {
-      setMessage(err?.message || "فشل تحميل الصورة")
+    } catch (err:unknown) {
+      setMessage(err instanceof Error ? err.message : "فشل تحميل الصورة")
     }
   }
 

@@ -18,9 +18,9 @@ export type Ad = {
 
 export type AdsListResponse =
   | {
-      data: Ad[]
-      total?: number
-    }
+    data: Ad[]
+    total?: number
+  }
   | Ad[]
 
 export type CreateAdInput = {
@@ -37,13 +37,17 @@ export type CreateAdInput = {
 export type UpdateAdInput = Partial<CreateAdInput>
 
 function asArray<T>(response: unknown): T[] {
-  if (!response) return []
+  if (Array.isArray(response)) {
+    return response as T[]
+  }
 
-  if (Array.isArray(response)) return response as T[]
+  if (!response || typeof response !== "object") {
+    return []
+  }
 
-  const maybe = response as any
+  const maybe = response as { data?: unknown }
 
-  if (maybe?.data && Array.isArray(maybe.data)) {
+  if (Array.isArray(maybe.data)) {
     return maybe.data as T[]
   }
 

@@ -32,7 +32,7 @@ export function ToggleDiscountButton({ id, isActive }: Props) {
       queryClient.invalidateQueries({
         queryKey: ["discount", id],
       })
-    } catch (error) {
+    } catch {
       setMessage("فشل تحديث الحالة")
     } finally {
       setLoading(false)

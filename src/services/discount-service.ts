@@ -58,10 +58,8 @@ export type CalculateDiscountParams = {
   productId?: number
 }
 
-// The backend may return the matched discount (or null when none applies).
 export type BestDiscountResponse = Discount | null
 
-// Shape is backend-defined; we keep the common fields optional and permissive.
 export type CalculateDiscountResponse = {
   discountAmount?: number
   finalAmount?: number
@@ -75,6 +73,20 @@ export type GetDiscountsParams = {
   search?: string
   type?: DiscountType
   scope?: DiscountScope
+}
+
+export type DiscountFormInput = {
+  name: string
+  type: DiscountType
+  scope: DiscountScope
+  value: string | number
+  maxInvoiceValue?: string | number | null
+  maxUses?: string | number | null
+  startDate: string
+  endDate?: string | null
+  isActive?: boolean
+  categoryId?: string | number | null
+  productId?: string | number | null
 }
 
 /* ========================================
@@ -136,8 +148,13 @@ export function getBestDiscount(params: BestDiscountParams) {
     subtotal: Number(params.subtotal),
   }
 
-  if (params.categoryId != null) payload.categoryId = Number(params.categoryId)
-  if (params.productId != null) payload.productId = Number(params.productId)
+  if (params.categoryId != null) {
+    payload.categoryId = Number(params.categoryId)
+  }
+
+  if (params.productId != null) {
+    payload.productId = Number(params.productId)
+  }
 
   return apiRequest<BestDiscountResponse>("/discount/best", {
     method: "POST",
@@ -155,8 +172,13 @@ export function calculateDiscount(params: CalculateDiscountParams) {
     subtotal: Number(params.subtotal),
   }
 
-  if (params.categoryId != null) payload.categoryId = Number(params.categoryId)
-  if (params.productId != null) payload.productId = Number(params.productId)
+  if (params.categoryId != null) {
+    payload.categoryId = Number(params.categoryId)
+  }
+
+  if (params.productId != null) {
+    payload.productId = Number(params.productId)
+  }
 
   return apiRequest<CalculateDiscountResponse>("/discount/calculate", {
     method: "POST",
@@ -168,143 +190,52 @@ export function calculateDiscount(params: CalculateDiscountParams) {
    TOGGLE DISCOUNT
 ======================================== */
 
-// export function toggleDiscount(
-//   id: number,
-//   isActive: boolean
-// ) {
-//   return apiRequest<Discount>(
-//     `/discount/${id}/toggle`,
-//     {
-//       method: "PATCH",
-//       body: JSON.stringify({
-//         isActive,
-//       }),
-//     }
-//   )
-// }
 export function toggleDiscount(id: number, isActive: boolean) {
-  return apiRequest(`/discount/${id}/toggle`, {
+  return apiRequest<Discount>(`/discount/${id}/toggle`, {
     method: "PATCH",
     body: JSON.stringify({
       isActive,
     }),
   })
 }
+
 /* ========================================
    DELETE DISCOUNT
 ======================================== */
 
-// export function deleteDiscount(id: number) {
-//   return apiRequest<DeleteDiscountResponse>(
-//     `/discount/${id}`,
-//     {
-//       method: "DELETE",
-//     }
-//   )
-// }
-
 export function deleteDiscount(id: number) {
-  return apiRequest<{ message: string }>(`/discount/${id}`, {
+  return apiRequest<DeleteDiscountResponse>(`/discount/${id}`, {
     method: "DELETE",
   })
 }
 
-// create discount
-// export function createDiscount(data: any) {
-//   return apiRequest("/discount", {
-//     method: "POST",
-//     body: JSON.stringify(data),
-//   })
-// }
+/* ========================================
+   CREATE / UPDATE DISCOUNT
+======================================== */
 
-// export function createDiscount(data: any) {
-//   const payload = {
-//     name: data.name,
-//     type: data.type,
-//     scope: data.scope,
-//     value: String(data.value),
-
-//     maxInvoiceValue: data.maxInvoiceValue ? Number(data.maxInvoiceValue) : null,
-//     maxUses: data.maxUses ? Number(data.maxUses) : null,
-
-//     startDate: new Date(data.startDate).toISOString(),
-//     endDate: data.endDate ? new Date(data.endDate).toISOString() : null,
-
-//     isActive: data.isActive ?? true,
-//   }
-
-//   return apiRequest("/discount", {
-//     method: "POST",
-//     body: JSON.stringify(payload),
-//   })
-// }
-
-// export function updateDiscount(
-//   id: number,
-//   data: any
-// ) {
-//   return apiRequest(`/discount/${id}`, {
-//     method: "PATCH",
-//     body: JSON.stringify(data),
-//   })
-// }
-
-// export function updateDiscount(id: number, data: any) {
-//   return apiRequest(`/discount/${id}`, {
-//     method: "PATCH",
-//     body: JSON.stringify({
-//       name: data.name,
-//       type: data.type,
-//       scope: data.scope,
-
-//       value: String(data.value),
-
-//       maxInvoiceValue: data.maxInvoiceValue
-//         ? String(data.maxInvoiceValue)
-//         : "0",
-
-//       maxUses: data.maxUses
-//         ? Number(data.maxUses)
-//         : null,
-
-//       startDate: new Date(data.startDate).toISOString(),
-
-//       endDate: data.endDate
-//         ? new Date(data.endDate).toISOString()
-//         : null,
-
-//       isActive: data.isActive ?? true,
-//     }),
-//   })
-// }
-
-/////////////////////////////////////////////////
-
-// import { apiRequest } from "@/api/client"
-
-export function createDiscount(data: any) {
+export function createDiscount(data: DiscountFormInput) {
   const payload = normalizeDiscount(data)
 
-  return apiRequest("/discount", {
+  return apiRequest<Discount>("/discount", {
     method: "POST",
     body: JSON.stringify(payload),
   })
 }
 
-export function updateDiscount(id: number, data: any) {
+export function updateDiscount(id: number, data: DiscountFormInput) {
   const payload = normalizeDiscount(data)
 
-  return apiRequest(`/discount/${id}`, {
+  return apiRequest<Discount>(`/discount/${id}`, {
     method: "PATCH",
     body: JSON.stringify(payload),
   })
 }
 
-/* =========================
-   NORMALIZER (IMPORTANT)
-========================= */
+/* ========================================
+   NORMALIZER
+======================================== */
 
-function normalizeDiscount(data: any) {
+function normalizeDiscount(data: DiscountFormInput) {
   const payload: Record<string, unknown> = {
     name: data.name,
     type: data.type,
@@ -312,12 +243,12 @@ function normalizeDiscount(data: any) {
     value: String(data.value),
 
     maxInvoiceValue:
-      data.maxInvoiceValue !== undefined && data.maxInvoiceValue !== ""
+      data.maxInvoiceValue != null && data.maxInvoiceValue !== ""
         ? Number(data.maxInvoiceValue)
         : null,
 
     maxUses:
-      data.maxUses !== undefined && data.maxUses !== ""
+      data.maxUses != null && data.maxUses !== ""
         ? Number(data.maxUses)
         : null,
 
@@ -328,7 +259,6 @@ function normalizeDiscount(data: any) {
     isActive: data.isActive ?? true,
   }
 
-  // Scope-specific targets: CATEGORY needs categoryId, PRODUCT needs productId.
   if (data.scope === "CATEGORY" && data.categoryId) {
     payload.categoryId = Number(data.categoryId)
   }

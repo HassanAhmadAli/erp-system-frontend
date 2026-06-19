@@ -29,9 +29,9 @@ export type Product = {
 
 export type ProductListResponse =
   | {
-      data: Product[]
-      total?: number
-    }
+    data: Product[]
+    total?: number
+  }
   | Product[]
 
 export type ProductPhoto = {
@@ -43,9 +43,9 @@ export type ProductPhoto = {
 
 export type ProductPhotoListResponse =
   | {
-      data: ProductPhoto[]
-      total?: number
-    }
+    data: ProductPhoto[]
+    total?: number
+  }
   | ProductPhoto[]
 
 export type ImportJob = {
@@ -60,9 +60,9 @@ export type ImportJob = {
 
 export type ImportJobListResponse =
   | {
-      data: ImportJob[]
-      total?: number
-    }
+    data: ImportJob[]
+    total?: number
+  }
   | ImportJob[]
 
 export type CreateProductInput = {
@@ -97,8 +97,8 @@ export type UpdateStockInput = {
 function asArray<T>(response: unknown): T[] {
   if (!response) return []
   if (Array.isArray(response)) return response as T[]
-  const maybe = response as any
-  if (maybe?.data && Array.isArray(maybe.data)) return maybe.data as T[]
+  const maybe = response as { data?: unknown }
+  if (Array.isArray(maybe.data)) return maybe.data as T[]
   return []
 }
 
