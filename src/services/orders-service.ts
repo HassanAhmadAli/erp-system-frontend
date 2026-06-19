@@ -3,7 +3,7 @@ import { apiRequest } from "@/api/client"
 export type OrderStatus =
   | "PENDING"
   | "PREPARING"
-  | "READY"
+  | "OUT_FOR_DELIVERY"
   | "DELIVERED"
   | "CANCELLED"
 
@@ -59,12 +59,12 @@ export type Order = {
 export type OrdersResponse =
   | Order[]
   | {
-      data: Order[]
-      total?: number
-      limit?: number
-      offset?: number
-      isFinalPage?: boolean
-    }
+    data: Order[]
+    total?: number
+    limit?: number
+    offset?: number
+    isFinalPage?: boolean
+  }
 
 export type CreateOrderItem = {
   productId: number

@@ -64,7 +64,6 @@ type OrderItemLike = {
 const statusLabels: Record<string, string> = {
   PENDING: "قيد الانتظار",
   PREPARING: "قيد التحضير",
-  READY: "جاهز",
   OUT_FOR_DELIVERY: "قيد التوصيل",
   DELIVERED: "تم التسليم",
   CANCELLED: "ملغي",
@@ -75,8 +74,6 @@ const statusStyles: Record<string, string> = {
     "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
   PREPARING:
     "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300",
-  READY:
-    "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
   OUT_FOR_DELIVERY:
     "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:bg-violet-500/15 dark:text-violet-300",
   DELIVERED:
