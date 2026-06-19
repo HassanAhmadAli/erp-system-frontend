@@ -22,11 +22,7 @@ export function SalesInvoiceDetailsPage() {
 
   const invoiceId = Number(id)
 
-  const {
-    data: invoice,
-    isLoading,
-    isError,
-  } = useSalesInvoice(invoiceId)
+  const { data: invoice, isLoading, isError } = useSalesInvoice(invoiceId)
 
   const updateStatusMutation = useUpdateSalesInvoiceStatus()
 
@@ -198,7 +194,9 @@ export function SalesInvoiceDetailsPage() {
               </div>
 
               <div className="rounded-2xl border p-4">
-                <p className="text-xs text-[var(--erp-muted)]">المجموع الفرعي</p>
+                <p className="text-xs text-[var(--erp-muted)]">
+                  المجموع الفرعي
+                </p>
                 <p className="mt-2 font-semibold">
                   <NumberText value={formatMoney(invoice.subtotal)} />
                 </p>
@@ -212,7 +210,9 @@ export function SalesInvoiceDetailsPage() {
               </div>
 
               <div className="rounded-2xl border p-4">
-                <p className="text-xs text-[var(--erp-muted)]">المبلغ المتبقي</p>
+                <p className="text-xs text-[var(--erp-muted)]">
+                  المبلغ المتبقي
+                </p>
                 <p className="mt-2 font-semibold">
                   <NumberText value={formatMoney(invoice.remainingAmount)} />
                 </p>

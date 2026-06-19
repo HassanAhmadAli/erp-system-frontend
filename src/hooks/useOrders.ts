@@ -1,35 +1,49 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import {
-    getOrder,
-    getOrders,
-    updateOrderStatus,
-    type OrderStatus,
+  createOrder,
+  getOrder,
+  getOrders,
+  updateOrderStatus,
+  type CreateOrderPayload,
+  type OrderStatus,
 } from "@/services/orders-service"
 
 export function useOrders() {
-    return useQuery({
-        queryKey: ["orders"],
-        queryFn: getOrders,
-    })
+  return useQuery({
+    queryKey: ["orders"],
+    queryFn: getOrders,
+  })
 }
 
 export function useOrder(id: number) {
-    return useQuery({
-        queryKey: ["orders", id],
-        queryFn: () => getOrder(id),
-        enabled: Boolean(id),
-    })
+  return useQuery({
+    queryKey: ["orders", id],
+    queryFn: () => getOrder(id),
+    enabled: Number.isFinite(id) && id > 0,
+  })
+}
+
+export function useCreateOrder() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: CreateOrderPayload) => createOrder(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] })
+    },
+  })
 }
 
 export function useUpdateOrderStatus() {
-    const queryClient = useQueryClient()
+  const queryClient = useQueryClient()
 
-    return useMutation({
-        mutationFn: ({ id, status }: { id: number; status: OrderStatus }) =>
-            updateOrderStatus(id, status),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["orders"] })
-        },
-    })
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: OrderStatus }) =>
+      updateOrderStatus(id, status),
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["orders"] })
+      queryClient.invalidateQueries({ queryKey: ["orders", variables.id] })
+    },
+  })
 }

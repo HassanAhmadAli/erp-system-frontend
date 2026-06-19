@@ -6,7 +6,7 @@ import {
   formatNumber,
   getProductPrice,
 } from "@/utils/number-formatters"
-import type { CartItem } from "../types"
+import type { CartItem } from "./types"
 
 type PosCartItemProps = {
   item: CartItem

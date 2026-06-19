@@ -54,9 +54,9 @@ import { ExpensesPage } from "@/view/pages/expenses/expenses-page"
 import { CreateExpensePage } from "@/view/pages/expenses/create-expense-page"
 import { ExpenseDetailsPage } from "@/view/pages/expenses/expense-details-page"
 import { EditExpensePage } from "@/view/pages/expenses/edit-expense-page"
-import { PurchasesPage } from "@/view/pages/purchases/purchases-page"
-import { CreatePurchasePage } from "@/view/pages/purchases/create-purchase-page"
-import { PurchaseDetailsPage } from "@/view/pages/purchases/purchase-details-page"
+// import { PurchasesPage } from "@/view/pages/purchases/purchases-page"
+// import { CreatePurchasePage } from "@/view/pages/purchases/create-purchase-page"
+// import { PurchaseDetailsPage } from "@/view/pages/purchases/purchase-details-page"
 import { ReportsPage } from "@/view/pages/reports/reports-page"
 import { ReportSummaryPage } from "@/view/pages/reports/report-summary-page"
 import { ReportDashboardPage } from "@/view/pages/reports/report-dashboard-page"
@@ -73,8 +73,8 @@ import { SupplierReportPage } from "@/view/pages/financial/supplier-report-page"
 import { RecalculateCostsPage } from "@/view/pages/financial/recalculate-costs-page"
 import { AuditLogsPage } from "@/view/pages/audit-logs/audit-logs-page"
 import { AuditLogDetailsPage } from "@/view/pages/audit-logs/audit-log-details-page"
-import { SalesPage } from "@/view/pages/sales/sales-page"
-import { SalesDetailsPage } from "@/view/pages/sales/sales-details-page"
+// import { SalesPage } from "@/view/pages/sales/sales-page"
+// import { SalesDetailsPage } from "@/view/pages/sales/sales-details-page"
 import { NotificationsPage } from "@/view/pages/notifications/notifications-page"
 
 function CreateCategoryPage() {
@@ -141,7 +141,7 @@ export function AppRoutes() {
 
         {/* Ads */}
         {/* Orders Module */}
-        <Route path="orders" element={<OrdersPage />} />
+        {/* <Route path="orders" element={<OrdersPage />} /> */}
 
         {/* Ads Module */}
         <Route path="ads" element={<AdsPage />} />
@@ -184,13 +184,13 @@ export function AppRoutes() {
         <Route path="expenses/create" element={<CreateExpensePage />} />
         <Route path="expenses/:id" element={<ExpenseDetailsPage />} />
         <Route path="expenses/:id/edit" element={<EditExpensePage />} />
-
+        {/* 
         <Route path="purchases" element={<PurchasesPage />} />
         <Route path="purchases/create" element={<CreatePurchasePage />} />
         <Route path="purchases/:id" element={<PurchaseDetailsPage />} />
 
         <Route path="sales" element={<SalesPage />} />
-        <Route path="sales/:id" element={<SalesDetailsPage />} />
+        <Route path="sales/:id" element={<SalesDetailsPage />} /> */}
 
         <Route path="reports" element={<ReportsPage />} />
         <Route path="reports/summary" element={<ReportSummaryPage />} />

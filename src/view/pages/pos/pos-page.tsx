@@ -9,24 +9,7 @@ import {
 } from "@/utils/number-formatters"
 import { PosCartPanel } from "@/view/components/pos/pos-cart-panel"
 import { PosProductsSection } from "@/view/components/pos/pos-products-section"
-import type { CartItem } from "../../components/pos/types"
-
-function getProductsArray(response: unknown): PosProduct[] {
-  if (Array.isArray(response)) {
-    return response
-  }
-
-  if (
-    response &&
-    typeof response === "object" &&
-    "data" in response &&
-    Array.isArray((response as { data: unknown }).data)
-  ) {
-    return (response as { data: PosProduct[] }).data
-  }
-
-  return []
-}
+import type { CartItem } from "@/view/components/pos/types"
 
 export function PosPage() {
   const [search, setSearch] = useState("")
@@ -38,10 +21,7 @@ export function PosPage() {
   const productsQuery = usePosProducts()
   const createInvoiceMutation = useCreateSaleInvoice()
 
-  const products = useMemo(
-    () => getProductsArray(productsQuery.data),
-    [productsQuery.data]
-  )
+  const products = useMemo(() => productsQuery.data ?? [], [productsQuery.data])
 
   const filteredProducts = useMemo(() => {
     const searchValue = toEnglishDigits(search).trim().toLowerCase()
@@ -142,7 +122,7 @@ export function PosPage() {
     const parsedAmountPaid = Number(toEnglishDigits(amountPaid))
 
     if (!parsedCustomerId || Number.isNaN(parsedCustomerId)) {
-      alert("يرجى إدخال رقم العميل.")
+      alert("يرجى اختيار العميل.")
       return
     }
 
@@ -155,6 +135,13 @@ export function PosPage() {
       alert("يرجى إدخال مبلغ مدفوع صحيح.")
       return
     }
+
+    if (completeInvoice && parsedAmountPaid < subtotal) {
+      alert("المبلغ المدفوع يجب أن يكون أكبر من أو يساوي إجمالي الفاتورة.")
+      return
+    }
+
+    createInvoiceMutation.reset()
 
     createInvoiceMutation.mutate(
       {
