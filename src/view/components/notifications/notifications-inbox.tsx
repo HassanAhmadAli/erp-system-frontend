@@ -5,12 +5,15 @@ import {
   useMarkNotificationUnread,
   useMyNotifications,
 } from "@/hooks/Notifications/useNotifications"
+import { formatShortDateTime } from "@/utils/date-formatters"
 import { formatInboxTargetLabel } from "@/view/components/notifications/notification-target-labels"
 import { Button } from "@/view/components/ui/button"
 
 type NotificationsInboxProps = {
   unreadOnly?: boolean
 }
+
+
 
 export function NotificationsInbox({
   unreadOnly = false,
@@ -39,10 +42,12 @@ export function NotificationsInbox({
     return (
       <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 text-center">
         <Bell className="h-12 w-12 text-[var(--erp-muted)]" />
+
         <div>
           <h3 className="text-lg font-semibold text-[var(--erp-text)]">
             {unreadOnly ? "لا توجد إشعارات غير مقروءة" : "لا توجد إشعارات"}
           </h3>
+
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
             ستظهر الإشعارات المرسلة إليك هنا.
           </p>
@@ -68,6 +73,7 @@ export function NotificationsInbox({
                 <h3 className="font-semibold text-[var(--erp-text)]">
                   {notification.title}
                 </h3>
+
                 <span className="rounded-full bg-[var(--erp-accent)]/10 px-2.5 py-0.5 text-xs font-medium text-[var(--erp-accent)]">
                   {formatInboxTargetLabel(
                     notification.targetType,
@@ -81,9 +87,10 @@ export function NotificationsInbox({
               </p>
 
               <div className="mt-3 flex flex-wrap items-center justify-end gap-3 text-xs text-[var(--erp-text)]/65">
-                <span>
-                  {new Date(notification.sentAt).toLocaleString("ar-SY")}
+                <span dir="ltr" className="text-left">
+                  {formatShortDateTime(notification.sentAt)}
                 </span>
+
                 {notification.sender && (
                   <span>من: {notification.sender.fullName}</span>
                 )}
