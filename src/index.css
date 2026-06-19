@@ -51,28 +51,39 @@
 :root {
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
+
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
+
   --primary: oklch(0.45 0.22 295);
   --primary-foreground: oklch(0.98 0.01 290);
+
   --secondary: oklch(0.967 0.001 286.375);
   --secondary-foreground: oklch(0.21 0.006 285.885);
+
   --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.556 0 0);
+
   --accent: oklch(0.97 0 0);
   --accent-foreground: oklch(0.205 0 0);
+
   --destructive: oklch(0.577 0.245 27.325);
+
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
   --ring: oklch(0.708 0 0);
+
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+
   --radius: 0.625rem;
+
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.627 0.194 149.214);
@@ -81,47 +92,71 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* ERP brand colors */
   --erp-brand: #4b22b5;
+  --erp-brand-solid: #4b22b5;
   --erp-accent: #f0ad34;
+
+  /* ERP surfaces */
   --erp-page: #f5f4fb;
+  --erp-bg: #f8f7fc;
   --erp-card: #ffffff;
   --erp-sidebar: #f3f1fa;
+
+  /* ERP text and borders */
   --erp-text: #1f1f2e;
   --erp-muted: #8d8ca3;
-  /** Top nav strip stays design purple in light mode */
+  --erp-border: #e4ddfa;
+
+  /* ERP layout effects */
   --erp-top-bar: #4b22b5;
   --erp-shadow: 0 8px 24px rgba(40, 30, 90, 0.08);
   --erp-top-shadow: 0 4px 18px rgba(35, 20, 84, 0.22);
   --erp-sidebar-divider: #e4ddfa;
+
+  /* ERP navigation */
   --erp-nav-active-bg: #ebe5ff;
   --erp-nav-hover: rgba(75, 34, 181, 0.07);
+
+  /* ERP actions */
   --erp-logout: #d52b45;
 }
 
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);
+
   --card: oklch(0.205 0 0);
   --card-foreground: oklch(0.985 0 0);
+
   --popover: oklch(0.205 0 0);
   --popover-foreground: oklch(0.985 0 0);
+
   --primary: oklch(0.64 0.2 295);
   --primary-foreground: oklch(0.16 0.03 295);
+
   --secondary: oklch(0.274 0.006 286.033);
   --secondary-foreground: oklch(0.985 0 0);
+
   --muted: oklch(0.269 0 0);
   --muted-foreground: oklch(0.708 0 0);
+
   --accent: oklch(0.269 0 0);
   --accent-foreground: oklch(0.985 0 0);
+
   --destructive: oklch(0.704 0.191 22.216);
+
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.556 0 0);
+
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
+
   --sidebar: oklch(0.205 0 0);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.723 0.219 149.579);
@@ -130,19 +165,34 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
-  --erp-top-bar: #4b22b5;
+
+  /* ERP brand colors */
   --erp-brand: #9480f8;
+  --erp-brand-solid: #b7a7ff;
   --erp-accent: #f0aa3a;
+
+  /* ERP surfaces */
   --erp-page: #141026;
+  --erp-bg: #181229;
   --erp-card: #221c36;
   --erp-sidebar: #1e1832;
+
+  /* ERP text and borders */
   --erp-text: #f7f5ff;
   --erp-muted: #bcb6d9;
+  --erp-border: rgba(255, 255, 255, 0.1);
+
+  /* ERP layout effects */
+  --erp-top-bar: #4b22b5;
   --erp-shadow: 0 14px 40px rgba(0, 0, 0, 0.42);
   --erp-top-shadow: 0 4px 22px rgba(0, 0, 0, 0.55);
   --erp-sidebar-divider: rgba(255, 255, 255, 0.07);
+
+  /* ERP navigation */
   --erp-nav-active-bg: rgba(148, 128, 248, 0.18);
   --erp-nav-hover: rgba(255, 255, 255, 0.06);
+
+  /* ERP actions */
   --erp-logout: #ff7b8f;
 }
 
@@ -175,10 +225,12 @@
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
+  }
+
+  body {
+    @apply bg-background text-foreground;
   }
 }
