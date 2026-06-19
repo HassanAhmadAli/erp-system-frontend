@@ -38,7 +38,7 @@ import { CalculateDiscountPage } from "@/view/pages/discounts/calculate-discount
 
 import { AdsPage } from "@/view/pages/ads/ads-page"
 import { CreateAdPage } from "@/view/pages/ads/create-ad-page"
-
+import { OrdersPage } from "@/view/pages/orders/orders-page"
 import { OrderDetailsPage } from "@/view/pages/orders/order-details-page"
 
 import { SalesInvoicesPage } from "@/view/pages/sales-invoices/sales-invoices-page"
