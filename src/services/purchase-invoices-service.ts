@@ -44,6 +44,7 @@ export type PurchaseInvoice = {
     id: number
     name?: string
     companyName?: string
+    fullName?: string
     user?: {
       fullName?: string
       email?: string
@@ -56,12 +57,12 @@ export type PurchaseInvoice = {
 export type PurchaseInvoicesResponse =
   | PurchaseInvoice[]
   | {
-      data: PurchaseInvoice[]
-      total?: number
-      limit?: number
-      offset?: number
-      isFinalPage?: boolean
-    }
+    data: PurchaseInvoice[]
+    total?: number
+    limit?: number
+    offset?: number
+    isFinalPage?: boolean
+  }
 
 export type CreatePurchaseInvoiceItem = {
   productId: number
