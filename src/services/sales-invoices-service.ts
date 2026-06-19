@@ -60,12 +60,12 @@ export type SalesInvoice = {
 export type SalesInvoicesResponse =
   | SalesInvoice[]
   | {
-    data: SalesInvoice[]
-    total?: number
-    limit?: number
-    offset?: number
-    isFinalPage?: boolean
-  }
+      data: SalesInvoice[]
+      total?: number
+      limit?: number
+      offset?: number
+      isFinalPage?: boolean
+    }
 
 export type CreateSalesInvoiceItem = {
   productId: number

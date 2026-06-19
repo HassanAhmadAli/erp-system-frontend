@@ -59,12 +59,12 @@ export type Order = {
 export type OrdersResponse =
   | Order[]
   | {
-    data: Order[]
-    total?: number
-    limit?: number
-    offset?: number
-    isFinalPage?: boolean
-  }
+      data: Order[]
+      total?: number
+      limit?: number
+      offset?: number
+      isFinalPage?: boolean
+    }
 
 export type CreateOrderItem = {
   productId: number

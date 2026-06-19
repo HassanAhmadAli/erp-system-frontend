@@ -4,7 +4,6 @@ export type LoginResponse = {
   refresh_token: string
 }
 
-
 /** Path segments for POST /authentication/{role}/signin */
 export const AUTH_USER_TYPES = [
   "store-manager",
@@ -70,14 +69,11 @@ export async function loginUser(
 export async function refreshTokens(
   refreshToken: string
 ): Promise<LoginResponse> {
-  const response = await fetch(
-    `${BASE_URL}/authentication/refresh-tokens`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ refresh_token: refreshToken }),
-    }
-  )
+  const response = await fetch(`${BASE_URL}/authentication/refresh-tokens`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
+  })
 
   const body = await response.text()
 
