@@ -11,7 +11,6 @@ import {
   formatDate,
   formatMoney,
   formatNumber,
-  getCustomerName,
   getInvoiceTotal,
   NumberText,
   SalesInvoiceStatusBadge,
@@ -21,6 +20,22 @@ type SalesInvoicesTableProps = {
   invoices: SalesInvoice[]
   isLoading: boolean
   isError: boolean
+}
+
+function getSalesInvoiceCustomerName(invoice: SalesInvoice) {
+  const fullName = invoice.customer?.user?.fullName?.trim()
+
+  if (fullName) {
+    return fullName
+  }
+
+  const customerId = invoice.customerId ?? invoice.customer?.id
+
+  if (!customerId) {
+    return "عميل نقدي"
+  }
+
+  return `عميل #${formatNumber(customerId)}`
 }
 
 export function SalesInvoicesTable({
@@ -94,7 +109,7 @@ export function SalesInvoicesTable({
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    {getCustomerName(invoice)}
+                    {getSalesInvoiceCustomerName(invoice)}
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
@@ -119,10 +134,7 @@ export function SalesInvoicesTable({
                         type="button"
                         disabled={updateStatusMutation.isPending}
                         onClick={() =>
-                          handleStatusUpdate(
-                            invoice.id,
-                            "COMPLETED" as SalesInvoiceStatus
-                          )
+                          handleStatusUpdate(invoice.id, "COMPLETED")
                         }
                         className={cn(
                           "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition",
@@ -144,10 +156,7 @@ export function SalesInvoicesTable({
                         type="button"
                         disabled={updateStatusMutation.isPending}
                         onClick={() =>
-                          handleStatusUpdate(
-                            invoice.id,
-                            "REFUNDED" as SalesInvoiceStatus
-                          )
+                          handleStatusUpdate(invoice.id, "REFUNDED")
                         }
                         className={cn(
                           "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition",

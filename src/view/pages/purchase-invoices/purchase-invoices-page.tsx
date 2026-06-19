@@ -4,20 +4,42 @@ import { Plus, ReceiptText, RefreshCw, X } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices"
 import { normalizePurchaseInvoices } from "@/services/purchase-invoices-service"
+import { toEnglishDigits } from "@/utils/number-formatters"
 import { CreatePurchaseInvoiceForm } from "@/view/components/purchase-invoices/create-purchase-invoice-form"
+import { PurchaseInvoicesListToolbar } from "@/view/components/purchase-invoices/purchase-invoices-list-toolbar"
 import { PurchaseInvoicesTable } from "@/view/components/purchase-invoices/purchase-invoices-table"
-import {
-  formatNumber,
-  NumberText,
-} from "@/view/components/purchase-invoices/purchase-invoice-format"
+import { getSupplierName } from "@/view/components/purchase-invoices/purchase-invoice-format"
 
 export function PurchaseInvoicesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [search, setSearch] = useState("")
 
   const { data, isLoading, isError, refetch, isFetching } =
     usePurchaseInvoices()
 
   const invoices = useMemo(() => normalizePurchaseInvoices(data), [data])
+
+  const filteredInvoices = useMemo(() => {
+    const query = toEnglishDigits(search).trim().toLowerCase()
+
+    if (!query) {
+      return invoices
+    }
+
+    const queryWithoutHash = query.replace(/^#/, "")
+
+    return invoices.filter((invoice) => {
+      const invoiceId = String(invoice.id)
+      const invoiceIdWithHash = `#${invoice.id}`
+      const supplierName = getSupplierName(invoice).toLowerCase()
+
+      return (
+        invoiceId.includes(queryWithoutHash) ||
+        invoiceIdWithHash.includes(query) ||
+        supplierName.includes(query)
+      )
+    })
+  }, [invoices, search])
 
   return (
     <main className="space-y-6" dir="rtl">
@@ -25,6 +47,7 @@ export function PurchaseInvoicesPage() {
         <div className="space-y-2 text-right">
           <div className="flex items-center gap-2">
             <ReceiptText className="size-6 text-[var(--erp-brand-solid)]" />
+
             <h1 className="text-2xl font-bold text-[var(--erp-text)]">
               فواتير الشراء
             </h1>
@@ -65,21 +88,15 @@ export function PurchaseInvoicesPage() {
       )}
 
       <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="text-right">
-            <h2 className="text-lg font-bold text-[var(--erp-text)]">
-              قائمة فواتير الشراء
-            </h2>
-
-            <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              عدد الفواتير المعروضة:{" "}
-              <NumberText value={formatNumber(invoices.length)} />
-            </p>
-          </div>
-        </div>
+        <PurchaseInvoicesListToolbar
+          search={search}
+          totalCount={invoices.length}
+          filteredCount={filteredInvoices.length}
+          onSearchChange={setSearch}
+        />
 
         <PurchaseInvoicesTable
-          invoices={invoices}
+          invoices={filteredInvoices}
           isLoading={isLoading}
           isError={isError}
         />

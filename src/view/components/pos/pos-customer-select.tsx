@@ -73,9 +73,17 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
     setIsOpen(false)
   }
 
+  function handleSelectCashCustomer() {
+    onChange("")
+    setSearch("")
+    setIsOpen(false)
+  }
+
   return (
     <div ref={containerRef} className="relative">
-      <span className="mb-2 block text-sm text-[var(--erp-muted)]">العميل</span>
+      <span className="mb-2 block text-sm text-[var(--erp-muted)]">
+        العميل - اختياري
+      </span>
 
       <button
         type="button"
@@ -97,7 +105,7 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
         >
           {selectedCustomer
             ? getCustomerLabel(selectedCustomer)
-            : "اختر عميلاً من القائمة"}
+            : "زبون نقدي / بدون عميل"}
         </span>
 
         <User className="h-4 w-4 shrink-0 text-[var(--erp-accent)]" />
@@ -122,6 +130,32 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
           </div>
 
           <div className="max-h-[240px] overflow-y-auto">
+            <button
+              type="button"
+              onClick={handleSelectCashCustomer}
+              className={`flex w-full items-center justify-between gap-3 border-b border-[var(--erp-border)] px-4 py-3 text-right transition-colors ${
+                value === ""
+                  ? "bg-[color-mix(in_srgb,var(--erp-accent)_10%,var(--erp-card))]"
+                  : "hover:bg-[var(--erp-nav-active-bg)]"
+              }`}
+            >
+              <span
+                dir="ltr"
+                className="shrink-0 text-xs text-[var(--erp-muted)]"
+              >
+                بدون ID
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium text-[var(--erp-text)]">
+                  زبون نقدي / بدون عميل
+                </p>
+                <p className="truncate text-xs text-[var(--erp-text)]/65">
+                  استخدم هذا الخيار إذا كان العميل لا يريد تسجيل بياناته.
+                </p>
+              </div>
+            </button>
+
             {isLoading ? (
               <div className="flex min-h-[120px] items-center justify-center">
                 <Loader2 className="h-5 w-5 animate-spin text-[var(--erp-accent)]" />
