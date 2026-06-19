@@ -5,6 +5,11 @@ import { useNavigate } from "react-router-dom"
 import { useCreateAd } from "@/hooks/useAds"
 import { Button } from "@/view/components/ui/button"
 
+const inputClass =
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-3 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+
+const dateInputClass = `${inputClass} text-left [direction:ltr]`
+
 function toIsoDateTime(value: string) {
   if (!value) return ""
 
@@ -77,7 +82,7 @@ export function CreateAdPage() {
   }
 
   return (
-    <main className="space-y-6" dir="rtl">
+    <main className="space-y-6 text-[var(--erp-text)]" dir="rtl">
       <section className="flex items-center justify-between gap-4">
         <div className="text-right">
           <h1 className="text-2xl font-bold text-[var(--erp-text)]">
@@ -102,7 +107,7 @@ export function CreateAdPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]"
+        className="rounded-[20px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
       >
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
@@ -114,7 +119,7 @@ export function CreateAdPage() {
               value={title}
               onChange={(event) => setTitle(event.target.value)}
               placeholder="مثال: عرض الصيف"
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={inputClass}
             />
           </div>
 
@@ -128,7 +133,7 @@ export function CreateAdPage() {
               onChange={(event) => setDescription(event.target.value)}
               placeholder="اكتب وصف الإعلان هنا..."
               rows={4}
-              className="w-full resize-none rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={`${inputClass} resize-none`}
             />
           </div>
 
@@ -141,7 +146,7 @@ export function CreateAdPage() {
               value={imageUrl}
               onChange={(event) => setImageUrl(event.target.value)}
               placeholder="https://example.com/image.png"
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={`${inputClass} text-left [direction:ltr]`}
             />
           </div>
 
@@ -154,7 +159,7 @@ export function CreateAdPage() {
               value={linkUrl}
               onChange={(event) => setLinkUrl(event.target.value)}
               placeholder="https://example.com"
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={`${inputClass} text-left [direction:ltr]`}
             />
           </div>
 
@@ -166,7 +171,7 @@ export function CreateAdPage() {
             <select
               value={placement}
               onChange={(event) => setPlacement(event.target.value as "HOME")}
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={inputClass}
             >
               <option value="HOME">الصفحة الرئيسية</option>
             </select>
@@ -180,7 +185,7 @@ export function CreateAdPage() {
             <select
               value={isActive ? "active" : "inactive"}
               onChange={(event) => setIsActive(event.target.value === "active")}
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={inputClass}
             >
               <option value="active">نشط</option>
               <option value="inactive">غير نشط</option>
@@ -196,7 +201,7 @@ export function CreateAdPage() {
               type="datetime-local"
               value={startDate}
               onChange={(event) => setStartDate(event.target.value)}
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={dateInputClass}
             />
           </div>
 
@@ -209,18 +214,18 @@ export function CreateAdPage() {
               type="datetime-local"
               value={endDate}
               onChange={(event) => setEndDate(event.target.value)}
-              className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={dateInputClass}
             />
           </div>
         </div>
 
         {formError && (
-          <p className="mt-5 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          <p className="mt-5 rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
             {formError}
           </p>
         )}
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex justify-end gap-3 border-t border-[var(--erp-border)] pt-4">
           <Button
             type="button"
             variant="outline"

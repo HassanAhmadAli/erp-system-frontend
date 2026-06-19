@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
     createAd,
     deleteAd,
+    getAdById,
     getAds,
     normalizeAds,
     updateAd,
@@ -17,6 +18,14 @@ export function useAds(activeOnly = false) {
             const response = await getAds(activeOnly)
             return normalizeAds(response)
         },
+    })
+}
+
+export function useAdById(id: number) {
+    return useQuery({
+        queryKey: ["ads", id],
+        queryFn: () => getAdById(id),
+        enabled: Number.isFinite(id),
     })
 }
 
@@ -37,8 +46,9 @@ export function useUpdateAd() {
     return useMutation({
         mutationFn: ({ id, data }: { id: number; data: UpdateAdInput }) =>
             updateAd(id, data),
-        onSuccess: () => {
+        onSuccess: (_data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["ads"] })
+            queryClient.invalidateQueries({ queryKey: ["ads", variables.id] })
         },
     })
 }

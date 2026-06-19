@@ -1,11 +1,24 @@
-import { createCategory } from "@/services/category-service"
+import { type FormEvent, useState } from "react"
+import { ArrowRight, FolderOpen } from "lucide-react"
+import { Link, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
-import { useState } from "react"
+
+import { createCategory } from "@/services/category-service"
+import { Button } from "@/view/components/ui/button"
 
 const inputClass =
-  "w-full rounded-xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-3 text-right outline-none"
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
-export function CreateCategoryForm({ onSuccess }: { onSuccess: () => void }) {
+const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
+
+type CreateCategoryFormProps = {
+  onSuccess?: () => void
+}
+
+export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [loading, setLoading] = useState(false)
@@ -14,11 +27,8 @@ export function CreateCategoryForm({ onSuccess }: { onSuccess: () => void }) {
     text: string
   }>({ type: "", text: "" })
 
-  const queryClient = useQueryClient()
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
     setMessage({ type: "", text: "" })
 
     if (!name.trim()) {
@@ -30,8 +40,8 @@ export function CreateCategoryForm({ onSuccess }: { onSuccess: () => void }) {
       setLoading(true)
 
       await createCategory({
-        name,
-        description,
+        name: name.trim(),
+        description: description.trim(),
       })
 
       setName("")
@@ -43,18 +53,16 @@ export function CreateCategoryForm({ onSuccess }: { onSuccess: () => void }) {
 
       setMessage({
         type: "success",
-        text: "تم إضافة الصنف بنجاح",
+        text: "تم إضافة التصنيف بنجاح",
       })
 
-      onSuccess()
+      onSuccess?.()
 
-      setTimeout(() => {
-        setMessage({ type: "", text: "" })
-      }, 3000)
+      navigate("/categories")
     } catch {
       setMessage({
         type: "error",
-        text: "فشل إضافة الصنف، حاول مرة أخرى",
+        text: "فشل إضافة التصنيف، حاول مرة أخرى",
       })
     } finally {
       setLoading(false)
@@ -62,66 +70,92 @@ export function CreateCategoryForm({ onSuccess }: { onSuccess: () => void }) {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="space-y-5 rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-6 text-right"
+    <div
+      className="mx-auto max-w-3xl space-y-6 text-right text-[var(--erp-text)]"
       dir="rtl"
     >
-      {message.text && (
-        <div
-          className={`rounded-xl p-3 text-center text-sm font-medium ${
-            message.type === "success"
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
-          }`}
-        >
-          {message.text}
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div className="flex items-center justify-end gap-2">
+            <h1 className="text-3xl font-bold text-[var(--erp-text)]">
+              إضافة تصنيف
+            </h1>
+
+            <FolderOpen className="size-7 text-[var(--erp-brand-solid)]" />
+          </div>
+
+          <p className="mt-1 text-sm text-[var(--erp-muted)]">
+            أضف تصنيفًا جديدًا لتنظيم المنتجات داخل المخزون.
+          </p>
         </div>
-      )}
 
-      <div>
-        <label
-          htmlFor="category-name"
-          className="mb-2 block text-sm font-medium"
+        <Link
+          to="/categories"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
         >
-          اسم التصنيف
-        </label>
-        <input
-          id="category-name"
-          className={inputClass}
-          placeholder="أدخل اسم التصنيف"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
-      </div>
+          <ArrowRight className="size-4" />
+          العودة إلى التصنيفات
+        </Link>
+      </header>
 
-      <div>
-        <label
-          htmlFor="category-description"
-          className="mb-2 block text-sm font-medium"
-        >
-          الوصف
-        </label>
-        <input
-          id="category-description"
-          className={inputClass}
-          placeholder="أدخل وصف التصنيف (اختياري)"
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-        />
-      </div>
-
-      <button
-        type="submit"
-        disabled={loading}
-        className={`w-full rounded-xl px-4 py-2 text-white transition ${
-          loading
-            ? "cursor-not-allowed bg-gray-400"
-            : "bg-green-600 hover:bg-green-700"
-        }`}
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
       >
-        {loading ? "جاري الإضافة..." : "إضافة التصنيف"}
-      </button>
-    </form>
+        {message.text && (
+          <div
+            className={
+              message.type === "success"
+                ? "rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-center text-sm font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                : "rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-center text-sm font-medium text-red-700 dark:bg-red-500/15 dark:text-red-300"
+            }
+          >
+            {message.text}
+          </div>
+        )}
+
+        <div>
+          <label htmlFor="category-name" className={labelClass}>
+            اسم التصنيف
+          </label>
+
+          <input
+            id="category-name"
+            className={inputClass}
+            placeholder="أدخل اسم التصنيف"
+            value={name}
+            onChange={(event) => setName(event.target.value)}
+          />
+        </div>
+
+        <div>
+          <label htmlFor="category-description" className={labelClass}>
+            الوصف
+          </label>
+
+          <textarea
+            id="category-description"
+            className={`${inputClass} min-h-28 resize-none`}
+            placeholder="أدخل وصف التصنيف (اختياري)"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-col gap-2 border-t border-[var(--erp-border)] pt-4 sm:flex-row sm:justify-end">
+          <Button type="submit" disabled={loading}>
+            {loading ? "جاري الإضافة..." : "إضافة التصنيف"}
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate("/categories")}
+          >
+            إلغاء
+          </Button>
+        </div>
+      </form>
+    </div>
   )
 }

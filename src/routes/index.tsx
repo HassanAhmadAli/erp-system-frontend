@@ -75,6 +75,7 @@ import { AuditLogDetailsPage } from "@/view/pages/audit-logs/audit-log-details-p
 // import { SalesPage } from "@/view/pages/sales/sales-page"
 // import { SalesDetailsPage } from "@/view/pages/sales/sales-details-page"
 import { NotificationsPage } from "@/view/pages/notifications/notifications-page"
+import { AdDetailsPage } from "@/view/pages/ads/ad-details-page"
 
 function CreateCategoryPage() {
   const navigate = useNavigate()
@@ -145,7 +146,7 @@ export function AppRoutes() {
         {/* Ads Module */}
         <Route path="ads" element={<AdsPage />} />
         <Route path="ads/create" element={<CreateAdPage />} />
-
+        <Route path="ads/:id" element={<AdDetailsPage />} />
         {/* Inventory */}
         <Route path="inventory" element={<InventoryPage />} />
 
