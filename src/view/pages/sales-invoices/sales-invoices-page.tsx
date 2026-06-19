@@ -20,7 +20,7 @@ export function SalesInvoicesPage() {
 
   return (
     <main className="space-y-6" dir="rtl">
-      <section className="flex flex-col gap-4 rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)] md:flex-row md:items-center md:justify-between">
+      <section className="flex flex-col gap-4 rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)] md:flex-row md:items-center md:justify-between">
         <div className="space-y-2 text-right">
           <div className="flex items-center gap-2">
             <ReceiptText className="size-6 text-[var(--erp-brand-solid)]" />
@@ -38,7 +38,7 @@ export function SalesInvoicesPage() {
           <button
             type="button"
             onClick={() => refetch()}
-            className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-nav-active-bg)]"
+            className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
             تحديث
@@ -47,7 +47,7 @@ export function SalesInvoicesPage() {
           <button
             type="button"
             onClick={() => setIsCreateOpen((currentValue) => !currentValue)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
           >
             {isCreateOpen ? (
               <X className="size-4" />
@@ -63,7 +63,7 @@ export function SalesInvoicesPage() {
         <CreateSalesInvoiceForm onCreated={() => setIsCreateOpen(false)} />
       )}
 
-      <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
+      <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <div className="mb-4 flex items-center justify-between gap-3">
           <div className="text-right">
             <h2 className="text-lg font-bold text-[var(--erp-text)]">

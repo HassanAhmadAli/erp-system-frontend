@@ -96,8 +96,8 @@
   /* ERP brand colors */
   --erp-brand: #4b22b5;
   --erp-brand-solid: #4b22b5;
+  --erp-brand-solid-foreground: #ffffff;
   --erp-accent: #f0ad34;
-
   /* ERP surfaces */
   --erp-page: #f5f4fb;
   --erp-bg: #f8f7fc;
@@ -169,6 +169,7 @@
   /* ERP brand colors */
   --erp-brand: #9480f8;
   --erp-brand-solid: #b7a7ff;
+  --erp-brand-solid-foreground: #24114f;
   --erp-accent: #f0aa3a;
 
   /* ERP surfaces */

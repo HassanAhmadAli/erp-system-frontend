@@ -3,8 +3,8 @@ export function CustomerStatusBadge({ isActive }: { isActive: boolean }) {
     <span
       className={
         isActive
-          ? "rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700"
-          : "rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700"
+          ? "rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+          : "rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-300"
       }
     >
       {isActive ? "نشط" : "غير نشط"}

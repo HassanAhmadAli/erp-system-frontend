@@ -6,9 +6,11 @@ export function CustomerInfoRow({
   value: string | number
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b pb-3 last:border-b-0">
+    <div className="flex items-center justify-between gap-4 border-b border-[var(--erp-border)] pb-3 last:border-b-0">
       <span className="text-sm text-[var(--erp-muted)]">{label}</span>
-      <span className="text-sm font-medium">{value}</span>
+      <span className="text-sm font-medium text-[var(--erp-text)]">
+        {value}
+      </span>
     </div>
   )
 }

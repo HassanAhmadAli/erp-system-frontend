@@ -309,7 +309,7 @@ export function CreatePurchaseInvoiceForm({
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+           className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-5 py-2.5 text-sm font-semibold text-[var(--erp-brand-solid-foreground)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {createMutation.isPending && (
               <Loader2 className="size-4 animate-spin" />
