@@ -14,7 +14,6 @@ import {
   Package,
   Percent,
   ReceiptText,
-  Receipt,
   Settings,
   ShoppingCart,
   Tags,

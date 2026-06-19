@@ -6,7 +6,6 @@ import { useExpenses } from "@/hooks/Expenses/useExpenses"
 import {
   formatExpenseAmount,
   sumExpenseAmounts,
-  type Expense,
 } from "@/services/expense-service"
 import { ExpensesTable } from "@/view/components/expenses/ExpensesTable"
 import { Button } from "@/view/components/ui/button"

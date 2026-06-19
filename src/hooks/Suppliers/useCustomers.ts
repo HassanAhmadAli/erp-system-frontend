@@ -10,7 +10,7 @@ import {
 export function useCustomers() {
   return useQuery({
     queryKey: ["customers"],
-    queryFn: getCustomers,
+    queryFn: () => getCustomers(),
   })
 }
 

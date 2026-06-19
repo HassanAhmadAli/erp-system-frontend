@@ -41,7 +41,7 @@ export function useDeleteProductPhoto() {
   return useMutation({
     mutationFn: (photoId: number | string) => deleteProductPhoto(photoId),
 
-    onSuccess: (_, variables) => {
+    onSuccess: () => {
       // We can only invalidate the generic photo query keys; the product details
       // page will also refresh itself by reloading photos.
       // If the backend response includes productId later, we can tighten this.
