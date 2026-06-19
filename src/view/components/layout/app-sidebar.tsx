@@ -161,7 +161,7 @@ export function AppSidebar() {
   }
 
   return (
-    <aside className="erp-scrollbar flex w-[280px] shrink-0 flex-col overflow-y-auto bg-[var(--erp-sidebar)] px-5 py-6">
+    <aside className="erp-scrollbar flex w-[280px] shrink-0 flex-col overflow-y-auto border-l border-[var(--erp-border)] bg-[var(--erp-sidebar)] px-5 py-6">
       <nav className="flex flex-1 flex-col gap-2">
         {sidebarItems.map((item) => (
           <SidebarNavItem key={item.to} {...item} />
@@ -171,7 +171,7 @@ export function AppSidebar() {
       <div className="mt-8 border-t border-[var(--erp-border)] pt-4">
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
+          className="flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm font-medium text-[var(--erp-logout)] transition-colors hover:bg-red-500/10"
         >
           <span className="min-w-0 flex-1 text-right">تسجيل الخروج</span>
           <LogOut className="size-[18px]" />

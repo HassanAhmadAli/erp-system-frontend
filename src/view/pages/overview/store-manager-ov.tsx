@@ -8,8 +8,10 @@ export function StoreManagerOverviewPage() {
   return (
     <div className="space-y-6">
       <header className="text-right">
-        <h1 className="text-3xl font-bold">نظرة عامة</h1>
-        <p className="text-[var(--erp-muted)]">
+        <h1 className="text-3xl font-bold text-[var(--erp-text)]">
+          نظرة عامة
+        </h1>
+        <p className="mt-1 text-[var(--erp-muted)]">
           ملخص لأداء المتجر والأنشطة الرئيسية
         </p>
       </header>
@@ -19,12 +21,12 @@ export function StoreManagerOverviewPage() {
 
         <MetricCard label="عدد الطلبات" value="32" icon={ShoppingCart} />
 
-        <MetricCard label="الأرباح" value="720" unit="SP" icon={DollarSign} />
+        <MetricCard label="الأرباح" value="720" unit="SYP" icon={DollarSign} />
 
         <MetricCard
           label="إجمالي المبيعات"
           value="60,000"
-          unit="SP"
+          unit="SYP"
           icon={Package}
           variant="highlight"
         />
