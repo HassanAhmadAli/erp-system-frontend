@@ -174,9 +174,7 @@ export function SalesInvoicesTable({
                   <td className="rounded-l-2xl bg-[var(--erp-bg)] px-4 py-3">
                     <button
                       type="button"
-                      onClick={() =>
-                        navigate(`/sales-invoices/${invoice.id}`)
-                      }
+                      onClick={() => navigate(`/sales-invoices/${invoice.id}`)}
                       className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-[var(--erp-nav-active-bg)]"
                     >
                       <Eye className="size-4" />

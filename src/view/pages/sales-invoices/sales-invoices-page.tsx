@@ -40,9 +40,7 @@ export function SalesInvoicesPage() {
             onClick={() => refetch()}
             className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-nav-active-bg)]"
           >
-            <RefreshCw
-              className={cn("size-4", isFetching && "animate-spin")}
-            />
+            <RefreshCw className={cn("size-4", isFetching && "animate-spin")} />
             تحديث
           </button>
 

@@ -74,7 +74,10 @@ function getPurchaseInvoice(id: number) {
   return apiRequest<PurchaseInvoice>(`${PURCHASE_INVOICES_ENDPOINT}/${id}`)
 }
 
-function updatePurchaseInvoiceStatus(id: number, status: PurchaseInvoiceStatus) {
+function updatePurchaseInvoiceStatus(
+  id: number,
+  status: PurchaseInvoiceStatus
+) {
   return apiRequest<PurchaseInvoice>(
     `${PURCHASE_INVOICES_ENDPOINT}/${id}/status`,
     {
@@ -360,14 +363,18 @@ export function PurchaseInvoiceDetailsPage() {
               </div>
 
               <div className="rounded-2xl border p-4">
-                <p className="text-xs text-[var(--erp-muted)]">المجموع الفرعي</p>
+                <p className="text-xs text-[var(--erp-muted)]">
+                  المجموع الفرعي
+                </p>
                 <p className="mt-2 font-semibold">
                   <NumberText value={formatMoney(invoice.subtotal)} />
                 </p>
               </div>
 
               <div className="rounded-2xl border p-4">
-                <p className="text-xs text-[var(--erp-muted)]">المبلغ المتبقي</p>
+                <p className="text-xs text-[var(--erp-muted)]">
+                  المبلغ المتبقي
+                </p>
                 <p className="mt-2 font-semibold">
                   <NumberText value={formatMoney(invoice.remainingAmount)} />
                 </p>

@@ -14,10 +14,7 @@ type PosProductCardProps = {
   onAddToCart: (product: PosProduct) => void
 }
 
-export function PosProductCard({
-  product,
-  onAddToCart,
-}: PosProductCardProps) {
+export function PosProductCard({ product, onAddToCart }: PosProductCardProps) {
   const isOutOfStock = product.quantityInStock <= 0
 
   return (
@@ -32,7 +29,9 @@ export function PosProductCard({
             dir="ltr"
             className="mt-1 text-right text-xs text-[var(--erp-muted)]"
           >
-            {product.barcode ? toEnglishDigits(product.barcode) : "لا يوجد باركود"}
+            {product.barcode
+              ? toEnglishDigits(product.barcode)
+              : "لا يوجد باركود"}
           </p>
         </div>
 
