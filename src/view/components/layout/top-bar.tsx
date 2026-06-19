@@ -2,14 +2,10 @@ import { ThemeToggle } from "@/view/components/layout/theme-toggle"
 import { cn } from "@/lib/utils"
 
 type TopBarProps = {
-  /** Title beside the avatar (matches design personas) */
   title: string
   className?: string
 }
 
-/**
- * Full-width deep purple strip (design): profile + role on inline-start side (RTL: visual right).
- */
 export function TopBar({ title, className }: TopBarProps) {
   return (
     <header
@@ -19,15 +15,17 @@ export function TopBar({ title, className }: TopBarProps) {
         className
       )}
     >
-      {/* RTL flex-start = visual right */}
       <div className="flex items-center gap-3">
         <span className="text-base font-semibold tracking-tight">{title}</span>
         <div
-          className="size-[38px] shrink-0 rounded-full bg-white/22 ring-[3px] ring-white/35"
+          className="size-[38px] shrink-0 rounded-full bg-white/20 ring-[3px] ring-white/35"
           aria-hidden
         />
       </div>
-      <ThemeToggle />
+
+      <div className="shrink-0">
+        <ThemeToggle />
+      </div>
     </header>
   )
 }

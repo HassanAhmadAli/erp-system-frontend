@@ -8,8 +8,10 @@ export function CustomerInfoCard({
   children: ReactNode
 }) {
   return (
-    <div className="rounded-3xl bg-white p-6 shadow-sm">
-      <h2 className="mb-5 text-xl font-semibold">{title}</h2>
+    <div className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
+      <h2 className="mb-5 text-xl font-semibold text-[var(--erp-text)]">
+        {title}
+      </h2>
       <div className="space-y-4">{children}</div>
     </div>
   )

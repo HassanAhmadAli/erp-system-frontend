@@ -1,3 +1,8 @@
+import {
+  formatNumber as formatGlobalNumber,
+  toEnglishDigits,
+} from "@/utils/number-formatters"
+
 export type ChartPoint = {
   label: string
   value: number
@@ -42,16 +47,23 @@ const METRIC_LABELS: Record<string, string> = {
   totalProducts: "إجمالي المنتجات",
   total: "الإجمالي",
   amount: "المبلغ",
+  totalAmount: "الإجمالي",
   lowStockCount: "منتجات منخفضة المخزون",
   outOfStockCount: "نفاد المخزون",
   inventoryValue: "قيمة المخزون",
   stockValue: "قيمة المخزون",
   invoiceCount: "عدد الفواتير",
   totalSpent: "إجمالي الإنفاق",
+  invoiceDate: "تاريخ الفاتورة",
+  createdAt: "تاريخ الإنشاء",
+  updatedAt: "آخر تحديث",
+  supplier: "المورد",
+  customer: "العميل",
+  status: "الحالة",
+  id: "الرقم",
 }
 
 const SKIP_KEYS = new Set([
-  "id",
   "data",
   "items",
   "rows",
@@ -64,21 +76,29 @@ const SKIP_KEYS = new Set([
   "to",
   "limit",
   "offset",
-  "total",
   "isFinalPage",
 ])
 
 export function toNumber(value: unknown): number | null {
   if (typeof value === "number" && !Number.isNaN(value)) return value
+
   if (typeof value === "string" && value.trim() !== "") {
-    const n = Number(value)
-    return Number.isNaN(n) ? null : n
+    const normalized = toEnglishDigits(value)
+      .trim()
+      .replace(/[٬,]/g, "")
+      .replace(/٫/g, ".")
+
+    const numberValue = Number(normalized)
+
+    return Number.isNaN(numberValue) ? null : numberValue
   }
+
   return null
 }
 
 export function formatMetricLabel(key: string): string {
   if (METRIC_LABELS[key]) return METRIC_LABELS[key]
+
   return key
     .replace(/([A-Z])/g, " $1")
     .replace(/_/g, " ")
@@ -86,30 +106,42 @@ export function formatMetricLabel(key: string): string {
 }
 
 export function formatNumber(value: number, unit = ""): string {
-  const formatted = value.toLocaleString("ar-SY", {
-    maximumFractionDigits: 2,
-  })
-  return unit ? `${formatted} ${unit}` : formatted
+  const formatted = formatGlobalNumber(value)
+
+  if (!unit) return formatted
+  if (unit === "%") return `${formatted}%`
+
+  return `${formatted} ${unit}`
 }
 
 export function unwrapData(payload: unknown): unknown {
   if (!payload || typeof payload !== "object") return payload
+
   const obj = payload as Record<string, unknown>
+
   if (obj.data !== undefined) return unwrapData(obj.data)
+
   return payload
 }
 
 export function extractMetrics(payload: unknown): MetricItem[] {
   const data = unwrapData(payload)
+
   if (!data || typeof data !== "object") return []
 
   const metrics: MetricItem[] = []
 
   for (const [key, value] of Object.entries(data as Record<string, unknown>)) {
     if (SKIP_KEYS.has(key) || Array.isArray(value)) continue
-    const num = toNumber(value)
-    if (num !== null) {
-      metrics.push({ key, label: formatMetricLabel(key), value: num })
+
+    const numberValue = toNumber(value)
+
+    if (numberValue !== null) {
+      metrics.push({
+        key,
+        label: formatMetricLabel(key),
+        value: numberValue,
+      })
     }
   }
 
@@ -128,11 +160,14 @@ function rowLabel(row: Record<string, unknown>): string {
     row.month,
   ]
 
-  for (const c of candidates) {
-    if (typeof c === "string" && c.trim()) return c
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return toEnglishDigits(candidate)
+    }
   }
 
-  if (row.id != null) return `#${row.id}`
+  if (row.id != null) return `#${toEnglishDigits(String(row.id))}`
+
   return "—"
 }
 
@@ -141,6 +176,7 @@ function rowValue(row: Record<string, unknown>): number | null {
     row.value,
     row.amount,
     row.total,
+    row.totalAmount,
     row.margin,
     row.marginPercent,
     row.profit,
@@ -151,9 +187,10 @@ function rowValue(row: Record<string, unknown>): number | null {
     row.count,
   ]
 
-  for (const c of candidates) {
-    const num = toNumber(c)
-    if (num !== null) return num
+  for (const candidate of candidates) {
+    const numberValue = toNumber(candidate)
+
+    if (numberValue !== null) return numberValue
   }
 
   return null
@@ -166,12 +203,18 @@ export function extractSeries(payload: unknown): ChartPoint[] {
     return data
       .map((item) => {
         if (!item || typeof item !== "object") return null
+
         const row = item as Record<string, unknown>
         const value = rowValue(row)
+
         if (value === null) return null
-        return { label: rowLabel(row), value }
+
+        return {
+          label: rowLabel(row),
+          value,
+        }
       })
-      .filter((p): p is ChartPoint => p !== null)
+      .filter((point): point is ChartPoint => point !== null)
   }
 
   if (data && typeof data === "object") {
@@ -191,13 +234,20 @@ export function extractSeries(payload: unknown): ChartPoint[] {
     }
 
     const points: ChartPoint[] = []
+
     for (const [key, value] of Object.entries(obj)) {
       if (SKIP_KEYS.has(key) || Array.isArray(value)) continue
-      const num = toNumber(value)
-      if (num !== null) {
-        points.push({ label: formatMetricLabel(key), value: num })
+
+      const numberValue = toNumber(value)
+
+      if (numberValue !== null) {
+        points.push({
+          label: formatMetricLabel(key),
+          value: numberValue,
+        })
       }
     }
+
     return points
   }
 
@@ -208,7 +258,7 @@ export function extractTableRows(payload: unknown): Record<string, unknown>[] {
   const data = unwrapData(payload)
 
   if (Array.isArray(data)) {
-    return data.filter((r) => r && typeof r === "object") as Record<
+    return data.filter((row) => row && typeof row === "object") as Record<
       string,
       unknown
     >[]
@@ -216,6 +266,7 @@ export function extractTableRows(payload: unknown): Record<string, unknown>[] {
 
   if (data && typeof data === "object") {
     const obj = data as Record<string, unknown>
+
     for (const key of [
       "items",
       "rows",
@@ -240,7 +291,8 @@ export function inferTableColumns(
 ): TableColumn[] {
   if (rows.length === 0) return []
 
-  const keys = Object.keys(rows[0]).filter((k) => !k.startsWith("_"))
+  const keys = Object.keys(rows[0]).filter((key) => !key.startsWith("_"))
+
   return keys.map((key) => ({
     key,
     label: formatMetricLabel(key),
@@ -249,7 +301,7 @@ export function inferTableColumns(
 
 export function toApiDateRange(from: string, to: string) {
   return {
-    from: from ? new Date(`${from}T00:00:00.000Z`).toISOString() : undefined,
-    to: to ? new Date(`${to}T23:59:59.999Z`).toISOString() : undefined,
+    from: from ? new Date(`${from}T00:00:00`).toISOString() : undefined,
+    to: to ? new Date(`${to}T23:59:59.999`).toISOString() : undefined,
   }
 }

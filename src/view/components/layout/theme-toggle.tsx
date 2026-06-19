@@ -1,9 +1,8 @@
 import * as React from "react"
+import { Moon, Sun } from "lucide-react"
 
 import { useTheme } from "@/view/components/theme-provider"
 import { Button } from "@/view/components/ui/button"
-import { Moon, Sun } from "lucide-react"
-
 import { cn } from "@/lib/utils"
 
 type Tone = "purpleHeader" | "page"
@@ -13,9 +12,6 @@ type ThemeToggleProps = {
   className?: string
 }
 
-/**
- * Reads `.dark` on `<html>` so it stays synced with ThemeProvider keyboard shortcut + storage.
- */
 export function ThemeToggle({
   tone = "purpleHeader",
   className,
@@ -30,16 +26,19 @@ export function ThemeToggle({
   React.useEffect(() => {
     const node = document.documentElement
     const sync = () => setIsDark(node.classList.contains("dark"))
+
     sync()
-    const obs = new MutationObserver(sync)
-    obs.observe(node, { attributes: true, attributeFilter: ["class"] })
-    return () => obs.disconnect()
+
+    const observer = new MutationObserver(sync)
+    observer.observe(node, { attributes: true, attributeFilter: ["class"] })
+
+    return () => observer.disconnect()
   }, [])
 
   const headerClasses =
     "text-white hover:bg-white/15 focus-visible:ring-white/40"
   const pageClasses =
-    "rounded-full border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] text-[var(--erp-top-bar)] hover:bg-[var(--erp-nav-hover)]"
+    "rounded-full border border-[var(--erp-border)] bg-[var(--erp-card)] text-[var(--erp-brand-solid)] hover:bg-[var(--erp-nav-hover)]"
 
   return (
     <Button

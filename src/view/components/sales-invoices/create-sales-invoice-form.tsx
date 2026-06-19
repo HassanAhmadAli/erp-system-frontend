@@ -121,7 +121,7 @@ export function CreateSalesInvoiceForm({
   }
 
   return (
-    <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
+    <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <form className="space-y-5" onSubmit={handleCreateInvoice}>
         <div className="flex items-center justify-between gap-4">
           <div className="text-right">
@@ -137,7 +137,7 @@ export function CreateSalesInvoiceForm({
           <button
             type="button"
             onClick={resetCreateForm}
-            className="rounded-2xl border px-4 py-2 text-sm"
+            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             تفريغ الحقول
           </button>
@@ -153,7 +153,7 @@ export function CreateSalesInvoiceForm({
               onChange={(event) => setCustomerId(event.target.value)}
               placeholder="مثال: 1"
               inputMode="numeric"
-              className="w-full rounded-2xl border bg-transparent px-4 py-2.5 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
             />
           </label>
 
@@ -166,7 +166,7 @@ export function CreateSalesInvoiceForm({
               onChange={(event) => setDiscountId(event.target.value)}
               placeholder="اتركه فارغاً بدون خصم"
               inputMode="numeric"
-              className="w-full rounded-2xl border bg-transparent px-4 py-2.5 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
             />
           </label>
 
@@ -179,16 +179,16 @@ export function CreateSalesInvoiceForm({
               onChange={(event) => setAmountPaid(event.target.value)}
               placeholder="0"
               inputMode="decimal"
-              className="w-full rounded-2xl border bg-transparent px-4 py-2.5 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
             />
           </label>
 
-          <label className="flex items-end gap-3 rounded-2xl border px-4 py-2.5">
+          <label className="flex items-end gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5">
             <input
               type="checkbox"
               checked={complete}
               onChange={(event) => setComplete(event.target.checked)}
-              className="size-4"
+              className="size-4 accent-[var(--erp-brand-solid)]"
             />
             <span className="text-sm font-medium text-[var(--erp-text)]">
               إنشاء الفاتورة كمكتملة
@@ -205,7 +205,7 @@ export function CreateSalesInvoiceForm({
             <button
               type="button"
               onClick={addItem}
-              className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm"
+              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
             >
               <Plus className="size-4" />
               إضافة منتج
@@ -216,7 +216,7 @@ export function CreateSalesInvoiceForm({
             {items.map((item, index) => (
               <div
                 key={index}
-                className="grid gap-3 rounded-2xl border p-3 md:grid-cols-[1fr_1fr_auto]"
+                className="grid gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-3 md:grid-cols-[1fr_1fr_auto]"
               >
                 <label className="space-y-2 text-right">
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
@@ -229,7 +229,7 @@ export function CreateSalesInvoiceForm({
                     }
                     placeholder="مثال: 1"
                     inputMode="numeric"
-                    className="w-full rounded-xl border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+                    className="w-full rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-2 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
                   />
                 </label>
 
@@ -244,7 +244,7 @@ export function CreateSalesInvoiceForm({
                     }
                     placeholder="1"
                     inputMode="numeric"
-                    className="w-full rounded-xl border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+                    className="w-full rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-2 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
                   />
                 </label>
 
@@ -252,7 +252,7 @@ export function CreateSalesInvoiceForm({
                   type="button"
                   onClick={() => removeItem(index)}
                   disabled={items.length === 1}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm text-red-500 disabled:cursor-not-allowed disabled:opacity-40 md:self-end"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25 md:self-end"
                 >
                   <Trash2 className="size-4" />
                   حذف
@@ -263,7 +263,7 @@ export function CreateSalesInvoiceForm({
         </div>
 
         {createMutation.isError && (
-          <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          <p className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
             حدث خطأ أثناء إنشاء الفاتورة. تأكد من أن الحساب الحالي يملك صلاحية
             الكاشير وأن البيانات صحيحة.
           </p>
@@ -273,7 +273,7 @@ export function CreateSalesInvoiceForm({
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60 dark:!text-[#24114f]"
           >
             {createMutation.isPending ? (
               <Loader2 className="size-4 animate-spin" />

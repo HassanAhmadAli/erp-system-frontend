@@ -18,6 +18,15 @@ type CreatePurchaseInvoiceFormProps = {
   onCreated?: () => void
 }
 
+const inputClass =
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+
+const smallInputClass =
+  "w-full rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-3 py-2 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+
+const dateInputClass = `${inputClass} text-left [direction:ltr]`
+const smallDateInputClass = `${smallInputClass} text-left [direction:ltr]`
+
 export function CreatePurchaseInvoiceForm({
   onCreated,
 }: CreatePurchaseInvoiceFormProps) {
@@ -142,13 +151,14 @@ export function CreatePurchaseInvoiceForm({
   }
 
   return (
-    <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
+    <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <form className="space-y-5" onSubmit={handleCreateInvoice}>
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div className="text-right">
             <h2 className="text-lg font-bold text-[var(--erp-text)]">
               إنشاء فاتورة شراء
             </h2>
+
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
               البيانات المطلوبة: المورد، تاريخ الفاتورة، المنتجات، تكلفة الوحدة،
               تاريخ الانتهاء، وخيار الاستلام.
@@ -158,7 +168,7 @@ export function CreatePurchaseInvoiceForm({
           <button
             type="button"
             onClick={resetCreateForm}
-            className="rounded-2xl border px-4 py-2 text-sm"
+            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             تفريغ الحقول
           </button>
@@ -169,12 +179,13 @@ export function CreatePurchaseInvoiceForm({
             <span className="text-sm font-medium text-[var(--erp-text)]">
               رقم المورد
             </span>
+
             <input
               value={supplierId}
               onChange={(event) => setSupplierId(event.target.value)}
               placeholder="مثال: 1"
               inputMode="numeric"
-              className="w-full rounded-2xl border bg-transparent px-4 py-2.5 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={`${inputClass} text-right`}
             />
           </label>
 
@@ -182,24 +193,26 @@ export function CreatePurchaseInvoiceForm({
             <span className="text-sm font-medium text-[var(--erp-text)]">
               تاريخ الفاتورة
             </span>
+
             <input
               type="datetime-local"
               value={invoiceDate}
               onChange={(event) => setInvoiceDate(event.target.value)}
-              className="w-full rounded-2xl border bg-transparent px-4 py-2.5 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+              className={dateInputClass}
             />
           </label>
 
-          <label className="flex items-end gap-3 rounded-2xl border px-4 py-2.5">
+          <label className="flex items-end justify-between gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5">
+            <span className="text-sm font-medium text-[var(--erp-text)]">
+              استلام المنتجات مباشرة
+            </span>
+
             <input
               type="checkbox"
               checked={receive}
               onChange={(event) => setReceive(event.target.checked)}
-              className="size-4"
+              className="size-4 accent-[var(--erp-brand-solid)]"
             />
-            <span className="text-sm font-medium text-[var(--erp-text)]">
-              استلام المنتجات مباشرة
-            </span>
           </label>
         </div>
 
@@ -212,7 +225,7 @@ export function CreatePurchaseInvoiceForm({
             <button
               type="button"
               onClick={addItem}
-              className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm"
+              className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
             >
               <Plus className="size-4" />
               إضافة منتج
@@ -223,12 +236,13 @@ export function CreatePurchaseInvoiceForm({
             {items.map((item, index) => (
               <div
                 key={index}
-                className="grid gap-3 rounded-2xl border p-3 md:grid-cols-[1fr_1fr_1fr_1fr_auto]"
+                className="grid gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-3 md:grid-cols-[1fr_1fr_1fr_1fr_auto]"
               >
                 <label className="space-y-2 text-right">
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
                     رقم المنتج
                   </span>
+
                   <input
                     value={item.productId}
                     onChange={(event) =>
@@ -236,7 +250,7 @@ export function CreatePurchaseInvoiceForm({
                     }
                     placeholder="مثال: 1"
                     inputMode="numeric"
-                    className="w-full rounded-xl border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+                    className={`${smallInputClass} text-right`}
                   />
                 </label>
 
@@ -244,6 +258,7 @@ export function CreatePurchaseInvoiceForm({
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
                     الكمية
                   </span>
+
                   <input
                     value={item.quantity}
                     onChange={(event) =>
@@ -251,7 +266,7 @@ export function CreatePurchaseInvoiceForm({
                     }
                     placeholder="1"
                     inputMode="numeric"
-                    className="w-full rounded-xl border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+                    className={`${smallInputClass} text-right`}
                   />
                 </label>
 
@@ -259,6 +274,7 @@ export function CreatePurchaseInvoiceForm({
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
                     تكلفة الوحدة
                   </span>
+
                   <input
                     value={item.unitCost}
                     onChange={(event) =>
@@ -266,7 +282,7 @@ export function CreatePurchaseInvoiceForm({
                     }
                     placeholder="20"
                     inputMode="decimal"
-                    className="w-full rounded-xl border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+                    className={`${smallInputClass} text-right`}
                   />
                 </label>
 
@@ -274,13 +290,14 @@ export function CreatePurchaseInvoiceForm({
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
                     تاريخ الانتهاء
                   </span>
+
                   <input
                     type="date"
                     value={item.expiryDate}
                     onChange={(event) =>
                       updateItem(index, "expiryDate", event.target.value)
                     }
-                    className="w-full rounded-xl border bg-transparent px-3 py-2 text-sm outline-none focus:border-[var(--erp-brand-solid)]"
+                    className={smallDateInputClass}
                   />
                 </label>
 
@@ -288,7 +305,7 @@ export function CreatePurchaseInvoiceForm({
                   type="button"
                   onClick={() => removeItem(index)}
                   disabled={items.length === 1}
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm text-red-500 disabled:cursor-not-allowed disabled:opacity-40 md:self-end"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25 md:self-end"
                 >
                   <Trash2 className="size-4" />
                   حذف
@@ -299,17 +316,17 @@ export function CreatePurchaseInvoiceForm({
         </div>
 
         {createMutation.isError && (
-          <p className="rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          <p className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
             حدث خطأ أثناء إنشاء فاتورة الشراء. تأكد من الصلاحيات ومن صحة أرقام
             المورد والمنتجات.
           </p>
         )}
 
-        <div className="flex justify-end">
+        <div className="flex justify-end border-t border-[var(--erp-border)] pt-4">
           <button
             type="submit"
             disabled={createMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-5 py-2.5 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-5 py-2.5 text-sm font-semibold text-[var(--erp-brand-solid-foreground)] transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {createMutation.isPending && (
               <Loader2 className="size-4 animate-spin" />

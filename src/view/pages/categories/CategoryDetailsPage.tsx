@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import {
   ArrowRight,
   Barcode,
@@ -11,6 +12,11 @@ import { Link, useParams } from "react-router-dom"
 import { useQuery } from "@tanstack/react-query"
 
 import { getCategoryById } from "@/services/category-service"
+import {
+  formatCurrency,
+  formatId,
+  formatNumber,
+} from "@/utils/number-formatters"
 import { CustomerInfoCard } from "@/view/components/customers/customer-info-card"
 import { CustomerInfoRow } from "@/view/components/customers/customer-info-row"
 import { Button } from "@/view/components/ui/button"
@@ -31,7 +37,7 @@ export function CategoryDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6 text-right" dir="rtl">
+      <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
         <p className="text-[var(--erp-muted)]">جاري تحميل بيانات التصنيف...</p>
       </div>
     )
@@ -41,17 +47,23 @@ export function CategoryDetailsPage() {
     return <ErrorMessage message="تعذر تحميل بيانات التصنيف." />
   }
 
-  const productCount = data._count?.products ?? data.products?.length ?? 0
-  const totalStock = data.products.reduce(
-    (sum, product) => sum + product.quantityInStock,
+  const products = data.products ?? []
+  const productCount = data._count?.products ?? products.length
+  const totalStock = products.reduce(
+    (sum, product) => sum + (Number(product.quantityInStock) || 0),
     0
   )
+  const averageStock =
+    productCount > 0 ? Math.round(totalStock / productCount) : 0
 
   return (
-    <div className="space-y-6 p-6 text-right" dir="rtl">
-      <header className="flex flex-col gap-4 sm:flex-row-reverse sm:items-center sm:justify-between">
+    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{data.name}</h1>
+          <h1 className="text-3xl font-bold text-[var(--erp-text)]">
+            {data.name}
+          </h1>
+
           <p className="mt-2 text-[var(--erp-muted)]">
             {data.description || "لا يوجد وصف لهذا التصنيف."}
           </p>
@@ -64,9 +76,10 @@ export function CategoryDetailsPage() {
               تعديل التصنيف
             </Button>
           </Link>
+
           <Link
             to="/categories"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border bg-white px-4 py-2 text-sm transition hover:bg-slate-50"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             <ArrowRight className="size-4" />
             العودة إلى التصنيفات
@@ -77,17 +90,19 @@ export function CategoryDetailsPage() {
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <SummaryCard
           label="عدد المنتجات"
-          value={productCount}
+          value={formatNumber(productCount)}
           icon={<Package className="size-5" />}
         />
+
         <SummaryCard
           label="إجمالي الكمية في المخزون"
-          value={totalStock}
+          value={formatNumber(totalStock)}
           icon={<Tag className="size-5" />}
         />
+
         <SummaryCard
           label="رقم التصنيف"
-          value={data.id}
+          value={`#${formatId(data.id)}`}
           icon={<Hash className="size-5" />}
         />
       </section>
@@ -96,77 +111,114 @@ export function CategoryDetailsPage() {
         <CustomerInfoCard title="معلومات التصنيف">
           <CustomerInfoRow label="اسم التصنيف" value={data.name} />
           <CustomerInfoRow label="الوصف" value={data.description || "—"} />
-          <CustomerInfoRow label="رقم التصنيف" value={data.id} />
-          <CustomerInfoRow label="عدد المنتجات" value={productCount} />
+          <CustomerInfoRow label="رقم التصنيف" value={`#${formatId(data.id)}`} />
+          <CustomerInfoRow
+            label="عدد المنتجات"
+            value={formatNumber(productCount)}
+          />
         </CustomerInfoCard>
 
-        <div className="rounded-3xl bg-white p-6 shadow-sm">
+        <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
           <div className="mb-4 flex items-center justify-end gap-2">
-            <h2 className="text-xl font-semibold">ملخص المخزون</h2>
-            <FolderOpen className="size-5 text-[var(--erp-brand)]" />
+            <h2 className="text-xl font-semibold text-[var(--erp-text)]">
+              ملخص المخزون
+            </h2>
+
+            <FolderOpen className="size-5 text-[var(--erp-brand-solid)]" />
           </div>
+
           <div className="space-y-3 text-sm">
-            <p>
-              <span className="text-[var(--erp-muted)]">
-                المنتجات المرتبطة:{" "}
-              </span>
-              <span className="font-medium">{productCount}</span>
-            </p>
-            <p>
-              <span className="text-[var(--erp-muted)]">إجمالي الوحدات: </span>
-              <span className="font-medium">{totalStock}</span>
-            </p>
-            <p>
-              <span className="text-[var(--erp-muted)]">
-                متوسط الكمية لكل منتج:{" "}
-              </span>
-              <span className="font-medium">
-                {productCount > 0 ? Math.round(totalStock / productCount) : 0}
-              </span>
-            </p>
+            <InfoLine
+              label="المنتجات المرتبطة"
+              value={formatNumber(productCount)}
+            />
+
+            <InfoLine
+              label="إجمالي الوحدات"
+              value={formatNumber(totalStock)}
+            />
+
+            <InfoLine
+              label="متوسط الكمية لكل منتج"
+              value={formatNumber(averageStock)}
+            />
           </div>
-        </div>
+        </section>
       </section>
 
-      <section className="rounded-3xl bg-white p-6 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
+      <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
+        <div className="mb-4 flex items-center justify-between gap-3">
           <span className="text-sm text-[var(--erp-muted)]">
-            {productCount} منتج
+            {formatNumber(productCount)} منتج
           </span>
-          <h2 className="text-xl font-semibold">المنتجات في هذا التصنيف</h2>
+
+          <h2 className="text-xl font-semibold text-[var(--erp-text)]">
+            المنتجات في هذا التصنيف
+          </h2>
         </div>
 
-        {data.products.length === 0 ? (
-          <div className="rounded-2xl border border-dashed p-8 text-center text-[var(--erp-muted)]">
+        {products.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-center text-[var(--erp-muted)]">
             لا توجد منتجات مرتبطة بهذا التصنيف حالياً.
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border">
-            <table className="w-full min-w-[600px] text-right">
-              <thead className="bg-gray-100">
+          <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
+            <table className="w-full table-fixed text-right text-sm">
+              <colgroup>
+                <col className="w-[10%]" />
+                <col className="w-[25%]" />
+                <col className="w-[20%]" />
+                <col className="w-[16%]" />
+                <col className="w-[13%]" />
+                <col className="w-[16%]" />
+              </colgroup>
+
+              <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
                 <tr>
-                  <th className="p-3">#</th>
-                  <th className="p-3">اسم المنتج</th>
-                  <th className="p-3">الباركود</th>
-                  <th className="p-3">سعر البيع</th>
-                  <th className="p-3">الكمية</th>
-                  <th className="p-3">العمليات</th>
+                  <th className="px-3 py-3 font-medium">#</th>
+                  <th className="px-3 py-3 font-medium">اسم المنتج</th>
+                  <th className="px-3 py-3 font-medium">الباركود</th>
+                  <th className="px-3 py-3 font-medium">سعر البيع</th>
+                  <th className="px-3 py-3 font-medium">الكمية</th>
+                  <th className="px-3 py-3 text-center font-medium">
+                    العمليات
+                  </th>
                 </tr>
               </thead>
+
               <tbody>
-                {data.products.map((product) => (
-                  <tr key={product.id} className="border-t">
-                    <td className="p-3">{product.id}</td>
-                    <td className="p-3 font-medium">{product.name}</td>
-                    <td className="p-3">
-                      <span className="inline-flex items-center gap-1 text-sm text-[var(--erp-muted)]">
+                {products.map((product) => (
+                  <tr
+                    key={product.id}
+                    className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
+                  >
+                    <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
+                      #{formatId(product.id)}
+                    </td>
+
+                    <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
+                      <span className="block truncate">{product.name}</span>
+                    </td>
+
+                    <td className="px-3 py-3">
+                      <span
+                        dir="ltr"
+                        className="inline-flex items-center gap-1 text-sm tabular-nums text-[var(--erp-muted)]"
+                      >
                         <Barcode className="size-3.5" />
-                        {product.barcode}
+                        {product.barcode || "—"}
                       </span>
                     </td>
-                    <td className="p-3">{product.sellingPrice}</td>
-                    <td className="p-3">{product.quantityInStock}</td>
-                    <td className="p-3">
+
+                    <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
+                      {formatCurrency(product.sellingPrice)}
+                    </td>
+
+                    <td className="px-3 py-3 text-[var(--erp-text)]">
+                      {formatNumber(product.quantityInStock)}
+                    </td>
+
+                    <td className="px-3 py-3 text-center">
                       <Link to={`/products/${product.id}`}>
                         <Button variant="outline" size="sm">
                           عرض المنتج
@@ -191,26 +243,40 @@ function SummaryCard({
 }: {
   label: string
   value: string | number
-  icon: React.ReactNode
+  icon: ReactNode
 }) {
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <div className="flex items-center justify-between">
-        <span className="text-[var(--erp-brand)]">{icon}</span>
+        <span className="rounded-2xl bg-[var(--erp-nav-active-bg)] p-3 text-[var(--erp-brand-solid)]">
+          {icon}
+        </span>
+
         <p className="text-sm text-[var(--erp-muted)]">{label}</p>
       </div>
-      <p className="mt-3 text-2xl font-bold">{value}</p>
+
+      <p className="mt-3 text-2xl font-bold text-[var(--erp-text)]">{value}</p>
     </div>
+  )
+}
+
+function InfoLine({ label, value }: { label: string; value: string | number }) {
+  return (
+    <p className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-3">
+      <span className="text-[var(--erp-muted)]">{label}</span>
+      <span className="font-medium text-[var(--erp-text)]">{value}</span>
+    </p>
   )
 }
 
 function ErrorMessage({ message }: { message: string }) {
   return (
-    <div className="space-y-6 p-6 text-right" dir="rtl">
-      <p className="text-red-500">{message}</p>
+    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+      <p className="text-red-500 dark:text-red-300">{message}</p>
+
       <Link
         to="/categories"
-        className="inline-flex items-center gap-2 rounded-2xl border bg-white px-4 py-2 text-sm transition hover:bg-slate-50"
+        className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
         <ArrowRight className="size-4" />
         العودة إلى التصنيفات

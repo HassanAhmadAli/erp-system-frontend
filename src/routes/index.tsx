@@ -27,7 +27,6 @@ import { ProductPhotosPage } from "@/view/pages/products/product-photos-page"
 import { CustomersPage } from "@/view/pages/customers/customers-page"
 import { CustomerDetailsPage } from "@/view/pages/customers/customer-details-page"
 
-import { OrdersPage } from "@/view/pages/orders/orders-page"
 
 import { DiscountsPage } from "@/view/pages/discounts/discounts-page"
 import { ActiveDiscountsPage } from "@/view/pages/discounts/active-discounts-page"
@@ -39,7 +38,7 @@ import { CalculateDiscountPage } from "@/view/pages/discounts/calculate-discount
 
 import { AdsPage } from "@/view/pages/ads/ads-page"
 import { CreateAdPage } from "@/view/pages/ads/create-ad-page"
-
+import { OrdersPage } from "@/view/pages/orders/orders-page"
 import { OrderDetailsPage } from "@/view/pages/orders/order-details-page"
 
 import { SalesInvoicesPage } from "@/view/pages/sales-invoices/sales-invoices-page"
@@ -76,6 +75,7 @@ import { AuditLogDetailsPage } from "@/view/pages/audit-logs/audit-log-details-p
 // import { SalesPage } from "@/view/pages/sales/sales-page"
 // import { SalesDetailsPage } from "@/view/pages/sales/sales-details-page"
 import { NotificationsPage } from "@/view/pages/notifications/notifications-page"
+import { AdDetailsPage } from "@/view/pages/ads/ad-details-page"
 
 function CreateCategoryPage() {
   const navigate = useNavigate()
@@ -146,7 +146,7 @@ export function AppRoutes() {
         {/* Ads Module */}
         <Route path="ads" element={<AdsPage />} />
         <Route path="ads/create" element={<CreateAdPage />} />
-
+        <Route path="ads/:id" element={<AdDetailsPage />} />
         {/* Inventory */}
         <Route path="inventory" element={<InventoryPage />} />
 

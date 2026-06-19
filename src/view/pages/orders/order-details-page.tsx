@@ -12,33 +12,67 @@ export function OrderDetailsPage() {
   const orderId = Number(id)
   const { data: order, isLoading, isError } = useOrder(orderId)
 
+  if (!Number.isFinite(orderId) || orderId <= 0) {
+    return (
+      <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2"
+          onClick={() => navigate("/orders")}
+        >
+          <ArrowRight className="size-4" />
+          العودة للطلبات
+        </Button>
+
+        <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
+          <p className="text-sm text-red-500 dark:text-red-300">
+            رقم الطلب غير صالح.
+          </p>
+        </section>
+      </main>
+    )
+  }
+
   if (isLoading) {
     return (
-      <div className="flex min-h-[300px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-[var(--erp-accent)]" />
-      </div>
+      <main className="flex min-h-[300px] items-center justify-center text-[var(--erp-text)]">
+        <Loader2 className="size-8 animate-spin text-[var(--erp-brand-solid)]" />
+      </main>
     )
   }
 
   if (isError || !order) {
     return (
-      <section className="space-y-4" dir="rtl">
-        <Button variant="outline" onClick={() => navigate("/orders")}>
-          <ArrowRight className="h-4 w-4" />
+      <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+        <Button
+          type="button"
+          variant="outline"
+          className="gap-2"
+          onClick={() => navigate("/orders")}
+        >
+          <ArrowRight className="size-4" />
           العودة للطلبات
         </Button>
 
-        <div className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
-          <p className="text-sm text-red-500">لم يتم العثور على الطلب.</p>
-        </div>
-      </section>
+        <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
+          <p className="text-sm text-red-500 dark:text-red-300">
+            لم يتم العثور على الطلب.
+          </p>
+        </section>
+      </main>
     )
   }
 
   return (
-    <section className="space-y-6" dir="rtl">
-      <Button variant="outline" onClick={() => navigate("/orders")}>
-        <ArrowRight className="h-4 w-4" />
+    <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+      <Button
+        type="button"
+        variant="outline"
+        className="gap-2"
+        onClick={() => navigate("/orders")}
+      >
+        <ArrowRight className="size-4" />
         العودة للطلبات
       </Button>
 
@@ -48,6 +82,6 @@ export function OrderDetailsPage() {
         isLoading={false}
         onClose={() => navigate("/orders")}
       />
-    </section>
+    </main>
   )
 }

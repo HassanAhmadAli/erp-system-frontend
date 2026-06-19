@@ -6,6 +6,11 @@ import { CustomerInfoCard } from "@/view/components/customers/customer-info-card
 import { CustomerInfoRow } from "@/view/components/customers/customer-info-row"
 import { CustomerStatusBadge } from "@/view/components/customers/customer-status-badge"
 import { CustomerSummaryCard } from "@/view/components/customers/customer-summary-card"
+import {
+  formatCurrency,
+  formatId,
+  formatNumber,
+} from "@/utils/number-formatters"
 
 export function CustomerDetailsPage() {
   const { id } = useParams()
@@ -32,12 +37,14 @@ export function CustomerDetailsPage() {
   const isActive = customer.user.isActive
 
   return (
-    <div className="space-y-6 text-right">
+    <div className="space-y-6 text-right text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 sm:flex-row-reverse sm:items-center sm:justify-between">
         <div>
           <div className="flex flex-wrap items-center justify-end gap-3">
             <CustomerStatusBadge isActive={isActive} />
-            <h1 className="text-3xl font-bold">{customer.user.fullName}</h1>
+            <h1 className="text-3xl font-bold text-[var(--erp-text)]">
+              {customer.user.fullName}
+            </h1>
           </div>
 
           <p className="mt-2 text-[var(--erp-muted)]">
@@ -47,7 +54,7 @@ export function CustomerDetailsPage() {
 
         <Link
           to="/customers"
-          className="inline-flex items-center justify-center gap-2 rounded-2xl border bg-white px-4 py-2 text-sm transition hover:bg-slate-50"
+          className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
         >
           <ArrowRight className="size-4" />
           العودة إلى العملاء
@@ -64,14 +71,14 @@ export function CustomerDetailsPage() {
 
         <CustomerSummaryCard
           label="إجمالي الإنفاق"
-          value={`${customer.totalSpent} SP`}
+          value={formatCurrency(customer.totalSpent)}
           icon={<BadgeDollarSign className="size-5" />}
           tone="blue"
         />
 
         <CustomerSummaryCard
           label="نقاط الولاء"
-          value={customer.loyaltyPoints}
+          value={formatNumber(customer.loyaltyPoints)}
           icon={<Star className="size-5" />}
           tone="yellow"
         />
@@ -95,19 +102,27 @@ export function CustomerDetailsPage() {
         </CustomerInfoCard>
 
         <CustomerInfoCard title="معلومات الحساب">
-          <CustomerInfoRow label="رقم العميل" value={customer.id} />
-          <CustomerInfoRow label="رقم المستخدم" value={customer.user.id} />
+          <CustomerInfoRow label="رقم العميل" value={formatId(customer.id)} />
+          <CustomerInfoRow
+            label="رقم المستخدم"
+            value={formatId(customer.user.id)}
+          />
           <CustomerInfoRow
             label="إجمالي الإنفاق"
-            value={`${customer.totalSpent} SP`}
+            value={formatCurrency(customer.totalSpent)}
           />
-          <CustomerInfoRow label="نقاط الولاء" value={customer.loyaltyPoints} />
+          <CustomerInfoRow
+            label="نقاط الولاء"
+            value={formatNumber(customer.loyaltyPoints)}
+          />
         </CustomerInfoCard>
       </section>
 
-      <section className="rounded-3xl bg-white p-6 shadow-sm">
+      <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <div className="mb-3 flex items-center justify-end gap-2">
-          <h2 className="text-xl font-semibold">ملاحظات</h2>
+          <h2 className="text-xl font-semibold text-[var(--erp-text)]">
+            ملاحظات
+          </h2>
           <MapPin className="size-5 text-[var(--erp-brand-solid)]" />
         </div>
 
@@ -123,11 +138,11 @@ export function CustomerDetailsPage() {
 function ErrorMessage({ message }: { message: string }) {
   return (
     <div className="space-y-6 text-right">
-      <p className="text-red-500">{message}</p>
+      <p className="text-red-500 dark:text-red-300">{message}</p>
 
       <Link
         to="/customers"
-        className="inline-flex rounded-2xl border bg-white px-4 py-2 text-sm transition hover:bg-slate-50"
+        className="inline-flex rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
         العودة إلى العملاء
       </Link>

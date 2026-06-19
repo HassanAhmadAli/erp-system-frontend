@@ -1,17 +1,12 @@
-import { Megaphone, Plus, Trash2 } from "lucide-react"
+import { Eye, Megaphone, Plus, Trash2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { useAds, useDeleteAd } from "@/hooks/useAds"
+import { formatDateTime } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
-function formatDate(date: string) {
-  if (!date) return "-"
-
-  return new Date(date).toLocaleDateString("ar-SY", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  })
+function formatAdDate(date?: string | null) {
+  return formatDateTime(date)
 }
 
 export function AdsPage() {
@@ -28,7 +23,7 @@ export function AdsPage() {
   }
 
   return (
-    <main className="space-y-6" dir="rtl">
+    <main className="space-y-6 text-[var(--erp-text)]" dir="rtl">
       <section className="flex items-center justify-between gap-4">
         <div className="text-right">
           <h1 className="text-2xl font-bold text-[var(--erp-text)]">
@@ -46,13 +41,13 @@ export function AdsPage() {
         </Button>
       </section>
 
-      <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
+      <section className="rounded-[20px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         {isLoading ? (
           <p className="text-sm text-[var(--erp-muted)]">
             جاري تحميل الإعلانات...
           </p>
         ) : isError ? (
-          <p className="text-sm text-red-500">
+          <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
             حدث خطأ أثناء تحميل الإعلانات.
           </p>
         ) : ads.length === 0 ? (
@@ -68,17 +63,29 @@ export function AdsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[900px] text-right">
-              <thead>
-                <tr className="border-b border-[var(--erp-border)] text-sm text-[var(--erp-muted)]">
-                  <th className="py-3 font-medium">العنوان</th>
-                  <th className="py-3 font-medium">الوصف</th>
-                  <th className="py-3 font-medium">المكان</th>
-                  <th className="py-3 font-medium">الحالة</th>
-                  <th className="py-3 font-medium">تاريخ البداية</th>
-                  <th className="py-3 font-medium">تاريخ النهاية</th>
-                  <th className="py-3 font-medium">الإجراءات</th>
+          <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
+            <table className="w-full table-fixed text-right text-sm">
+              <colgroup>
+                <col className="w-[28%]" />
+                <col className="w-[14%]" />
+                <col className="w-[12%]" />
+                <col className="w-[18%]" />
+                <col className="w-[18%]" />
+                <col className="w-[10%]" />
+              </colgroup>
+
+              <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
+                <tr>
+                  <th className="px-3 py-3 font-medium">العنوان</th>
+                  <th className="px-3 py-3 font-medium">المكان</th>
+                  <th className="px-3 py-3 text-center font-medium">
+                    الحالة
+                  </th>
+                  <th className="px-3 py-3 font-medium">تاريخ البداية</th>
+                  <th className="px-3 py-3 font-medium">تاريخ النهاية</th>
+                  <th className="px-3 py-3 text-center font-medium">
+                    الإجراءات
+                  </th>
                 </tr>
               </thead>
 
@@ -86,51 +93,67 @@ export function AdsPage() {
                 {ads.map((ad) => (
                   <tr
                     key={ad.id}
-                    className="border-b border-[var(--erp-border)] last:border-0"
+                    className="border-b border-[var(--erp-border)] transition-colors last:border-0 hover:bg-[var(--erp-bg)]"
                   >
-                    <td className="py-4 font-medium text-[var(--erp-text)]">
+                    <td className="px-3 py-4 font-medium leading-6 text-[var(--erp-text)]">
                       {ad.title}
                     </td>
 
-                    <td className="max-w-[260px] truncate py-4 text-sm text-[var(--erp-muted)]">
-                      {ad.description || "-"}
-                    </td>
-
-                    <td className="py-4 text-sm text-[var(--erp-text)]">
+                    <td className="px-3 py-4 text-sm text-[var(--erp-text)]">
                       {ad.placement === "HOME"
                         ? "الصفحة الرئيسية"
                         : ad.placement}
                     </td>
 
-                    <td className="py-4">
-                      <span
-                        className={
-                          ad.isActive
-                            ? "rounded-full bg-green-100 px-3 py-1 text-xs font-medium text-green-700"
-                            : "rounded-full bg-red-100 px-3 py-1 text-xs font-medium text-red-700"
-                        }
-                      >
-                        {ad.isActive ? "نشط" : "غير نشط"}
-                      </span>
+                    <td className="px-3 py-4">
+                      <div className="flex justify-center">
+                        <span
+                          className={
+                            ad.isActive
+                              ? "rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                              : "rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-300"
+                          }
+                        >
+                          {ad.isActive ? "نشط" : "غير نشط"}
+                        </span>
+                      </div>
                     </td>
 
-                    <td className="py-4 text-sm text-[var(--erp-muted)]">
-                      {formatDate(ad.startDate)}
+                    <td
+                      dir="ltr"
+                      className="px-3 py-4 text-right text-sm tabular-nums text-[var(--erp-muted)]"
+                    >
+                      {formatAdDate(ad.startDate)}
                     </td>
 
-                    <td className="py-4 text-sm text-[var(--erp-muted)]">
-                      {formatDate(ad.endDate)}
+                    <td
+                      dir="ltr"
+                      className="px-3 py-4 text-right text-sm tabular-nums text-[var(--erp-muted)]"
+                    >
+                      {formatAdDate(ad.endDate)}
                     </td>
 
-                    <td className="py-4">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => handleDelete(ad.id)}
-                        disabled={deleteAdMutation.isPending}
-                      >
-                        <Trash2 className="size-4 text-red-500" />
-                      </Button>
+                    <td className="px-3 py-4">
+                      <div className="flex flex-wrap justify-center gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => navigate(`/ads/${ad.id}`)}
+                        >
+                          <Eye className="size-3.5" />
+                          عرض
+                        </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDelete(ad.id)}
+                          disabled={deleteAdMutation.isPending}
+                        >
+                          <Trash2 className="size-4 text-red-500" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}

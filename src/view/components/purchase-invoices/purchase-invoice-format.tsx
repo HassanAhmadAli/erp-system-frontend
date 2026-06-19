@@ -3,6 +3,13 @@ import type {
   PurchaseInvoice,
   PurchaseInvoiceItem,
 } from "@/services/purchase-invoices-service"
+import {
+  formatCurrency,
+  formatDateTime,
+  formatId,
+  formatNumber as formatGlobalNumber,
+  toEnglishDigits,
+} from "@/utils/number-formatters"
 
 export const purchaseInvoiceStatusLabels: Record<string, string> = {
   PENDING: "قيد الانتظار",
@@ -12,43 +19,35 @@ export const purchaseInvoiceStatusLabels: Record<string, string> = {
 }
 
 const purchaseInvoiceStatusStyles: Record<string, string> = {
-  PENDING: "bg-amber-50 text-amber-700 ring-amber-200",
-  RECEIVED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  COMPLETED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
-  CANCELLED: "bg-rose-50 text-rose-700 ring-rose-200",
+  PENDING:
+    "bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:bg-amber-500/15 dark:text-amber-300",
+  RECEIVED:
+    "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300",
+  COMPLETED:
+    "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300",
+  CANCELLED:
+    "bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:bg-rose-500/15 dark:text-rose-300",
 }
 
 export function formatNumber(value?: string | number | null) {
   if (value === undefined || value === null || value === "") return "—"
 
-  const numberValue = Number(value)
-
-  if (Number.isNaN(numberValue)) {
-    return String(value)
-  }
-
-  return numberValue.toLocaleString("en-US")
+  return formatGlobalNumber(value)
 }
 
 export function formatMoney(value?: string | number | null) {
   if (value === undefined || value === null || value === "") return "—"
 
-  return `${formatNumber(value)} SYP`
+  return formatCurrency(value)
 }
 
-export function formatDate(value?: string) {
-  if (!value) return "—"
-
-  const date = new Date(value)
-
-  if (Number.isNaN(date.getTime())) {
-    return "—"
-  }
-
-  return new Intl.DateTimeFormat("ar-SY-u-nu-latn", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date)
+/**
+ * Uses the global formatter.
+ * Because formatDateTime does not pass a fixed timeZone,
+ * the browser automatically displays the time using the local PC timezone.
+ */
+export function formatDate(value?: string | Date | null) {
+  return formatDateTime(value)
 }
 
 export function getTodayDateTimeInputValue() {
@@ -72,7 +71,7 @@ export function getSupplierName(invoice: PurchaseInvoice) {
     invoice.supplier?.companyName ||
     invoice.supplier?.user?.fullName ||
     invoice.supplier?.user?.email ||
-    `مورد #${invoice.supplierId ?? "—"}`
+    `مورد #${formatId(invoice.supplierId ?? "—")}`
   )
 }
 
@@ -102,20 +101,20 @@ export function getItemTotal(item: PurchaseInvoiceItem) {
 export function NumberText({ value }: { value: string | number }) {
   return (
     <span dir="ltr" className="inline-block tabular-nums">
-      {value}
+      {toEnglishDigits(value)}
     </span>
   )
 }
 
 export function PurchaseInvoiceStatusBadge({ status }: { status?: string }) {
-  const safeStatus = status ?? "PENDING"
+  const safeStatus = String(status ?? "PENDING").toUpperCase()
 
   return (
     <span
       className={cn(
         "inline-flex rounded-full px-3 py-1 text-xs font-semibold ring-1",
         purchaseInvoiceStatusStyles[safeStatus] ??
-          "bg-slate-50 text-slate-700 ring-slate-200"
+          "bg-slate-500/10 text-slate-700 ring-slate-500/20 dark:text-slate-300"
       )}
     >
       {purchaseInvoiceStatusLabels[safeStatus] ?? safeStatus}

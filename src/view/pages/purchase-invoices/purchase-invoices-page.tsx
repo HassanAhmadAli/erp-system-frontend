@@ -48,7 +48,7 @@ export function PurchaseInvoicesPage() {
           <button
             type="button"
             onClick={() => setIsCreateOpen((currentValue) => !currentValue)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90"
+           className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-[var(--erp-brand-solid-foreground)] transition hover:opacity-90"
           >
             {isCreateOpen ? (
               <X className="size-4" />

@@ -1,3 +1,4 @@
+import { formatDateTime } from "@/utils/number-formatters"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowRight,
@@ -104,15 +105,9 @@ function formatMoney(value?: string | number | null) {
   return `${formatNumber(value)} SYP`
 }
 
-function formatDate(value?: string) {
-  if (!value) return "—"
-
-  return new Intl.DateTimeFormat("ar-SY-u-nu-latn", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value))
+function formatDate(value?: string | null) {
+  return formatDateTime(value)
 }
-
 function getSupplierName(invoice: PurchaseInvoice) {
   return (
     invoice.supplier?.name ||

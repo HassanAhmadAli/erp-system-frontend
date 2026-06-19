@@ -1,10 +1,10 @@
 export function CategoriesSkeleton() {
   return (
     <div className="space-y-3">
-      {Array.from({ length: 15 }).map((_, i) => (
+      {Array.from({ length: 8 }).map((_, index) => (
         <div
-          key={i}
-          className="h-16 animate-pulse rounded-2xl bg-[var(--erp-card)]"
+          key={index}
+          className="h-16 animate-pulse rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)]"
         />
       ))}
     </div>

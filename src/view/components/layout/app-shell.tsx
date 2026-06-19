@@ -33,7 +33,7 @@ export function AppShell() {
       <div className="flex min-h-0 flex-1">
         <AppSidebar />
 
-        <main className="erp-scrollbar min-h-0 flex-1 overflow-y-auto px-5 py-8 sm:px-10 lg:py-10">
+        <main className="erp-scrollbar min-h-0 flex-1 overflow-y-auto bg-[var(--erp-bg)] px-5 py-8 sm:px-10 lg:py-10">
           <Outlet />
         </main>
       </div>

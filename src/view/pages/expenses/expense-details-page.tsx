@@ -1,3 +1,4 @@
+import type { ReactNode } from "react"
 import {
   ArrowRight,
   Calendar,
@@ -12,25 +13,37 @@ import { Link, useParams } from "react-router-dom"
 
 import { useExpenseById } from "@/hooks/Expenses/useExpenses"
 import { formatExpenseAmount } from "@/services/expense-service"
+import { formatId, toEnglishDigits } from "@/utils/number-formatters"
 import { CustomerInfoCard } from "@/view/components/customers/customer-info-card"
 import { CustomerInfoRow } from "@/view/components/customers/customer-info-row"
 import { Button } from "@/view/components/ui/button"
 
 function formatDate(date: string) {
-  return new Date(date).toLocaleDateString("ar-SY", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  })
+  return toEnglishDigits(
+    new Date(date).toLocaleDateString("en-GB", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    })
+  )
 }
 
 function formatDateTime(date?: string) {
   if (!date) return "—"
-  return new Date(date).toLocaleString("ar-SY")
+
+  return toEnglishDigits(
+    new Date(date).toLocaleString("en-GB", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    })
+  )
 }
 
 function formatAmount(amount: number | string) {
-  return formatExpenseAmount(amount)
+  return `${toEnglishDigits(formatExpenseAmount(amount))} SYP`
 }
 
 export function ExpenseDetailsPage() {
@@ -45,7 +58,7 @@ export function ExpenseDetailsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-6 text-right" dir="rtl">
+      <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
         <p className="text-[var(--erp-muted)]">جاري تحميل بيانات المصروف...</p>
       </div>
     )
@@ -57,13 +70,16 @@ export function ExpenseDetailsPage() {
 
   const recordedByName =
     expense.recordedBy?.fullName ??
-    (expense.recordedById ? `#${expense.recordedById}` : "—")
+    (expense.recordedById ? `#${formatId(expense.recordedById)}` : "—")
 
   return (
-    <div className="space-y-6 p-6 text-right" dir="rtl">
-      <header className="flex flex-col gap-4 sm:flex-row-reverse sm:items-center sm:justify-between">
+    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+      <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{expense.description}</h1>
+          <h1 className="text-3xl font-bold text-[var(--erp-text)]">
+            {expense.description}
+          </h1>
+
           <p className="mt-2 text-[var(--erp-muted)]">
             {expense.category} — {formatDate(expense.expenseDate)}
           </p>
@@ -76,9 +92,10 @@ export function ExpenseDetailsPage() {
               تعديل المصروف
             </Button>
           </Link>
+
           <Link
             to="/expenses"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl border bg-white px-4 py-2 text-sm transition hover:bg-slate-50"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             <ArrowRight className="size-4" />
             العودة إلى المصروفات
@@ -92,14 +109,16 @@ export function ExpenseDetailsPage() {
           value={formatAmount(expense.amount)}
           icon={<Wallet className="size-5" />}
         />
+
         <SummaryCard
           label="الفئة"
           value={expense.category}
           icon={<FolderOpen className="size-5" />}
         />
+
         <SummaryCard
           label="رقم المصروف"
-          value={expense.id}
+          value={formatId(expense.id)}
           icon={<Hash className="size-5" />}
         />
       </section>
@@ -116,7 +135,7 @@ export function ExpenseDetailsPage() {
             label="تاريخ المصروف"
             value={formatDate(expense.expenseDate)}
           />
-          <CustomerInfoRow label="رقم المصروف" value={expense.id} />
+          <CustomerInfoRow label="رقم المصروف" value={formatId(expense.id)} />
         </CustomerInfoCard>
 
         <CustomerInfoCard title="معلومات التسجيل">
@@ -136,32 +155,40 @@ export function ExpenseDetailsPage() {
         </CustomerInfoCard>
       </section>
 
-      <section className="rounded-3xl bg-white p-6 shadow-sm">
+      <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <div className="mb-4 flex items-center justify-end gap-2">
-          <h2 className="text-xl font-semibold">ملخص سريع</h2>
-          <Receipt className="size-5 text-[var(--erp-brand)]" />
+          <h2 className="text-xl font-semibold text-[var(--erp-text)]">
+            ملخص سريع
+          </h2>
+
+          <Receipt className="size-5 text-[var(--erp-brand-solid)]" />
         </div>
+
         <div className="grid gap-4 sm:grid-cols-2">
           <InfoRow
             label="الوصف"
             value={expense.description}
             icon={<Receipt className="size-4" />}
           />
+
           <InfoRow
             label="المبلغ"
             value={formatAmount(expense.amount)}
             icon={<Wallet className="size-4" />}
           />
+
           <InfoRow
             label="الفئة"
             value={expense.category}
             icon={<FolderOpen className="size-4" />}
           />
+
           <InfoRow
             label="التاريخ"
             value={formatDate(expense.expenseDate)}
             icon={<Calendar className="size-4" />}
           />
+
           {expense.recordedBy && (
             <InfoRow
               label="المسجّل"
@@ -182,15 +209,19 @@ function SummaryCard({
 }: {
   label: string
   value: string | number
-  icon: React.ReactNode
+  icon: ReactNode
 }) {
   return (
-    <div className="rounded-3xl bg-white p-5 shadow-sm">
+    <div className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <div className="flex items-center justify-between">
-        <span className="text-[var(--erp-brand)]">{icon}</span>
+        <span className="rounded-2xl bg-[var(--erp-nav-active-bg)] p-3 text-[var(--erp-brand-solid)]">
+          {icon}
+        </span>
+
         <p className="text-sm text-[var(--erp-muted)]">{label}</p>
       </div>
-      <p className="mt-3 text-2xl font-bold">{value}</p>
+
+      <p className="mt-3 text-2xl font-bold text-[var(--erp-text)]">{value}</p>
     </div>
   )
 }
@@ -202,26 +233,28 @@ function InfoRow({
 }: {
   label: string
   value: string | number
-  icon: React.ReactNode
+  icon: ReactNode
 }) {
   return (
-    <div className="rounded-2xl border p-4">
+    <div className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4 text-[var(--erp-text)]">
       <div className="mb-1 flex items-center justify-end gap-2 text-sm text-[var(--erp-muted)]">
         <span>{label}</span>
         {icon}
       </div>
-      <p className="font-medium">{value}</p>
+
+      <p className="font-medium text-[var(--erp-text)]">{value}</p>
     </div>
   )
 }
 
 function ErrorMessage({ message }: { message: string }) {
   return (
-    <div className="space-y-6 p-6 text-right" dir="rtl">
-      <p className="text-red-500">{message}</p>
+    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+      <p className="text-red-500 dark:text-red-300">{message}</p>
+
       <Link
         to="/expenses"
-        className="inline-flex items-center gap-2 rounded-2xl border bg-white px-4 py-2 text-sm transition hover:bg-slate-50"
+        className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
         <ArrowRight className="size-4" />
         العودة إلى المصروفات
