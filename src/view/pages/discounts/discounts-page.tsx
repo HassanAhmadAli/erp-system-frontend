@@ -141,13 +141,13 @@ export function DiscountsPage() {
             placeholder="بحث باسم الخصم..."
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
           />
 
           <select
             value={typeFilter}
             onChange={(event) => setTypeFilter(event.target.value)}
-            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none transition focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
           >
             <option value="">كل الأنواع</option>
             <option value="PERCENTAGE">نسبة مئوية</option>
@@ -157,7 +157,7 @@ export function DiscountsPage() {
           <select
             value={scopeFilter}
             onChange={(event) => setScopeFilter(event.target.value)}
-            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none transition focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
           >
             <option value="">كل النطاقات</option>
             <option value="GLOBAL">عام</option>
@@ -262,7 +262,9 @@ export function DiscountsPage() {
                         </Link>
 
                         <Button
-                          variant={discount.isActive ? "destructive" : "success"}
+                          variant={
+                            discount.isActive ? "destructive" : "success"
+                          }
                           size="xs"
                           onClick={() =>
                             handleToggle(discount.id, discount.isActive)

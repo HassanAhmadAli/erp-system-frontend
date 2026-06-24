@@ -3,7 +3,7 @@ import { apiRequest } from "@/api/client"
 export type OrderStatus =
   | "PENDING"
   | "PREPARING"
-  | "READY"
+  | "OUT_FOR_DELIVERY"
   | "DELIVERED"
   | "CANCELLED"
 

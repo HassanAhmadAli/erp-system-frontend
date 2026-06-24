@@ -14,23 +14,23 @@ type OrdersTableProps = {
 const statusLabels: Record<OrderStatus, string> = {
   PENDING: "قيد الانتظار",
   PREPARING: "قيد التحضير",
-  READY: "جاهز",
+  OUT_FOR_DELIVERY: "قيد التوصيل",
   DELIVERED: "تم التسليم",
   CANCELLED: "ملغي",
 }
 
 const nextStatusByStatus: Record<OrderStatus, OrderStatus | null> = {
   PENDING: "PREPARING",
-  PREPARING: "READY",
-  READY: "DELIVERED",
+  PREPARING: "OUT_FOR_DELIVERY",
+  OUT_FOR_DELIVERY: "DELIVERED",
   DELIVERED: null,
   CANCELLED: null,
 }
 
 const proceedButtonLabels: Record<OrderStatus, string> = {
   PENDING: "بدء التحضير",
-  PREPARING: "تعيين كجاهز",
-  READY: "تأكيد التسليم",
+  PREPARING: "إرسال للتوصيل",
+  OUT_FOR_DELIVERY: "تأكيد التسليم",
   DELIVERED: "متابعة",
   CANCELLED: "متابعة",
 }

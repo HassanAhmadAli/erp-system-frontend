@@ -9,7 +9,11 @@ import {
   type DiscountScope,
   type DiscountType,
 } from "@/services/discount-service"
-import { formatId, formatNumber, toEnglishDigits } from "@/utils/number-formatters"
+import {
+  formatId,
+  formatNumber,
+  toEnglishDigits,
+} from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
 function getDiscountTypeLabel(type: DiscountType) {
@@ -159,8 +163,14 @@ export function DiscountDetailsPage() {
                 : "غير محدود"
             }
           />
-          <InfoRow label="تاريخ البداية" value={formatLocalDate(data.startDate)} />
-          <InfoRow label="تاريخ النهاية" value={formatLocalDate(data.endDate)} />
+          <InfoRow
+            label="تاريخ البداية"
+            value={formatLocalDate(data.startDate)}
+          />
+          <InfoRow
+            label="تاريخ النهاية"
+            value={formatLocalDate(data.endDate)}
+          />
         </div>
 
         <div className="mt-6 flex flex-wrap justify-end gap-2 border-t border-[var(--erp-border)] pt-4">

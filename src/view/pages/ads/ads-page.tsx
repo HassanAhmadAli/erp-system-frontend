@@ -78,9 +78,7 @@ export function AdsPage() {
                 <tr>
                   <th className="px-3 py-3 font-medium">العنوان</th>
                   <th className="px-3 py-3 font-medium">المكان</th>
-                  <th className="px-3 py-3 text-center font-medium">
-                    الحالة
-                  </th>
+                  <th className="px-3 py-3 text-center font-medium">الحالة</th>
                   <th className="px-3 py-3 font-medium">تاريخ البداية</th>
                   <th className="px-3 py-3 font-medium">تاريخ النهاية</th>
                   <th className="px-3 py-3 text-center font-medium">
@@ -95,7 +93,7 @@ export function AdsPage() {
                     key={ad.id}
                     className="border-b border-[var(--erp-border)] transition-colors last:border-0 hover:bg-[var(--erp-bg)]"
                   >
-                    <td className="px-3 py-4 font-medium leading-6 text-[var(--erp-text)]">
+                    <td className="px-3 py-4 leading-6 font-medium text-[var(--erp-text)]">
                       {ad.title}
                     </td>
 
@@ -121,14 +119,14 @@ export function AdsPage() {
 
                     <td
                       dir="ltr"
-                      className="px-3 py-4 text-right text-sm tabular-nums text-[var(--erp-muted)]"
+                      className="px-3 py-4 text-right text-sm text-[var(--erp-muted)] tabular-nums"
                     >
                       {formatAdDate(ad.startDate)}
                     </td>
 
                     <td
                       dir="ltr"
-                      className="px-3 py-4 text-right text-sm tabular-nums text-[var(--erp-muted)]"
+                      className="px-3 py-4 text-right text-sm text-[var(--erp-muted)] tabular-nums"
                     >
                       {formatAdDate(ad.endDate)}
                     </td>

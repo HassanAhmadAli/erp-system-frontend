@@ -10,9 +10,7 @@ export function OrdersPage() {
     <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
       <header>
         <div className="flex items-center justify-end gap-2">
-          <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-            الطلبات
-          </h1>
+          <h1 className="text-3xl font-bold text-[var(--erp-text)]">الطلبات</h1>
 
           <ClipboardList className="size-7 text-[var(--erp-brand-solid)]" />
         </div>

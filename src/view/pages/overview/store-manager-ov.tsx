@@ -8,9 +8,7 @@ export function StoreManagerOverviewPage() {
   return (
     <div className="space-y-6">
       <header className="text-right">
-        <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-          نظرة عامة
-        </h1>
+        <h1 className="text-3xl font-bold text-[var(--erp-text)]">نظرة عامة</h1>
         <p className="mt-1 text-[var(--erp-muted)]">
           ملخص لأداء المتجر والأنشطة الرئيسية
         </p>

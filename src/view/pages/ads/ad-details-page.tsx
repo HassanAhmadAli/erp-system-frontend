@@ -221,7 +221,7 @@ export function AdDetailsPage() {
                 target="_blank"
                 rel="noreferrer"
                 dir="ltr"
-                className="block break-all rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4 text-left text-sm text-[var(--erp-brand-solid)] hover:underline"
+                className="block rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4 text-left text-sm break-all text-[var(--erp-brand-solid)] hover:underline"
               >
                 {ad.linkUrl}
               </a>
@@ -287,7 +287,7 @@ function InfoRow({
         dir={ltr ? "ltr" : "rtl"}
         className={
           multiline
-            ? "whitespace-pre-wrap leading-7 text-[var(--erp-text)]"
+            ? "leading-7 whitespace-pre-wrap text-[var(--erp-text)]"
             : "font-medium text-[var(--erp-text)]"
         }
       >
