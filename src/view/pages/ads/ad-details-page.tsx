@@ -13,6 +13,8 @@ import {
 import { Link, useNavigate, useParams } from "react-router-dom"
 
 import { useAdById, useDeleteAd } from "@/hooks/useAds"
+import { PERMISSIONS } from "@/auth/permissions"
+import { usePermissions } from "@/hooks/usePermissions"
 import { formatDateTime, formatId } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
@@ -28,6 +30,8 @@ export function AdDetailsPage() {
   const navigate = useNavigate()
 
   const { data: ad, isLoading, isError } = useAdById(adId)
+  const { can } = usePermissions()
+  const canManage = can(PERMISSIONS.ADS_MANAGE)
   const deleteAdMutation = useDeleteAd()
 
   function handleDelete() {
@@ -86,16 +90,18 @@ export function AdDetailsPage() {
             العودة إلى الإعلانات
           </Link>
 
-          <Button
-            type="button"
-            variant="destructive"
-            className="gap-2"
-            disabled={deleteAdMutation.isPending}
-            onClick={handleDelete}
-          >
-            <Trash2 className="size-4" />
-            حذف الإعلان
-          </Button>
+          {canManage && (
+            <Button
+              type="button"
+              variant="destructive"
+              className="gap-2"
+              disabled={deleteAdMutation.isPending}
+              onClick={handleDelete}
+            >
+              <Trash2 className="size-4" />
+              حذف الإعلان
+            </Button>
+          )}
         </div>
       </header>
 

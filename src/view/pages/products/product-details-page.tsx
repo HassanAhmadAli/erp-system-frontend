@@ -1,9 +1,13 @@
 import { useEffect, useMemo, useState } from "react"
 import { useNavigate, useParams } from "react-router-dom"
 
+import { PERMISSIONS } from "@/auth/permissions"
+import { Can } from "@/view/components/auth/can"
+
 import { StatusBadge } from "@/view/components/common/status-badge"
 import { ProductPhotosPanel } from "@/view/components/products/ProductPhotosPanel"
 import { useProductById } from "@/hooks/Products/useProductById"
+import { usePermissions } from "@/hooks/usePermissions"
 import { useUpdateProductStock } from "@/hooks/Products/useUpdateProductStock"
 
 import type { Product } from "@/services/product-service"
@@ -23,6 +27,8 @@ export function ProductDetailsPage() {
   const productId = id ? Number(id) : null
 
   const navigate = useNavigate()
+  const { can } = usePermissions()
+  const canManage = can(PERMISSIONS.PRODUCT_MANAGE)
   const { data, isLoading, error } = useProductById(productId)
   const stockMutation = useUpdateProductStock()
 
@@ -90,20 +96,22 @@ export function ProductDetailsPage() {
           >
             رجوع
           </button>
-          <button
-            className="rounded bg-blue-600 px-3 py-1 text-white"
-            onClick={() => navigate(`/products/${data.id}/edit`)}
-            type="button"
-          >
-            تعديل
-          </button>
-          <button
-            className="rounded bg-indigo-600 px-3 py-1 text-white"
-            onClick={() => navigate(`/products/${data.id}/photos`)}
-            type="button"
-          >
-            صفحة الصور
-          </button>
+          <Can permission={PERMISSIONS.PRODUCT_MANAGE}>
+            <button
+              className="rounded bg-blue-600 px-3 py-1 text-white"
+              onClick={() => navigate(`/products/${data.id}/edit`)}
+              type="button"
+            >
+              تعديل
+            </button>
+            <button
+              className="rounded bg-indigo-600 px-3 py-1 text-white"
+              onClick={() => navigate(`/products/${data.id}/photos`)}
+              type="button"
+            >
+              صفحة الصور
+            </button>
+          </Can>
         </div>
       </div>
 
@@ -212,44 +220,46 @@ export function ProductDetailsPage() {
         </article>
       </section>
 
-      <form onSubmit={handleUpdateStock} className="rounded-2xl border p-6">
-        <h3 className="mb-3 text-xl font-bold">تحديث مخزون المنتج</h3>
-        {message && (
-          <div
-            className={`mb-4 rounded-xl p-3 text-center text-sm font-medium ${
-              message.type === "success"
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-            role="alert"
-          >
-            {message.text}
-          </div>
-        )}
+      {canManage && (
+        <form onSubmit={handleUpdateStock} className="rounded-2xl border p-6">
+          <h3 className="mb-3 text-xl font-bold">تحديث مخزون المنتج</h3>
+          {message && (
+            <div
+              className={`mb-4 rounded-xl p-3 text-center text-sm font-medium ${
+                message.type === "success"
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+              role="alert"
+            >
+              {message.text}
+            </div>
+          )}
 
-        <label className="block space-y-2">
-          <span className="block text-right text-sm text-[var(--erp-muted)]">
-            الكمية في المخزون
-          </span>
-          <input
-            type="number"
-            className="w-full rounded-xl border p-3"
-            value={quantityInStock}
-            onChange={(e) => setQuantityInStock(e.target.value)}
+          <label className="block space-y-2">
+            <span className="block text-right text-sm text-[var(--erp-muted)]">
+              الكمية في المخزون
+            </span>
+            <input
+              type="number"
+              className="w-full rounded-xl border p-3"
+              value={quantityInStock}
+              onChange={(e) => setQuantityInStock(e.target.value)}
+              disabled={stockMutation.isPending}
+            />
+          </label>
+
+          <button
+            type="submit"
             disabled={stockMutation.isPending}
-          />
-        </label>
+            className="mt-4 w-full rounded-xl bg-green-600 px-5 py-3 text-white disabled:opacity-60"
+          >
+            {stockMutation.isPending ? "جاري التحديث..." : "حفظ المخزون"}
+          </button>
+        </form>
+      )}
 
-        <button
-          type="submit"
-          disabled={stockMutation.isPending}
-          className="mt-4 w-full rounded-xl bg-green-600 px-5 py-3 text-white disabled:opacity-60"
-        >
-          {stockMutation.isPending ? "جاري التحديث..." : "حفظ المخزون"}
-        </button>
-      </form>
-
-      <ProductPhotosPanel productId={data.id} />
+      {canManage && <ProductPhotosPanel productId={data.id} />}
     </div>
   )
 }

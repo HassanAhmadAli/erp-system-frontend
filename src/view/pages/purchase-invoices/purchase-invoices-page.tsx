@@ -2,6 +2,8 @@ import { useMemo, useState } from "react"
 import { Plus, ReceiptText, RefreshCw, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { PERMISSIONS } from "@/auth/permissions"
+import { usePermissions } from "@/hooks/usePermissions"
 import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices"
 import { normalizePurchaseInvoices } from "@/services/purchase-invoices-service"
 import { CreatePurchaseInvoiceForm } from "@/view/components/purchase-invoices/create-purchase-invoice-form"
@@ -13,6 +15,8 @@ import {
 
 export function PurchaseInvoicesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const { can } = usePermissions()
+  const canCreate = can(PERMISSIONS.PURCHASES_CREATE)
 
   const { data, isLoading, isError, refetch, isFetching } =
     usePurchaseInvoices()
@@ -45,22 +49,24 @@ export function PurchaseInvoicesPage() {
             تحديث
           </button>
 
-          <button
-            type="button"
-            onClick={() => setIsCreateOpen((currentValue) => !currentValue)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-[var(--erp-brand-solid-foreground)] transition hover:opacity-90"
-          >
-            {isCreateOpen ? (
-              <X className="size-4" />
-            ) : (
-              <Plus className="size-4" />
-            )}
-            {isCreateOpen ? "إغلاق النموذج" : "إنشاء فاتورة"}
-          </button>
+          {canCreate && (
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen((currentValue) => !currentValue)}
+              className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-[var(--erp-brand-solid-foreground)] transition hover:opacity-90"
+            >
+              {isCreateOpen ? (
+                <X className="size-4" />
+              ) : (
+                <Plus className="size-4" />
+              )}
+              {isCreateOpen ? "إغلاق النموذج" : "إنشاء فاتورة"}
+            </button>
+          )}
         </div>
       </section>
 
-      {isCreateOpen && (
+      {canCreate && isCreateOpen && (
         <CreatePurchaseInvoiceForm onCreated={() => setIsCreateOpen(false)} />
       )}
 

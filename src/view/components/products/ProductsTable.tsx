@@ -4,6 +4,8 @@ import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
 import { StatusBadge } from "@/view/components/common/status-badge"
 
 import { normalizeProducts, type Product } from "@/services/product-service"
+import { PERMISSIONS } from "@/auth/permissions"
+import { Can } from "@/view/components/auth/can"
 import { useDeleteProduct } from "@/hooks/Products/useDeleteProduct"
 import { useProducts } from "@/hooks/Products/useProducts"
 import { useLowStockProducts } from "@/hooks/Products/useLowStockProducts"
@@ -238,18 +240,20 @@ export function ProductsTable() {
                       >
                         التفاصيل
                       </button>
-                      <button
-                        onClick={() => navigate(`/products/${p.id}/edit`)}
-                        className="rounded bg-blue-600 px-3 py-1 text-white"
-                      >
-                        تعديل
-                      </button>
-                      <button
-                        onClick={() => setDeleteId(p.id)}
-                        className="rounded bg-red-600 px-3 py-1 text-white"
-                      >
-                        حذف
-                      </button>
+                      <Can permission={PERMISSIONS.PRODUCT_MANAGE}>
+                        <button
+                          onClick={() => navigate(`/products/${p.id}/edit`)}
+                          className="rounded bg-blue-600 px-3 py-1 text-white"
+                        >
+                          تعديل
+                        </button>
+                        <button
+                          onClick={() => setDeleteId(p.id)}
+                          className="rounded bg-red-600 px-3 py-1 text-white"
+                        >
+                          حذف
+                        </button>
+                      </Can>
                     </div>
                   </td>
                 </tr>

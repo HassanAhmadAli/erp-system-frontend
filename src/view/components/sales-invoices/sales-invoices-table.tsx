@@ -2,6 +2,7 @@ import { CheckCircle2, Eye, Loader2, Undo2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
+import { usePermissions } from "@/hooks/usePermissions"
 import { useUpdateSalesInvoiceStatus } from "@/hooks/useSalesInvoices"
 import type {
   SalesInvoice,
@@ -29,6 +30,7 @@ export function SalesInvoicesTable({
   isError,
 }: SalesInvoicesTableProps) {
   const navigate = useNavigate()
+  const { canManageSalesInvoice } = usePermissions()
   const updateStatusMutation = useUpdateSalesInvoiceStatus()
 
   function handleStatusUpdate(id: number, status: SalesInvoiceStatus) {
@@ -86,6 +88,7 @@ export function SalesInvoicesTable({
 
               const canComplete = currentStatus === "PENDING"
               const canReturn = currentStatus === "COMPLETED"
+              const canUpdateStatus = canManageSalesInvoice(invoice.cashierId)
 
               return (
                 <tr key={invoice.id}>
@@ -114,7 +117,7 @@ export function SalesInvoicesTable({
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    {canComplete && (
+                    {canUpdateStatus && canComplete && (
                       <button
                         type="button"
                         disabled={updateStatusMutation.isPending}
@@ -139,7 +142,7 @@ export function SalesInvoicesTable({
                       </button>
                     )}
 
-                    {canReturn && (
+                    {canUpdateStatus && canReturn && (
                       <button
                         type="button"
                         disabled={updateStatusMutation.isPending}
@@ -164,7 +167,13 @@ export function SalesInvoicesTable({
                       </button>
                     )}
 
-                    {!canComplete && !canReturn && (
+                    {!canUpdateStatus && (
+                      <span className="text-xs text-[var(--erp-muted)]">
+                        لا تملك صلاحية التحديث
+                      </span>
+                    )}
+
+                    {canUpdateStatus && !canComplete && !canReturn && (
                       <span className="text-xs text-[var(--erp-muted)]">
                         لا يوجد انتقال متاح
                       </span>

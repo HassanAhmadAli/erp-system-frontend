@@ -4,6 +4,8 @@ import { useMemo, useState } from "react"
 import { FolderOpen, Plus, Receipt, Wallet } from "lucide-react"
 
 import { useExpenses } from "@/hooks/Expenses/useExpenses"
+import { PERMISSIONS } from "@/auth/permissions"
+import { Can } from "@/view/components/auth/can"
 import {
   formatExpenseAmount,
   sumExpenseAmounts,
@@ -54,12 +56,14 @@ export function ExpensesPage() {
           </p>
         </div>
 
-        <Link to="/expenses/create">
-          <Button className="gap-2">
-            <Plus className="size-4" />
-            إضافة مصروف
-          </Button>
-        </Link>
+        <Can permission={PERMISSIONS.EXPENSES_MANAGE}>
+          <Link to="/expenses/create">
+            <Button className="gap-2">
+              <Plus className="size-4" />
+              إضافة مصروف
+            </Button>
+          </Link>
+        </Can>
       </header>
 
       {!isLoading && !isError && (

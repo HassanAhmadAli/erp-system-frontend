@@ -2,6 +2,8 @@ import { Link } from "react-router-dom"
 
 import { useDeleteSupplier } from "@/hooks/Suppliers/useDeleteSupplier"
 import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
+import { PERMISSIONS } from "@/auth/permissions"
+import { Can } from "@/view/components/auth/can"
 import { formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
@@ -49,12 +51,14 @@ export function SuppliersTable() {
             لا يوجد موردون حالياً.
           </p>
 
-          <Link
-            to="/suppliers/create"
-            className="mt-4 inline-flex rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
-          >
-            إضافة أول مورد
-          </Link>
+          <Can permission={PERMISSIONS.SUPPLIER_MANAGE}>
+            <Link
+              to="/suppliers/create"
+              className="mt-4 inline-flex rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
+            >
+              إضافة أول مورد
+            </Link>
+          </Can>
         </div>
       )}
 
@@ -111,20 +115,22 @@ export function SuppliersTable() {
                         </Button>
                       </Link>
 
-                      <Link to={`/suppliers/${supplier.id}/edit`}>
-                        <Button variant="outline" size="xs">
-                          تعديل
-                        </Button>
-                      </Link>
+                      <Can permission={PERMISSIONS.SUPPLIER_MANAGE}>
+                        <Link to={`/suppliers/${supplier.id}/edit`}>
+                          <Button variant="outline" size="xs">
+                            تعديل
+                          </Button>
+                        </Link>
 
-                      <Button
-                        variant="destructive"
-                        size="xs"
-                        onClick={() => handleDeleteSupplier(supplier.id)}
-                        disabled={deleteMutation.isPending}
-                      >
-                        حذف
-                      </Button>
+                        <Button
+                          variant="destructive"
+                          size="xs"
+                          onClick={() => handleDeleteSupplier(supplier.id)}
+                          disabled={deleteMutation.isPending}
+                        >
+                          حذف
+                        </Button>
+                      </Can>
                     </div>
                   </td>
                 </tr>

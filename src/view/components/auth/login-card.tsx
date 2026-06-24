@@ -1,11 +1,14 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useState } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 
+import { getDefaultRouteForRole } from "@/auth/permissions"
 import {
   AUTH_USER_TYPES,
   type AuthUserType,
   loginUser,
 } from "@/services/auth-service"
+import { getCurrentUser } from "@/services/user-service"
 import { saveTokens } from "@/utils/auth-storage"
 
 const USER_TYPE_LABELS: Record<AuthUserType, string> = {
@@ -23,6 +26,7 @@ export function LoginCard() {
   const [loginMessage, setLoginMessage] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
 
   const handleLogin = async () => {
     const trimmedEmail = email.trim()
@@ -40,8 +44,10 @@ export function LoginCard() {
     try {
       const result = await loginUser(userType, trimmedEmail, password)
       saveTokens(result.access_token, result.refresh_token)
+      const user = await getCurrentUser()
+      await queryClient.invalidateQueries({ queryKey: ["currentUser"] })
       setLoginMessage("تم تسجيل الدخول بنجاح")
-      navigate("/overview", { replace: true })
+      navigate(getDefaultRouteForRole(user.role), { replace: true })
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "فشل تسجيل الدخول"

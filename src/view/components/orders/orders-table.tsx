@@ -2,6 +2,8 @@ import { useNavigate } from "react-router-dom"
 import { CheckCircle, Eye, Loader2, PackageCheck, XCircle } from "lucide-react"
 
 import { useUpdateOrderStatus } from "@/hooks/useOrders"
+import { PERMISSIONS } from "@/auth/permissions"
+import { usePermissions } from "@/hooks/usePermissions"
 import type { Order, OrderStatus } from "@/services/orders-service"
 import { Button } from "@/view/components/ui/button"
 
@@ -53,6 +55,8 @@ function getProceedButtonLabel(status: OrderStatus) {
 
 export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
   const navigate = useNavigate()
+  const { can } = usePermissions()
+  const canManage = can(PERMISSIONS.ORDERS_MANAGE)
 
   const updateStatusMutation = useUpdateOrderStatus()
 
@@ -172,6 +176,10 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
                       {isFinalStatus ? (
                         <span className="text-sm text-[var(--erp-muted)]">
                           لا يوجد إجراء
+                        </span>
+                      ) : !canManage ? (
+                        <span className="text-sm text-[var(--erp-muted)]">
+                          لا تملك صلاحية التحديث
                         </span>
                       ) : (
                         <div className="flex items-center gap-2">

@@ -6,6 +6,8 @@ import {
   useCategories,
   useDeleteCategory,
 } from "@/hooks/Categories/useCategories"
+import { PERMISSIONS } from "@/auth/permissions"
+import { Can } from "@/view/components/auth/can"
 import { formatNumber } from "@/utils/number-formatters"
 import { CategoriesSkeleton } from "./categories-skeleton"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
@@ -127,27 +129,29 @@ export function CategoriesTable() {
                       عرض
                     </Button>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1"
-                      onClick={() =>
-                        navigate(`/categories/${category.id}/edit`)
-                      }
-                    >
-                      <Pencil className="size-3.5" />
-                      تعديل
-                    </Button>
+                    <Can permission={PERMISSIONS.CATEGORY_MANAGE}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() =>
+                          navigate(`/categories/${category.id}/edit`)
+                        }
+                      >
+                        <Pencil className="size-3.5" />
+                        تعديل
+                      </Button>
 
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      className="gap-1"
-                      onClick={() => setDeleteId(category.id)}
-                    >
-                      <Trash2 className="size-3.5" />
-                      حذف
-                    </Button>
+                      <Button
+                        variant="destructive"
+                        size="sm"
+                        className="gap-1"
+                        onClick={() => setDeleteId(category.id)}
+                      >
+                        <Trash2 className="size-3.5" />
+                        حذف
+                      </Button>
+                    </Can>
                   </div>
                 </td>
               </tr>

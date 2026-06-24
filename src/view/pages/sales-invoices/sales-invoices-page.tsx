@@ -2,6 +2,8 @@ import { useMemo, useState } from "react"
 import { Plus, ReceiptText, RefreshCw, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { PERMISSIONS } from "@/auth/permissions"
+import { usePermissions } from "@/hooks/usePermissions"
 import { useSalesInvoices } from "@/hooks/useSalesInvoices"
 import { normalizeSalesInvoices } from "@/services/sales-invoices-service"
 import { CreateSalesInvoiceForm } from "@/view/components/sales-invoices/create-sales-invoice-form"
@@ -13,6 +15,8 @@ import {
 
 export function SalesInvoicesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const { can } = usePermissions()
+  const canCreate = can(PERMISSIONS.SALES_CREATE)
 
   const { data, isLoading, isError, refetch, isFetching } = useSalesInvoices()
 
@@ -44,22 +48,24 @@ export function SalesInvoicesPage() {
             تحديث
           </button>
 
-          <button
-            type="button"
-            onClick={() => setIsCreateOpen((currentValue) => !currentValue)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
-          >
-            {isCreateOpen ? (
-              <X className="size-4" />
-            ) : (
-              <Plus className="size-4" />
-            )}
-            {isCreateOpen ? "إغلاق النموذج" : "إنشاء فاتورة"}
-          </button>
+          {canCreate && (
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen((currentValue) => !currentValue)}
+              className="inline-flex items-center gap-2 rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
+            >
+              {isCreateOpen ? (
+                <X className="size-4" />
+              ) : (
+                <Plus className="size-4" />
+              )}
+              {isCreateOpen ? "إغلاق النموذج" : "إنشاء فاتورة"}
+            </button>
+          )}
         </div>
       </section>
 
-      {isCreateOpen && (
+      {canCreate && isCreateOpen && (
         <CreateSalesInvoiceForm onCreated={() => setIsCreateOpen(false)} />
       )}
 

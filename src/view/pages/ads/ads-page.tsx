@@ -2,6 +2,8 @@ import { Eye, Megaphone, Plus, Trash2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { useAds, useDeleteAd } from "@/hooks/useAds"
+import { PERMISSIONS } from "@/auth/permissions"
+import { usePermissions } from "@/hooks/usePermissions"
 import { formatDateTime } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
@@ -11,6 +13,8 @@ function formatAdDate(date?: string | null) {
 
 export function AdsPage() {
   const navigate = useNavigate()
+  const { can } = usePermissions()
+  const canManage = can(PERMISSIONS.ADS_MANAGE)
   const { data: ads = [], isLoading, isError } = useAds(false)
   const deleteAdMutation = useDeleteAd()
 
@@ -35,10 +39,12 @@ export function AdsPage() {
           </p>
         </div>
 
-        <Button className="gap-2" onClick={() => navigate("/ads/create")}>
-          <Plus className="size-4" />
-          إضافة إعلان
-        </Button>
+        {canManage && (
+          <Button className="gap-2" onClick={() => navigate("/ads/create")}>
+            <Plus className="size-4" />
+            إضافة إعلان
+          </Button>
+        )}
       </section>
 
       <section className="rounded-[20px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
@@ -133,24 +139,28 @@ export function AdsPage() {
 
                     <td className="px-3 py-4">
                       <div className="flex flex-wrap justify-center gap-1.5">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1"
-                          onClick={() => navigate(`/ads/${ad.id}`)}
-                        >
-                          <Eye className="size-3.5" />
-                          عرض
-                        </Button>
+                        {canManage && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1"
+                            onClick={() => navigate(`/ads/${ad.id}`)}
+                          >
+                            <Eye className="size-3.5" />
+                            عرض
+                          </Button>
+                        )}
 
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(ad.id)}
-                          disabled={deleteAdMutation.isPending}
-                        >
-                          <Trash2 className="size-4 text-red-500" />
-                        </Button>
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(ad.id)}
+                            disabled={deleteAdMutation.isPending}
+                          >
+                            <Trash2 className="size-4 text-red-500" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>

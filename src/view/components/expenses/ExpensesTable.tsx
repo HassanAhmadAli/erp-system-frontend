@@ -2,6 +2,8 @@ import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
 import { formatExpenseAmount, type Expense } from "@/services/expense-service"
+import { PERMISSIONS } from "@/auth/permissions"
+import { Can } from "@/view/components/auth/can"
 import {
   formatId,
   formatNumber,
@@ -148,13 +150,15 @@ export function ExpensesTable({
                       </Button>
                     </Link>
 
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => navigate(`/expenses/${expense.id}/edit`)}
-                    >
-                      تعديل
-                    </Button>
+                    <Can permission={PERMISSIONS.EXPENSES_MANAGE}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/expenses/${expense.id}/edit`)}
+                      >
+                        تعديل
+                      </Button>
+                    </Can>
                   </div>
                 </td>
               </tr>

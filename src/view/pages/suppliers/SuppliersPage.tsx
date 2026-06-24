@@ -1,6 +1,9 @@
 import { Plus, Truck } from "lucide-react"
 import { Link } from "react-router-dom"
 
+import { PERMISSIONS } from "@/auth/permissions"
+import { Can } from "@/view/components/auth/can"
+
 import { SuppliersTable } from "@/view/components/suppliers/SuppliersTable"
 import { Button } from "@/view/components/ui/button"
 
@@ -21,12 +24,14 @@ export function SuppliersPage() {
           </p>
         </div>
 
-        <Link to="/suppliers/create">
-          <Button className="gap-2">
-            <Plus className="size-4" />
-            إضافة مورد
-          </Button>
-        </Link>
+        <Can permission={PERMISSIONS.SUPPLIER_MANAGE}>
+          <Link to="/suppliers/create">
+            <Button className="gap-2">
+              <Plus className="size-4" />
+              إضافة مورد
+            </Button>
+          </Link>
+        </Can>
       </header>
 
       <SuppliersTable />

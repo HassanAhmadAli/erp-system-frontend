@@ -1,6 +1,7 @@
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom"
+import { Route, Routes, useNavigate } from "react-router-dom"
 
 import { AppShell } from "@/view/components/layout/app-shell"
+import { DefaultRouteRedirect, PermissionGuard } from "./PermissionGuard"
 import { ProtectedRoute } from "./ProtectedRoute"
 
 import { LoginPage } from "@/view/pages/login-page"
@@ -103,131 +104,125 @@ export function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        {/* Default redirect */}
-        <Route index element={<Navigate to="/overview" replace />} />
+        <Route element={<PermissionGuard />}>
+          {/* Default redirect */}
+          <Route index element={<DefaultRouteRedirect />} />
 
-        {/* Overview */}
-        <Route path="overview" element={<StoreManagerOverviewPage />} />
-        <Route
-          path="accountant/overview"
-          element={<AccountantOverviewPage />}
-        />
+          {/* Overview */}
+          <Route path="overview" element={<StoreManagerOverviewPage />} />
+          <Route
+            path="accountant/overview"
+            element={<AccountantOverviewPage />}
+          />
 
-        {/* POS */}
-        <Route path="pos" element={<PosPage />} />
+          {/* POS */}
+          <Route path="pos" element={<PosPage />} />
 
-        {/* Customers */}
-        <Route path="customers" element={<CustomersPage />} />
-        <Route path="customers/:id" element={<CustomerDetailsPage />} />
+          {/* Customers */}
+          <Route path="customers" element={<CustomersPage />} />
+          <Route path="customers/:id" element={<CustomerDetailsPage />} />
 
-        {/* Orders */}
-        <Route path="orders" element={<OrdersPage />} />
-        <Route path="orders/:id" element={<OrderDetailsPage />} />
+          {/* Orders */}
+          <Route path="orders" element={<OrdersPage />} />
+          <Route path="orders/:id" element={<OrderDetailsPage />} />
 
-        {/* Sales Invoices */}
-        <Route path="sales-invoices" element={<SalesInvoicesPage />} />
-        <Route
-          path="sales-invoices/:id"
-          element={<SalesInvoiceDetailsPage />}
-        />
+          {/* Sales Invoices */}
+          <Route path="sales-invoices" element={<SalesInvoicesPage />} />
+          <Route
+            path="sales-invoices/:id"
+            element={<SalesInvoiceDetailsPage />}
+          />
 
-        {/* Purchase Invoices */}
-        <Route path="purchase-invoices" element={<PurchaseInvoicesPage />} />
-        <Route
-          path="purchase-invoices/:id"
-          element={<PurchaseInvoiceDetailsPage />}
-        />
+          {/* Purchase Invoices */}
+          <Route path="purchase-invoices" element={<PurchaseInvoicesPage />} />
+          <Route
+            path="purchase-invoices/:id"
+            element={<PurchaseInvoiceDetailsPage />}
+          />
 
-        {/* Ads */}
-        {/* Orders Module */}
-        {/* <Route path="orders" element={<OrdersPage />} /> */}
+          {/* Ads Module */}
+          <Route path="ads" element={<AdsPage />} />
+          <Route path="ads/create" element={<CreateAdPage />} />
+          <Route path="ads/:id" element={<AdDetailsPage />} />
+          {/* Inventory */}
+          <Route path="inventory" element={<InventoryPage />} />
 
-        {/* Ads Module */}
-        <Route path="ads" element={<AdsPage />} />
-        <Route path="ads/create" element={<CreateAdPage />} />
-        <Route path="ads/:id" element={<AdDetailsPage />} />
-        {/* Inventory */}
-        <Route path="inventory" element={<InventoryPage />} />
+          {/* Categories */}
+          <Route path="categories" element={<CategoriesPage />} />
+          <Route path="categories/create" element={<CreateCategoryPage />} />
+          <Route path="categories/:id" element={<CategoryDetailsPage />} />
+          <Route path="categories/:id/edit" element={<EditCategoryPage />} />
 
-        {/* Categories */}
-        <Route path="categories" element={<CategoriesPage />} />
-        <Route path="categories/create" element={<CreateCategoryPage />} />
-        <Route path="categories/:id" element={<CategoryDetailsPage />} />
-        <Route path="categories/:id/edit" element={<EditCategoryPage />} />
+          {/* Suppliers */}
+          <Route path="suppliers" element={<SuppliersPage />} />
+          <Route path="suppliers/create" element={<CreateSupplierPage />} />
+          <Route path="suppliers/:id" element={<SupplierDetailsPage />} />
+          <Route path="suppliers/:id/edit" element={<EditSupplierPage />} />
 
-        {/* Suppliers */}
-        <Route path="suppliers" element={<SuppliersPage />} />
-        <Route path="suppliers/create" element={<CreateSupplierPage />} />
-        <Route path="suppliers/:id" element={<SupplierDetailsPage />} />
-        <Route path="suppliers/:id/edit" element={<EditSupplierPage />} />
+          {/* Products */}
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="products/import" element={<ProductImportPage />} />
+          <Route path="products/create" element={<CreateProductPage />} />
+          <Route path="products/:id" element={<ProductDetailsPage />} />
+          <Route path="products/:id/edit" element={<EditProductPage />} />
+          <Route path="products/:id/photos" element={<ProductPhotosPage />} />
 
-        {/* Products */}
-        <Route path="products" element={<ProductsPage />} />
-        <Route path="products/import" element={<ProductImportPage />} />
-        <Route path="products/create" element={<CreateProductPage />} />
-        <Route path="products/:id" element={<ProductDetailsPage />} />
-        <Route path="products/:id/edit" element={<EditProductPage />} />
-        <Route path="products/:id/photos" element={<ProductPhotosPage />} />
+          {/* Discounts */}
+          <Route path="discounts" element={<DiscountsPage />} />
+          <Route path="discounts/active" element={<ActiveDiscountsPage />} />
+          <Route path="discounts/best" element={<BestDiscountPage />} />
+          <Route
+            path="discounts/calculate"
+            element={<CalculateDiscountPage />}
+          />
+          <Route path="discounts/create" element={<CreateDiscountPage />} />
+          <Route path="discounts/:id" element={<DiscountDetailsPage />} />
+          <Route path="discounts/:id/edit" element={<EditDiscountPage />} />
 
-        {/* Discounts */}
-        <Route path="discounts" element={<DiscountsPage />} />
-        <Route path="discounts/active" element={<ActiveDiscountsPage />} />
-        <Route path="discounts/best" element={<BestDiscountPage />} />
-        <Route path="discounts/calculate" element={<CalculateDiscountPage />} />
-        <Route path="discounts/create" element={<CreateDiscountPage />} />
-        <Route path="discounts/:id" element={<DiscountDetailsPage />} />
-        <Route path="discounts/:id/edit" element={<EditDiscountPage />} />
+          {/* Accountant Modules */}
+          <Route path="expenses" element={<ExpensesPage />} />
+          <Route path="expenses/create" element={<CreateExpensePage />} />
+          <Route path="expenses/:id" element={<ExpenseDetailsPage />} />
+          <Route path="expenses/:id/edit" element={<EditExpensePage />} />
 
-        {/* Accountant Modules */}
-        <Route path="expenses" element={<ExpensesPage />} />
-        <Route path="expenses/create" element={<CreateExpensePage />} />
-        <Route path="expenses/:id" element={<ExpenseDetailsPage />} />
-        <Route path="expenses/:id/edit" element={<EditExpensePage />} />
-        {/* 
-        <Route path="purchases" element={<PurchasesPage />} />
-        <Route path="purchases/create" element={<CreatePurchasePage />} />
-        <Route path="purchases/:id" element={<PurchaseDetailsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
+          <Route path="reports/summary" element={<ReportSummaryPage />} />
+          <Route path="reports/dashboard" element={<ReportDashboardPage />} />
+          <Route path="reports/inventory" element={<ReportInventoryPage />} />
+          <Route path="reports/sales" element={<ReportSalesPage />} />
+          <Route path="reports/purchases" element={<ReportPurchasesPage />} />
+          <Route
+            path="reports/profit-margins"
+            element={<ReportProfitMarginsPage />}
+          />
 
-        <Route path="sales" element={<SalesPage />} />
-        <Route path="sales/:id" element={<SalesDetailsPage />} /> */}
-
-        <Route path="reports" element={<ReportsPage />} />
-        <Route path="reports/summary" element={<ReportSummaryPage />} />
-        <Route path="reports/dashboard" element={<ReportDashboardPage />} />
-        <Route path="reports/inventory" element={<ReportInventoryPage />} />
-        <Route path="reports/sales" element={<ReportSalesPage />} />
-        <Route path="reports/purchases" element={<ReportPurchasesPage />} />
-        <Route
-          path="reports/profit-margins"
-          element={<ReportProfitMarginsPage />}
-        />
-
-        <Route path="financial" element={<FinancialPage />} />
-        <Route
-          path="financial/profit-margins"
-          element={<ProfitMarginsPage />}
-        />
-        <Route
-          path="financial/cost-breakdown"
-          element={<CostBreakdownPage />}
-        />
-        <Route path="financial/cost-trends" element={<CostTrendsPage />} />
-        <Route
-          path="financial/supplier-report"
-          element={<SupplierReportPage />}
-        />
-        <Route
-          path="financial/recalculate"
-          element={<RecalculateCostsPage />}
-        />
-        <Route path="loyalty-rewards" element={<LoyaltyRewardsPage />} />
-        <Route path="audit-logs" element={<AuditLogsPage />} />
-        <Route path="audit-logs/:id" element={<AuditLogDetailsPage />} />
-        <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="financial" element={<FinancialPage />} />
+          <Route
+            path="financial/profit-margins"
+            element={<ProfitMarginsPage />}
+          />
+          <Route
+            path="financial/cost-breakdown"
+            element={<CostBreakdownPage />}
+          />
+          <Route path="financial/cost-trends" element={<CostTrendsPage />} />
+          <Route
+            path="financial/supplier-report"
+            element={<SupplierReportPage />}
+          />
+          <Route
+            path="financial/recalculate"
+            element={<RecalculateCostsPage />}
+          />
+          <Route path="loyalty-rewards" element={<LoyaltyRewardsPage />} />
+          <Route path="audit-logs" element={<AuditLogsPage />} />
+          <Route path="audit-logs/:id" element={<AuditLogDetailsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+        </Route>
       </Route>
 
       {/* Fallback */}
-      <Route path="*" element={<Navigate to="/overview" replace />} />
+      <Route path="*" element={<DefaultRouteRedirect />} />
     </Routes>
   )
 }

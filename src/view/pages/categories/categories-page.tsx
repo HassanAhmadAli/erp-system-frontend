@@ -1,6 +1,9 @@
 import { Link } from "react-router-dom"
 import { FolderOpen, Plus } from "lucide-react"
 
+import { PERMISSIONS } from "@/auth/permissions"
+import { Can } from "@/view/components/auth/can"
+
 import { CategoriesTable } from "@/view/components/categories/CategoriesTable"
 import { Button } from "@/view/components/ui/button"
 
@@ -22,12 +25,14 @@ export function CategoriesPage() {
           </p>
         </div>
 
-        <Link to="/categories/create">
-          <Button className="gap-2">
-            <Plus className="size-4" />
-            إضافة تصنيف
-          </Button>
-        </Link>
+        <Can permission={PERMISSIONS.CATEGORY_MANAGE}>
+          <Link to="/categories/create">
+            <Button className="gap-2">
+              <Plus className="size-4" />
+              إضافة تصنيف
+            </Button>
+          </Link>
+        </Can>
       </header>
 
       <CategoriesTable />

@@ -38,3 +38,7 @@ export async function getUsers(params?: UsersQuery) {
     `/user${buildQuery(params)}`
   )
 }
+
+export async function getCurrentUser() {
+  return apiRequest<UserProfile>("/user/me")
+}

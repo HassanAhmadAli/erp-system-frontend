@@ -2,6 +2,8 @@ import { Ban, CheckCircle2, Eye, Loader2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
+import { PERMISSIONS } from "@/auth/permissions"
+import { usePermissions } from "@/hooks/usePermissions"
 import { useUpdatePurchaseInvoiceStatus } from "@/hooks/usePurchaseInvoices"
 import type {
   PurchaseInvoice,
@@ -29,6 +31,8 @@ export function PurchaseInvoicesTable({
   isError,
 }: PurchaseInvoicesTableProps) {
   const navigate = useNavigate()
+  const { can } = usePermissions()
+  const canManage = can(PERMISSIONS.PURCHASES_CREATE)
   const updateStatusMutation = useUpdatePurchaseInvoiceStatus()
 
   function handleStatusUpdate(id: number, status: PurchaseInvoiceStatus) {
@@ -82,7 +86,7 @@ export function PurchaseInvoicesTable({
                 invoice.status ?? "PENDING"
               ).toUpperCase()
 
-              const canEditStatus = currentStatus === "PENDING"
+              const statusEditable = currentStatus === "PENDING"
 
               return (
                 <tr key={invoice.id}>
@@ -111,7 +115,7 @@ export function PurchaseInvoicesTable({
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    {canEditStatus ? (
+                    {canManage && statusEditable ? (
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"

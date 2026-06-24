@@ -5,6 +5,7 @@ import {
   useSalesInvoice,
   useUpdateSalesInvoiceStatus,
 } from "@/hooks/useSalesInvoices"
+import { usePermissions } from "@/hooks/usePermissions"
 import {
   formatDate,
   formatMoney,
@@ -23,8 +24,12 @@ export function SalesInvoiceDetailsPage() {
   const invoiceId = Number(id)
 
   const { data: invoice, isLoading, isError } = useSalesInvoice(invoiceId)
+  const { canManageSalesInvoice } = usePermissions()
 
   const updateStatusMutation = useUpdateSalesInvoiceStatus()
+  const canUpdateStatus = invoice
+    ? canManageSalesInvoice(invoice.cashierId)
+    : false
 
   function handleRefund() {
     updateStatusMutation.mutate({
@@ -140,7 +145,7 @@ export function SalesInvoiceDetailsPage() {
                 </p>
               </div>
 
-              {invoice.status === "COMPLETED" && (
+              {invoice.status === "COMPLETED" && canUpdateStatus && (
                 <button
                   type="button"
                   disabled={updateStatusMutation.isPending}
