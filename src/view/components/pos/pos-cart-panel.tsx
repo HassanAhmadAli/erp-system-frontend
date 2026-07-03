@@ -22,6 +22,7 @@ type PosCartPanelProps = {
   onCreateInvoice: () => void
   onIncreaseQuantity: (productId: number) => void
   onDecreaseQuantity: (productId: number) => void
+  onQuantityChange: (productId: number, quantity: number) => void
   onRemoveFromCart: (productId: number) => void
 }
 
@@ -41,6 +42,7 @@ export function PosCartPanel({
   onCreateInvoice,
   onIncreaseQuantity,
   onDecreaseQuantity,
+  onQuantityChange,
   onRemoveFromCart,
 }: PosCartPanelProps) {
   return (
@@ -75,6 +77,7 @@ export function PosCartPanel({
                 item={item}
                 onIncreaseQuantity={onIncreaseQuantity}
                 onDecreaseQuantity={onDecreaseQuantity}
+                onQuantityChange={onQuantityChange}
                 onRemoveFromCart={onRemoveFromCart}
               />
             ))

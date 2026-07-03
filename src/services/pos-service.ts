@@ -24,7 +24,7 @@ export type SaleInvoiceItem = {
 }
 
 export type CreateSaleInvoicePayload = {
-  customerId: number
+  customerId?: number
   discountId: number | null
   amountPaid: number
   items: SaleInvoiceItem[]
@@ -33,7 +33,7 @@ export type CreateSaleInvoicePayload = {
 
 export type SaleInvoice = {
   id: number
-  customerId: number
+  customerId?: number
   discountId: number | null
   amountPaid: number | string
   subtotal?: number | string

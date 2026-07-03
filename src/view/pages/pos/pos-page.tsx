@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react"
 
 import { useCreateSaleInvoice, usePosProducts } from "@/hooks/usePos"
-import type { PosProduct } from "@/services/pos-service"
+import type { CreateSaleInvoicePayload, PosProduct } from "@/services/pos-service"
 import {
   formatCurrency,
   getProductPrice,
@@ -106,6 +106,35 @@ export function PosPage() {
     )
   }
 
+  function changeQuantity(productId: number, quantity: number) {
+    setCart((previous) =>
+      previous
+        .map((item) => {
+          if (item.product.id !== productId) {
+            return item
+          }
+
+          if (item.product.quantityInStock <= 0) {
+            return {
+              ...item,
+              quantity: 0,
+            }
+          }
+
+          const safeQuantity = Math.min(
+            Math.max(Math.trunc(quantity), 1),
+            item.product.quantityInStock
+          )
+
+          return {
+            ...item,
+            quantity: safeQuantity,
+          }
+        })
+        .filter((item) => item.quantity > 0)
+    )
+  }
+
   function removeFromCart(productId: number) {
     setCart((previous) =>
       previous.filter((item) => item.product.id !== productId)
@@ -118,11 +147,17 @@ export function PosPage() {
   }
 
   function handleCreateInvoice() {
-    const parsedCustomerId = Number(toEnglishDigits(customerId))
+    const customerIdValue = toEnglishDigits(customerId).trim()
+    const customerIdNumber = customerIdValue ? Number(customerIdValue) : null
     const parsedAmountPaid = Number(toEnglishDigits(amountPaid))
 
-    if (!parsedCustomerId || Number.isNaN(parsedCustomerId)) {
-      alert("يرجى اختيار العميل.")
+    if (
+      customerIdValue &&
+      (customerIdNumber === null ||
+        Number.isNaN(customerIdNumber) ||
+        customerIdNumber <= 0)
+    ) {
+      alert("يرجى إدخال رقم عميل صحيح أو ترك الحقل فارغاً.")
       return
     }
 
@@ -143,25 +178,27 @@ export function PosPage() {
 
     createInvoiceMutation.reset()
 
-    createInvoiceMutation.mutate(
-      {
-        customerId: parsedCustomerId,
-        discountId: null,
-        amountPaid: parsedAmountPaid,
-        complete: completeInvoice,
-        items: cart.map((item) => ({
-          productId: item.product.id,
-          quantity: item.quantity,
-        })),
+    const payload: CreateSaleInvoicePayload = {
+      discountId: null,
+      amountPaid: parsedAmountPaid,
+      complete: completeInvoice,
+      items: cart.map((item) => ({
+        productId: item.product.id,
+        quantity: item.quantity,
+      })),
+    }
+
+    if (customerIdNumber !== null) {
+      payload.customerId = customerIdNumber
+    }
+
+    createInvoiceMutation.mutate(payload, {
+      onSuccess: () => {
+        clearCart()
+        setCustomerId("")
+        setCompleteInvoice(true)
       },
-      {
-        onSuccess: () => {
-          clearCart()
-          setCustomerId("")
-          setCompleteInvoice(true)
-        },
-      }
-    )
+    })
   }
 
   return (
@@ -213,6 +250,7 @@ export function PosPage() {
           onCreateInvoice={handleCreateInvoice}
           onIncreaseQuantity={increaseQuantity}
           onDecreaseQuantity={decreaseQuantity}
+          onQuantityChange={changeQuantity}
           onRemoveFromCart={removeFromCart}
         />
       </div>
