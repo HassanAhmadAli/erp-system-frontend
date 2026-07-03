@@ -46,6 +46,56 @@ function buildHeaders(options: RequestInit = {}) {
   return headers
 }
 
+function getErrorMessage(errorBody: unknown, fallback: string) {
+  if (!errorBody) {
+    return fallback
+  }
+
+  if (typeof errorBody === "string") {
+    return errorBody
+  }
+
+  if (typeof errorBody !== "object") {
+    return fallback
+  }
+
+  const maybeError = errorBody as {
+    message?: unknown
+    error?: unknown
+  }
+
+  if (Array.isArray(maybeError.message)) {
+    return maybeError.message.join("\n")
+  }
+
+  if (typeof maybeError.message === "string") {
+    return maybeError.message
+  }
+
+  if (typeof maybeError.error === "string") {
+    return maybeError.error
+  }
+
+  return fallback
+}
+
+function parseResponseBody(text: string): unknown {
+  if (!text.trim()) {
+    return undefined
+  }
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return text
+  }
+}
+
+async function readResponseBody(response: Response) {
+  const text = await response.text()
+  return parseResponseBody(text)
+}
+
 export async function apiRequest<T>(
   endpoint: string,
   options: RequestInit = {}
@@ -55,12 +105,18 @@ export async function apiRequest<T>(
     headers: buildHeaders(options),
   })
 
+  const body = await readResponseBody(response)
+
   if (!response.ok) {
-    const error = await response.text()
-    throw new Error(error)
+    throw new Error(
+      getErrorMessage(
+        body,
+        `Request failed with status ${response.status}`
+      )
+    )
   }
 
-  return response.json()
+  return body as T
 }
 
 export async function apiRequestBlob(
@@ -73,8 +129,14 @@ export async function apiRequestBlob(
   })
 
   if (!response.ok) {
-    const error = await response.text()
-    throw new Error(error)
+    const body = await readResponseBody(response)
+
+    throw new Error(
+      getErrorMessage(
+        body,
+        `Request failed with status ${response.status}`
+      )
+    )
   }
 
   return response.blob()
