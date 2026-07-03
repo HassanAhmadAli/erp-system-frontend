@@ -80,25 +80,45 @@ export type CreateSalesInvoicePayload = {
   complete: boolean
 }
 
-export function normalizeSalesInvoices(response?: SalesInvoicesResponse) {
+export function normalizeSalesInvoices(response?: unknown): SalesInvoice[] {
   if (!response) return []
 
   if (Array.isArray(response)) {
-    return response
+    return response as SalesInvoice[]
   }
 
-  return response.data ?? []
+  if (typeof response !== "object") {
+    return []
+  }
+
+  const data = (response as { data?: unknown }).data
+
+  if (Array.isArray(data)) {
+    return data as SalesInvoice[]
+  }
+
+  if (data && typeof data === "object") {
+    const nestedData = (data as { data?: unknown }).data
+
+    if (Array.isArray(nestedData)) {
+      return nestedData as SalesInvoice[]
+    }
+  }
+
+  return []
 }
 
-export async function getSalesInvoices() {
+export async function getSalesInvoices(): Promise<SalesInvoicesResponse> {
   return apiRequest<SalesInvoicesResponse>(SALES_INVOICES_ENDPOINT)
 }
 
-export async function getSalesInvoice(id: number) {
+export async function getSalesInvoice(id: number): Promise<SalesInvoice> {
   return apiRequest<SalesInvoice>(`${SALES_INVOICES_ENDPOINT}/${id}`)
 }
 
-export async function createSalesInvoice(payload: CreateSalesInvoicePayload) {
+export async function createSalesInvoice(
+  payload: CreateSalesInvoicePayload
+): Promise<SalesInvoice> {
   return apiRequest<SalesInvoice>(SALES_INVOICES_ENDPOINT, {
     method: "POST",
     body: JSON.stringify(payload),
@@ -108,7 +128,7 @@ export async function createSalesInvoice(payload: CreateSalesInvoicePayload) {
 export async function updateSalesInvoiceStatus(
   id: number,
   status: SalesInvoiceStatus
-) {
+): Promise<SalesInvoice> {
   return apiRequest<SalesInvoice>(`${SALES_INVOICES_ENDPOINT}/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),

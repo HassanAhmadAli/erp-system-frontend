@@ -44,6 +44,7 @@ export type PurchaseInvoice = {
     id: number
     name?: string
     companyName?: string
+    fullName?: string
     user?: {
       fullName?: string
       email?: string

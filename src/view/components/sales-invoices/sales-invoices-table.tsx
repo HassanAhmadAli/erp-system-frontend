@@ -2,7 +2,6 @@ import { CheckCircle2, Eye, Loader2, Undo2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
-import { usePermissions } from "@/hooks/usePermissions"
 import { useUpdateSalesInvoiceStatus } from "@/hooks/useSalesInvoices"
 import type {
   SalesInvoice,
@@ -12,7 +11,6 @@ import {
   formatDate,
   formatMoney,
   formatNumber,
-  getCustomerName,
   getInvoiceTotal,
   NumberText,
   SalesInvoiceStatusBadge,
@@ -24,13 +22,28 @@ type SalesInvoicesTableProps = {
   isError: boolean
 }
 
+function getSalesInvoiceCustomerName(invoice: SalesInvoice) {
+  const fullName = invoice.customer?.user?.fullName?.trim()
+
+  if (fullName) {
+    return fullName
+  }
+
+  const customerId = invoice.customerId ?? invoice.customer?.id
+
+  if (!customerId) {
+    return "عميل نقدي"
+  }
+
+  return `عميل #${formatNumber(customerId)}`
+}
+
 export function SalesInvoicesTable({
   invoices,
   isLoading,
   isError,
 }: SalesInvoicesTableProps) {
   const navigate = useNavigate()
-  const { canManageSalesInvoice } = usePermissions()
   const updateStatusMutation = useUpdateSalesInvoiceStatus()
 
   function handleStatusUpdate(id: number, status: SalesInvoiceStatus) {
@@ -88,7 +101,6 @@ export function SalesInvoicesTable({
 
               const canComplete = currentStatus === "PENDING"
               const canReturn = currentStatus === "COMPLETED"
-              const canUpdateStatus = canManageSalesInvoice(invoice.cashierId)
 
               return (
                 <tr key={invoice.id}>
@@ -97,7 +109,7 @@ export function SalesInvoicesTable({
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    {getCustomerName(invoice)}
+                    {getSalesInvoiceCustomerName(invoice)}
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
@@ -117,15 +129,12 @@ export function SalesInvoicesTable({
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    {canUpdateStatus && canComplete && (
+                    {canComplete && (
                       <button
                         type="button"
                         disabled={updateStatusMutation.isPending}
                         onClick={() =>
-                          handleStatusUpdate(
-                            invoice.id,
-                            "COMPLETED" as SalesInvoiceStatus
-                          )
+                          handleStatusUpdate(invoice.id, "COMPLETED")
                         }
                         className={cn(
                           "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition",
@@ -142,15 +151,12 @@ export function SalesInvoicesTable({
                       </button>
                     )}
 
-                    {canUpdateStatus && canReturn && (
+                    {canReturn && (
                       <button
                         type="button"
                         disabled={updateStatusMutation.isPending}
                         onClick={() =>
-                          handleStatusUpdate(
-                            invoice.id,
-                            "REFUNDED" as SalesInvoiceStatus
-                          )
+                          handleStatusUpdate(invoice.id, "REFUNDED")
                         }
                         className={cn(
                           "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition",
@@ -167,13 +173,7 @@ export function SalesInvoicesTable({
                       </button>
                     )}
 
-                    {!canUpdateStatus && (
-                      <span className="text-xs text-[var(--erp-muted)]">
-                        لا تملك صلاحية التحديث
-                      </span>
-                    )}
-
-                    {canUpdateStatus && !canComplete && !canReturn && (
+                    {!canComplete && !canReturn && (
                       <span className="text-xs text-[var(--erp-muted)]">
                         لا يوجد انتقال متاح
                       </span>
