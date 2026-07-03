@@ -15,6 +15,7 @@ import {
   targetTypeLabels,
 } from "@/view/components/notifications/notification-target-labels"
 import { Button } from "@/view/components/ui/button"
+import { toEnglishDigits } from "@/utils/number-formatters"
 
 export function SendNotificationForm() {
   const sendNotification = useSendNotification()
@@ -72,7 +73,8 @@ export function SendNotificationForm() {
       onError: (error) => {
         const message =
           error instanceof Error ? error.message : "فشل إرسال الإشعار."
-        setErrorMessage(message)
+
+        setErrorMessage(toEnglishDigits(message))
       },
     })
   }
@@ -81,10 +83,12 @@ export function SendNotificationForm() {
     <section className="rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
       <div className="mb-5 flex items-center gap-2">
         <Send className="h-5 w-5 text-[var(--erp-accent)]" />
+
         <div className="text-right">
           <h2 className="text-lg font-semibold text-[var(--erp-text)]">
             إرسال إشعار
           </h2>
+
           <p className="text-sm text-[var(--erp-muted)]">
             أرسل إشعاراً داخلياً للجميع أو حسب الدور أو لمستخدمين محددين.
           </p>
@@ -114,6 +118,7 @@ export function SendNotificationForm() {
             <span className="mb-2 block text-[var(--erp-muted)]">
               نوع المستهدف
             </span>
+
             <select
               value={targetType}
               onChange={(event) =>
@@ -134,6 +139,7 @@ export function SendNotificationForm() {
           {targetType === "ROLE" && (
             <label className="block text-right text-sm">
               <span className="mb-2 block text-[var(--erp-muted)]">الدور</span>
+
               <select
                 value={targetRole}
                 onChange={(event) =>
@@ -152,16 +158,31 @@ export function SendNotificationForm() {
         </div>
 
         {targetType === "USER" && (
-          <NotificationUserPicker
-            selectedUserIds={selectedUserIds}
-            onChange={setSelectedUserIds}
-          />
+          <div className="space-y-2">
+            <NotificationUserPicker
+              selectedUserIds={selectedUserIds}
+              onChange={setSelectedUserIds}
+            />
+
+            <p className="text-sm text-[var(--erp-muted)]">
+              عدد المستخدمين المحددين:{" "}
+              <span dir="ltr" className="font-semibold">
+                {toEnglishDigits(String(selectedUserIds.length))}
+              </span>
+            </p>
+          </div>
         )}
 
-        {errorMessage && <p className="text-sm text-red-500">{errorMessage}</p>}
+        {errorMessage && (
+          <p className="text-sm text-red-500">
+            {toEnglishDigits(errorMessage)}
+          </p>
+        )}
 
         {successMessage && (
-          <p className="text-sm text-green-600">{successMessage}</p>
+          <p className="text-sm text-green-600">
+            {toEnglishDigits(successMessage)}
+          </p>
         )}
 
         <Button type="submit" disabled={sendNotification.isPending}>
