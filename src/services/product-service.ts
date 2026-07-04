@@ -67,6 +67,7 @@ export type ImportJobListResponse =
 
 export type CreateProductInput = {
   name: string
+  description?: string
   barcode: string
   purchasePrice: number
   sellingPrice: number
@@ -76,19 +77,7 @@ export type CreateProductInput = {
   supplierId: number
 }
 
-export type UpdateProductInput = Partial<
-  Omit<CreateProductInput, "categoryId" | "supplierId"> & {
-    categoryId?: number
-    supplierId?: number
-  }
-> & {
-  name?: string
-  barcode?: string
-  purchasePrice?: number
-  sellingPrice?: number
-  quantityInStock?: number
-  minQuantity?: number
-}
+export type UpdateProductInput = Partial<CreateProductInput>
 
 export type UpdateStockInput = {
   quantityInStock: number
@@ -97,8 +86,11 @@ export type UpdateStockInput = {
 function asArray<T>(response: unknown): T[] {
   if (!response) return []
   if (Array.isArray(response)) return response as T[]
+
   const maybe = response as { data?: unknown }
+
   if (Array.isArray(maybe.data)) return maybe.data as T[]
+
   return []
 }
 
@@ -115,7 +107,7 @@ export function normalizeImportJobs(response: unknown): ImportJob[] {
 }
 
 export function getProducts() {
-  return apiRequest<ProductListResponse>(`/product`)
+  return apiRequest<ProductListResponse>("/product")
 }
 
 export function getProductsByCategory(categoryId: number) {
@@ -127,7 +119,7 @@ export function getProductsBySupplier(supplierId: number) {
 }
 
 export function getLowStockProducts() {
-  return apiRequest<ProductListResponse>(`/product/low-stock`)
+  return apiRequest<ProductListResponse>("/product/low-stock")
 }
 
 export function getProductById(id: number) {
@@ -135,21 +127,21 @@ export function getProductById(id: number) {
 }
 
 export function createProduct(data: CreateProductInput) {
-  return apiRequest(`/product`, {
+  return apiRequest<Product>("/product", {
     method: "POST",
     body: JSON.stringify(data),
   })
 }
 
 export function updateProduct(id: number, data: UpdateProductInput) {
-  return apiRequest(`/product/${id}`, {
+  return apiRequest<Product>(`/product/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data),
   })
 }
 
 export function updateProductStock(id: number, data: UpdateStockInput) {
-  return apiRequest(`/product/${id}/stock`, {
+  return apiRequest<Product>(`/product/${id}/stock`, {
     method: "PATCH",
     body: JSON.stringify(data),
   })
@@ -164,7 +156,10 @@ export function deleteProduct(id: number) {
 async function authorizedFetch(url: string, options: RequestInit) {
   const token = getAccessToken()
   const headers = new Headers(options.headers || {})
-  if (token) headers.set("Authorization", `Bearer ${token}`)
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`)
+  }
 
   return fetch(url, {
     ...options,
@@ -196,7 +191,10 @@ export async function uploadProductPhoto(
 
   // Some backends may return the created photo object, or just a message.
   const bodyText = await response.text()
-  if (!bodyText) return { message: "Uploaded" }
+
+  if (!bodyText) {
+    return { message: "Uploaded" }
+  }
 
   try {
     return JSON.parse(bodyText)
@@ -254,7 +252,7 @@ export async function importProducts(file: File) {
 }
 
 export async function getProductImportJobs() {
-  return apiRequest<ImportJobListResponse>(`/product/import/jobs`)
+  return apiRequest<ImportJobListResponse>("/product/import/jobs")
 }
 
 export async function getProductImportJob(jobId: number | string) {
