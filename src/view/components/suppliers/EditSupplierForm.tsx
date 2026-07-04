@@ -3,6 +3,14 @@ import { useNavigate } from "react-router-dom"
 
 import { useSupplierById } from "@/hooks/Suppliers/useSupplierById"
 import { useUpdateSupplier } from "@/hooks/Suppliers/useUpdateSupplier"
+import { isValidId } from "@/validation/helpers"
+import {
+  supplierFormValuesToPayload,
+  supplierSchema,
+  supplierZodErrorToFormErrors,
+  type SupplierFormErrors,
+  type SupplierFormValues,
+} from "@/validation/supplier-schema"
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
@@ -10,18 +18,28 @@ const inputClass =
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
+const EMPTY_FORM: SupplierFormValues = {
+  fullName: "",
+  phone: "",
+  email: "",
+  address: "",
+}
+
+function ErrorText({ message }: { message?: string }) {
+  if (!message) return null
+
+  return (
+    <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  )
+}
+
 export function EditSupplierForm({ supplierId }: { supplierId: number }) {
   const navigate = useNavigate()
   const { data, isLoading, isError } = useSupplierById(supplierId)
   const updateMutation = useUpdateSupplier()
 
-  const [form, setForm] = useState({
-    fullName: "",
-    phone: "",
-    email: "",
-    address: "",
-  })
-
+  const [form, setForm] = useState<SupplierFormValues>(EMPTY_FORM)
+  const [errors, setErrors] = useState<SupplierFormErrors>({})
   const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
@@ -32,37 +50,38 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
         email: data.email ?? "",
         address: data.address ?? "",
       })
+      setErrors({})
+      setErrorMessage("")
     }
   }, [data])
+
+  function setField(key: keyof SupplierFormValues, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setErrorMessage("")
 
-    if (!form.fullName.trim()) {
-      setErrorMessage("اسم المورد مطلوب")
+    if (!isValidId(supplierId)) {
+      setErrorMessage("رقم المورد غير صالح")
       return
     }
 
-    if (!form.phone.trim()) {
-      setErrorMessage("رقم الهاتف مطلوب")
+    const validationResult = supplierSchema.safeParse(form)
+
+    if (!validationResult.success) {
+      setErrors(supplierZodErrorToFormErrors(validationResult.error))
       return
     }
 
-    if (!form.email.trim()) {
-      setErrorMessage("البريد الإلكتروني مطلوب")
-      return
-    }
+    setErrors({})
 
     try {
       await updateMutation.mutateAsync({
         id: supplierId,
-        data: {
-          fullName: form.fullName.trim(),
-          phone: form.phone.trim(),
-          email: form.email.trim(),
-          address: form.address.trim(),
-        },
+        data: supplierFormValuesToPayload(validationResult.data),
       })
 
       navigate(`/suppliers/${supplierId}`)
@@ -102,15 +121,11 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
           <input
             id="edit-supplier-fullName"
             value={form.fullName}
-            onChange={(event) =>
-              setForm((currentForm) => ({
-                ...currentForm,
-                fullName: event.target.value,
-              }))
-            }
+            onChange={(event) => setField("fullName", event.target.value)}
             placeholder="أدخل اسم المورد"
             className={inputClass}
           />
+          <ErrorText message={errors.fullName} />
         </div>
 
         <div>
@@ -120,15 +135,11 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
           <input
             id="edit-supplier-phone"
             value={form.phone}
-            onChange={(event) =>
-              setForm((currentForm) => ({
-                ...currentForm,
-                phone: event.target.value,
-              }))
-            }
+            onChange={(event) => setField("phone", event.target.value)}
             placeholder="أدخل رقم الهاتف"
             className={inputClass}
           />
+          <ErrorText message={errors.phone} />
         </div>
 
         <div>
@@ -139,15 +150,11 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
             id="edit-supplier-email"
             type="email"
             value={form.email}
-            onChange={(event) =>
-              setForm((currentForm) => ({
-                ...currentForm,
-                email: event.target.value,
-              }))
-            }
+            onChange={(event) => setField("email", event.target.value)}
             placeholder="أدخل البريد الإلكتروني"
             className={inputClass}
           />
+          <ErrorText message={errors.email} />
         </div>
 
         <div>
@@ -157,15 +164,11 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
           <input
             id="edit-supplier-address"
             value={form.address}
-            onChange={(event) =>
-              setForm((currentForm) => ({
-                ...currentForm,
-                address: event.target.value,
-              }))
-            }
+            onChange={(event) => setField("address", event.target.value)}
             placeholder="أدخل عنوان المورد"
             className={inputClass}
           />
+          <ErrorText message={errors.address} />
         </div>
       </div>
 

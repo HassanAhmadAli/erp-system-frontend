@@ -3,12 +3,13 @@ import { Link, useParams } from "react-router-dom"
 
 import { EditSupplierForm } from "@/view/components/suppliers/EditSupplierForm"
 import { formatId } from "@/utils/number-formatters"
+import { isValidId } from "@/validation/helpers"
 
 export function EditSupplierPage() {
   const { id } = useParams()
   const supplierId = Number(id)
 
-  if (!Number.isFinite(supplierId)) {
+  if (!isValidId(supplierId)) {
     return (
       <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
         <p className="text-red-500 dark:text-red-300">رقم المورد غير صالح.</p>
