@@ -3,6 +3,12 @@ import { Loader2, Plus, Trash2 } from "lucide-react"
 
 import { useCreatePurchaseInvoice } from "@/hooks/usePurchaseInvoices"
 import {
+  purchaseInvoiceSchema,
+  purchaseInvoiceValuesToPayload,
+  purchaseInvoiceZodErrorToFormErrors,
+  type PurchaseInvoiceFormErrors,
+} from "@/validation/purchase-invoice-schema"
+import {
   getNextYearDateInputValue,
   getTodayDateTimeInputValue,
 } from "./purchase-invoice-format"
@@ -27,6 +33,14 @@ const smallInputClass =
 const dateInputClass = `${inputClass} text-left [direction:ltr]`
 const smallDateInputClass = `${smallInputClass} text-left [direction:ltr]`
 
+function ErrorText({ message }: { message?: string }) {
+  if (!message) return null
+
+  return (
+    <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  )
+}
+
 export function CreatePurchaseInvoiceForm({
   onCreated,
 }: CreatePurchaseInvoiceFormProps) {
@@ -35,6 +49,7 @@ export function CreatePurchaseInvoiceForm({
   const [supplierId, setSupplierId] = useState("")
   const [invoiceDate, setInvoiceDate] = useState(getTodayDateTimeInputValue())
   const [receive, setReceive] = useState(false)
+  const [errors, setErrors] = useState<PurchaseInvoiceFormErrors>({})
   const [items, setItems] = useState<InvoiceFormItem[]>([
     {
       productId: "",
@@ -48,6 +63,7 @@ export function CreatePurchaseInvoiceForm({
     setSupplierId("")
     setInvoiceDate(getTodayDateTimeInputValue())
     setReceive(false)
+    setErrors({})
     setItems([
       {
         productId: "",
@@ -56,6 +72,16 @@ export function CreatePurchaseInvoiceForm({
         expiryDate: getNextYearDateInputValue(),
       },
     ])
+  }
+
+  function updateSupplierId(value: string) {
+    setSupplierId(value)
+    setErrors((currentErrors) => ({ ...currentErrors, supplierId: undefined }))
+  }
+
+  function updateInvoiceDate(value: string) {
+    setInvoiceDate(value)
+    setErrors((currentErrors) => ({ ...currentErrors, invoiceDate: undefined }))
   }
 
   function addItem() {
@@ -68,6 +94,7 @@ export function CreatePurchaseInvoiceForm({
         expiryDate: getNextYearDateInputValue(),
       },
     ])
+    setErrors((currentErrors) => ({ ...currentErrors, items: undefined }))
   }
 
   function removeItem(index: number) {
@@ -76,6 +103,7 @@ export function CreatePurchaseInvoiceForm({
         ? currentItems
         : currentItems.filter((_, itemIndex) => itemIndex !== index)
     )
+    setErrors((currentErrors) => ({ ...currentErrors, items: undefined }))
   }
 
   function updateItem(
@@ -88,59 +116,28 @@ export function CreatePurchaseInvoiceForm({
         itemIndex === index ? { ...item, [field]: value } : item
       )
     )
+    setErrors((currentErrors) => ({ ...currentErrors, items: undefined }))
   }
 
   function handleCreateInvoice(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const parsedSupplierId = Number(supplierId)
-    const parsedInvoiceDate = new Date(invoiceDate)
-
-    if (!Number.isFinite(parsedSupplierId) || parsedSupplierId <= 0) {
-      alert("أدخل رقم المورد بشكل صحيح")
-      return
-    }
-
-    if (!invoiceDate || Number.isNaN(parsedInvoiceDate.getTime())) {
-      alert("أدخل تاريخ الفاتورة بشكل صحيح")
-      return
-    }
-
-    const hasInvalidItem = items.some((item) => {
-      const productId = Number(item.productId)
-      const quantity = Number(item.quantity)
-      const unitCost = Number(item.unitCost)
-      const expiryDate = new Date(item.expiryDate)
-
-      return (
-        !Number.isFinite(productId) ||
-        productId <= 0 ||
-        !Number.isFinite(quantity) ||
-        quantity <= 0 ||
-        !Number.isFinite(unitCost) ||
-        unitCost < 0 ||
-        !item.expiryDate ||
-        Number.isNaN(expiryDate.getTime())
-      )
+    const validationResult = purchaseInvoiceSchema.safeParse({
+      supplierId,
+      invoiceDate,
+      receive,
+      items,
     })
 
-    if (hasInvalidItem) {
-      alert("تأكد من رقم المنتج والكمية وتكلفة الوحدة وتاريخ الانتهاء")
+    if (!validationResult.success) {
+      setErrors(purchaseInvoiceZodErrorToFormErrors(validationResult.error))
       return
     }
 
+    setErrors({})
+
     createMutation.mutate(
-      {
-        supplierId: parsedSupplierId,
-        invoiceDate: parsedInvoiceDate.toISOString(),
-        receive,
-        items: items.map((item) => ({
-          productId: Number(item.productId),
-          quantity: Number(item.quantity),
-          unitCost: Number(item.unitCost),
-          expiryDate: new Date(item.expiryDate).toISOString(),
-        })),
-      },
+      purchaseInvoiceValuesToPayload(validationResult.data),
       {
         onSuccess: () => {
           resetCreateForm()
@@ -182,11 +179,12 @@ export function CreatePurchaseInvoiceForm({
 
             <input
               value={supplierId}
-              onChange={(event) => setSupplierId(event.target.value)}
+              onChange={(event) => updateSupplierId(event.target.value)}
               placeholder="مثال: 1"
               inputMode="numeric"
               className={`${inputClass} text-right`}
             />
+            <ErrorText message={errors.supplierId} />
           </label>
 
           <label className="space-y-2 text-right">
@@ -197,9 +195,10 @@ export function CreatePurchaseInvoiceForm({
             <input
               type="datetime-local"
               value={invoiceDate}
-              onChange={(event) => setInvoiceDate(event.target.value)}
+              onChange={(event) => updateInvoiceDate(event.target.value)}
               className={dateInputClass}
             />
+            <ErrorText message={errors.invoiceDate} />
           </label>
 
           <label className="flex items-end justify-between gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5">
@@ -313,6 +312,7 @@ export function CreatePurchaseInvoiceForm({
               </div>
             ))}
           </div>
+          <ErrorText message={errors.items} />
         </div>
 
         {createMutation.isError && (

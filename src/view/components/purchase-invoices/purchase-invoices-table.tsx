@@ -1,8 +1,11 @@
+import { useState } from "react"
 import { Ban, CheckCircle2, Eye, Loader2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
 import { useUpdatePurchaseInvoiceStatus } from "@/hooks/usePurchaseInvoices"
+import { isValidId } from "@/validation/helpers"
+import { isPurchaseInvoiceStatus } from "@/validation/purchase-invoice-schema"
 import type {
   PurchaseInvoice,
   PurchaseInvoiceStatus,
@@ -30,8 +33,21 @@ export function PurchaseInvoicesTable({
 }: PurchaseInvoicesTableProps) {
   const navigate = useNavigate()
   const updateStatusMutation = useUpdatePurchaseInvoiceStatus()
+  const [statusError, setStatusError] = useState("")
 
   function handleStatusUpdate(id: number, status: PurchaseInvoiceStatus) {
+    setStatusError("")
+
+    if (!isValidId(id)) {
+      setStatusError("رقم الفاتورة غير صالح.")
+      return
+    }
+
+    if (!isPurchaseInvoiceStatus(status)) {
+      setStatusError("حالة الفاتورة غير صالحة.")
+      return
+    }
+
     updateStatusMutation.mutate({ id, status })
   }
 
@@ -189,6 +205,12 @@ export function PurchaseInvoicesTable({
         <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
           فشل تحديث حالة الفاتورة. الحالة يمكن تغييرها فقط من Pending إلى
           Completed أو Cancelled.
+        </p>
+      )}
+
+      {statusError && (
+        <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          {statusError}
         </p>
       )}
     </>

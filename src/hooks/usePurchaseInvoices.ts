@@ -8,6 +8,7 @@ import {
   type CreatePurchaseInvoicePayload,
   type PurchaseInvoiceStatus,
 } from "@/services/purchase-invoices-service"
+import { isValidId } from "@/validation/helpers"
 
 export function usePurchaseInvoices() {
   return useQuery({
@@ -20,7 +21,7 @@ export function usePurchaseInvoice(invoiceId: number) {
   return useQuery({
     queryKey: ["purchase-invoice", invoiceId],
     queryFn: () => getPurchaseInvoice(invoiceId),
-    enabled: Number.isFinite(invoiceId) && invoiceId > 0,
+    enabled: isValidId(invoiceId),
   })
 }
 

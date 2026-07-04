@@ -1,16 +1,17 @@
 import { apiRequest } from "@/api/client"
+import { isValidId } from "@/validation/helpers"
+import {
+  PURCHASE_INVOICE_STATUS_OPTIONS,
+  isPurchaseInvoiceStatus,
+  type PurchaseInvoiceItemPayload,
+  type PurchaseInvoicePayload,
+  type PurchaseInvoiceStatus,
+} from "@/validation/purchase-invoice-schema"
 
 export const PURCHASE_INVOICES_ENDPOINT = "/purchase/invoices"
 
-export const PURCHASE_INVOICE_STATUS_OPTIONS = [
-  "PENDING",
-  "RECEIVED",
-  "COMPLETED",
-  "CANCELLED",
-] as const
-
-export type PurchaseInvoiceStatus =
-  (typeof PURCHASE_INVOICE_STATUS_OPTIONS)[number]
+export { PURCHASE_INVOICE_STATUS_OPTIONS }
+export type { PurchaseInvoiceStatus }
 
 export type PurchaseInvoiceItem = {
   id?: number
@@ -64,19 +65,9 @@ export type PurchaseInvoicesResponse =
       isFinalPage?: boolean
     }
 
-export type CreatePurchaseInvoiceItem = {
-  productId: number
-  quantity: number
-  unitCost: number
-  expiryDate: string
-}
+export type CreatePurchaseInvoiceItem = PurchaseInvoiceItemPayload
 
-export type CreatePurchaseInvoicePayload = {
-  supplierId: number
-  invoiceDate: string
-  items: CreatePurchaseInvoiceItem[]
-  receive: boolean
-}
+export type CreatePurchaseInvoicePayload = PurchaseInvoicePayload
 
 export function normalizePurchaseInvoices(response?: PurchaseInvoicesResponse) {
   if (!response) return []
@@ -93,6 +84,10 @@ export async function getPurchaseInvoices() {
 }
 
 export async function getPurchaseInvoice(id: number) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid purchase invoice id")
+  }
+
   return apiRequest<PurchaseInvoice>(`${PURCHASE_INVOICES_ENDPOINT}/${id}`)
 }
 
@@ -109,6 +104,14 @@ export async function updatePurchaseInvoiceStatus(
   id: number,
   status: PurchaseInvoiceStatus
 ) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid purchase invoice id")
+  }
+
+  if (!isPurchaseInvoiceStatus(status)) {
+    throw new Error("Invalid purchase invoice status")
+  }
+
   return apiRequest<PurchaseInvoice>(
     `${PURCHASE_INVOICES_ENDPOINT}/${id}/status`,
     {

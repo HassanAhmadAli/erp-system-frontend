@@ -1,4 +1,5 @@
 import { formatDateTime } from "@/utils/number-formatters"
+import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   ArrowRight,
@@ -11,10 +12,13 @@ import { useNavigate, useParams } from "react-router-dom"
 
 import { apiRequest } from "@/api/client"
 import { cn } from "@/lib/utils"
+import { isValidId } from "@/validation/helpers"
+import {
+  isPurchaseInvoiceStatus,
+  type PurchaseInvoiceStatus,
+} from "@/validation/purchase-invoice-schema"
 
 const PURCHASE_INVOICES_ENDPOINT = "/purchase/invoices"
-
-type PurchaseInvoiceStatus = "PENDING" | "COMPLETED" | "CANCELLED"
 
 type PurchaseInvoiceItem = {
   id?: number
@@ -61,17 +65,23 @@ type PurchaseInvoice = {
 
 const statusLabels: Record<string, string> = {
   PENDING: "قيد الانتظار",
+  RECEIVED: "مستلمة",
   COMPLETED: "مكتملة",
   CANCELLED: "ملغاة",
 }
 
 const statusStyles: Record<string, string> = {
   PENDING: "bg-amber-50 text-amber-700 ring-amber-200",
+  RECEIVED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   COMPLETED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   CANCELLED: "bg-rose-50 text-rose-700 ring-rose-200",
 }
 
 function getPurchaseInvoice(id: number) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid purchase invoice id")
+  }
+
   return apiRequest<PurchaseInvoice>(`${PURCHASE_INVOICES_ENDPOINT}/${id}`)
 }
 
@@ -79,6 +89,14 @@ function updatePurchaseInvoiceStatus(
   id: number,
   status: PurchaseInvoiceStatus
 ) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid purchase invoice id")
+  }
+
+  if (!isPurchaseInvoiceStatus(status)) {
+    throw new Error("Invalid purchase invoice status")
+  }
+
   return apiRequest<PurchaseInvoice>(
     `${PURCHASE_INVOICES_ENDPOINT}/${id}/status`,
     {
@@ -155,6 +173,7 @@ export function PurchaseInvoiceDetailsPage() {
   const { id } = useParams()
 
   const invoiceId = Number(id)
+  const [statusError, setStatusError] = useState("")
 
   const {
     data: invoice,
@@ -163,7 +182,7 @@ export function PurchaseInvoiceDetailsPage() {
   } = useQuery({
     queryKey: ["purchase-invoice", invoiceId],
     queryFn: () => getPurchaseInvoice(invoiceId),
-    enabled: Number.isFinite(invoiceId) && invoiceId > 0,
+    enabled: isValidId(invoiceId),
   })
 
   const updateStatusMutation = useMutation({
@@ -178,14 +197,38 @@ export function PurchaseInvoiceDetailsPage() {
   })
 
   function handleComplete() {
+    setStatusError("")
+
+    if (!isValidId(invoiceId)) {
+      setStatusError("رقم الفاتورة غير صالح.")
+      return
+    }
+
+    if (!isPurchaseInvoiceStatus("COMPLETED")) {
+      setStatusError("حالة الفاتورة غير صالحة.")
+      return
+    }
+
     updateStatusMutation.mutate("COMPLETED")
   }
 
   function handleCancel() {
+    setStatusError("")
+
+    if (!isValidId(invoiceId)) {
+      setStatusError("رقم الفاتورة غير صالح.")
+      return
+    }
+
+    if (!isPurchaseInvoiceStatus("CANCELLED")) {
+      setStatusError("حالة الفاتورة غير صالحة.")
+      return
+    }
+
     updateStatusMutation.mutate("CANCELLED")
   }
 
-  if (!Number.isFinite(invoiceId) || invoiceId <= 0) {
+  if (!isValidId(invoiceId)) {
     return (
       <main className="space-y-6" dir="rtl">
         <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
@@ -326,6 +369,12 @@ export function PurchaseInvoiceDetailsPage() {
               <p className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
                 فشل تحديث حالة الفاتورة. قد تكون الحالة غير مسموح بها من
                 الباكند.
+              </p>
+            )}
+
+            {statusError && (
+              <p className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+                {statusError}
               </p>
             )}
 
