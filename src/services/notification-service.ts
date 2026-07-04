@@ -1,15 +1,15 @@
 import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import {
+  NOTIFICATION_TARGET_ROLES,
+  NOTIFICATION_TARGET_TYPES,
+  type NotificationRequestPayload,
+  type NotificationTargetRole,
+  type NotificationTargetType,
+} from "@/validation/notification-schema"
+import { isValidId } from "@/validation/helpers"
 
-export const NOTIFICATION_TARGET_TYPES = ["ALL", "ROLE", "USER"] as const
-export type NotificationTargetType = (typeof NOTIFICATION_TARGET_TYPES)[number]
-
-export const NOTIFICATION_TARGET_ROLES = [
-  "CASHIER",
-  "STORE_MANAGER",
-  "ACCOUNTANT",
-  "WAREHOUSE_WORKER",
-] as const
-export type NotificationTargetRole = (typeof NOTIFICATION_TARGET_ROLES)[number]
+export { NOTIFICATION_TARGET_ROLES, NOTIFICATION_TARGET_TYPES }
+export type { NotificationTargetRole, NotificationTargetType }
 
 export type NotificationSender = {
   id: number
@@ -59,13 +59,8 @@ export type SentNotificationHistory = {
   recipientCount: number
 }
 
-export type SendNotificationPayload = {
-  title: string
-  body: string
-  targetType: NotificationTargetType
-  targetRole?: NotificationTargetRole
-  userIds?: number[]
-}
+export type SendNotificationPayload = NotificationRequestPayload
+export type CreateNotificationInput = NotificationRequestPayload
 
 export type MyNotificationsQuery = {
   limit?: number
@@ -161,6 +156,8 @@ export function getMyNotifications(params?: MyNotificationsQuery) {
 }
 
 export function markNotificationRead(recipientId: number) {
+  if (!isValidId(recipientId)) throw new Error("Invalid notification id")
+
   return apiRequest<InboxNotificationRecipient>(
     `/notifications/${recipientId}/read`,
     {
@@ -170,6 +167,8 @@ export function markNotificationRead(recipientId: number) {
 }
 
 export function markNotificationUnread(recipientId: number) {
+  if (!isValidId(recipientId)) throw new Error("Invalid notification id")
+
   return apiRequest<InboxNotificationRecipient>(
     `/notifications/${recipientId}/unread`,
     {

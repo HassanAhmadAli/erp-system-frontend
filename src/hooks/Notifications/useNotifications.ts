@@ -12,6 +12,7 @@ import {
   type NotificationHistoryQuery,
   type SendNotificationPayload,
 } from "@/services/notification-service"
+import { isValidId } from "@/validation/helpers"
 
 export function useMyNotifications(params?: MyNotificationsQuery) {
   return useQuery({
@@ -42,7 +43,10 @@ export function useMarkNotificationRead() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (recipientId: number) => markNotificationRead(recipientId),
+    mutationFn: (recipientId: number) => {
+      if (!isValidId(recipientId)) throw new Error("Invalid notification id")
+      return markNotificationRead(recipientId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
@@ -53,7 +57,10 @@ export function useMarkNotificationUnread() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (recipientId: number) => markNotificationUnread(recipientId),
+    mutationFn: (recipientId: number) => {
+      if (!isValidId(recipientId)) throw new Error("Invalid notification id")
+      return markNotificationUnread(recipientId)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] })
     },
