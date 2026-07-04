@@ -3,18 +3,19 @@ import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
 
 import { useCreateAd } from "@/hooks/useAds"
+import {
+  adFormValuesToPayload,
+  adSchema,
+  adZodErrorToFormErrors,
+  type AdFormErrors,
+  type AdPlacement,
+} from "@/validation/ad-schema"
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
   "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-3 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const dateInputClass = `${inputClass} text-left [direction:ltr]`
-
-function toIsoDateTime(value: string) {
-  if (!value) return ""
-
-  return new Date(value).toISOString()
-}
 
 export function CreateAdPage() {
   const navigate = useNavigate()
@@ -24,61 +25,42 @@ export function CreateAdPage() {
   const [description, setDescription] = useState("")
   const [imageUrl, setImageUrl] = useState("")
   const [linkUrl, setLinkUrl] = useState("")
-  const [placement, setPlacement] = useState<"HOME">("HOME")
+  const [placement, setPlacement] = useState<AdPlacement>("HOME")
   const [isActive, setIsActive] = useState(true)
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
+  const [formErrors, setFormErrors] = useState<AdFormErrors>({})
   const [formError, setFormError] = useState("")
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setFormError("")
+    setFormErrors({})
 
-    if (!title.trim()) {
-      setFormError("عنوان الإعلان مطلوب.")
+    const validation = adSchema.safeParse({
+      title,
+      description,
+      imageUrl,
+      linkUrl,
+      placement,
+      isActive,
+      startDate,
+      endDate,
+    })
+
+    if (!validation.success) {
+      setFormErrors(adZodErrorToFormErrors(validation.error))
       return
     }
 
-    if (!description.trim()) {
-      setFormError("وصف الإعلان مطلوب.")
-      return
-    }
-
-    if (!startDate) {
-      setFormError("تاريخ بداية الإعلان مطلوب.")
-      return
-    }
-
-    if (!endDate) {
-      setFormError("تاريخ نهاية الإعلان مطلوب.")
-      return
-    }
-
-    if (new Date(endDate) <= new Date(startDate)) {
-      setFormError("تاريخ النهاية يجب أن يكون بعد تاريخ البداية.")
-      return
-    }
-
-    createAdMutation.mutate(
-      {
-        title: title.trim(),
-        description: description.trim(),
-        imageUrl: imageUrl.trim() || null,
-        linkUrl: linkUrl.trim() || null,
-        placement,
-        isActive,
-        startDate: toIsoDateTime(startDate),
-        endDate: toIsoDateTime(endDate),
+    createAdMutation.mutate(adFormValuesToPayload(validation.data), {
+      onSuccess: () => {
+        navigate("/ads")
       },
-      {
-        onSuccess: () => {
-          navigate("/ads")
-        },
-        onError: () => {
-          setFormError("حدث خطأ أثناء إنشاء الإعلان.")
-        },
-      }
-    )
+      onError: () => {
+        setFormError("حدث خطأ أثناء إنشاء الإعلان.")
+      },
+    })
   }
 
   return (
@@ -121,6 +103,12 @@ export function CreateAdPage() {
               placeholder="مثال: عرض الصيف"
               className={inputClass}
             />
+
+            {formErrors.title && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.title}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2 md:col-span-2">
@@ -135,6 +123,12 @@ export function CreateAdPage() {
               rows={4}
               className={`${inputClass} resize-none`}
             />
+
+            {formErrors.description && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.description}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -148,6 +142,12 @@ export function CreateAdPage() {
               placeholder="https://example.com/image.png"
               className={`${inputClass} text-left [direction:ltr]`}
             />
+
+            {formErrors.imageUrl && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.imageUrl}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -161,6 +161,12 @@ export function CreateAdPage() {
               placeholder="https://example.com"
               className={`${inputClass} text-left [direction:ltr]`}
             />
+
+            {formErrors.linkUrl && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.linkUrl}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -170,11 +176,17 @@ export function CreateAdPage() {
 
             <select
               value={placement}
-              onChange={(event) => setPlacement(event.target.value as "HOME")}
+              onChange={(event) => setPlacement(event.target.value as AdPlacement)}
               className={inputClass}
             >
               <option value="HOME">الصفحة الرئيسية</option>
             </select>
+
+            {formErrors.placement && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.placement}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -190,6 +202,12 @@ export function CreateAdPage() {
               <option value="active">نشط</option>
               <option value="inactive">غير نشط</option>
             </select>
+
+            {formErrors.isActive && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.isActive}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -203,6 +221,12 @@ export function CreateAdPage() {
               onChange={(event) => setStartDate(event.target.value)}
               className={dateInputClass}
             />
+
+            {formErrors.startDate && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.startDate}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -216,6 +240,12 @@ export function CreateAdPage() {
               onChange={(event) => setEndDate(event.target.value)}
               className={dateInputClass}
             />
+
+            {formErrors.endDate && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.endDate}
+              </p>
+            )}
           </div>
         </div>
 

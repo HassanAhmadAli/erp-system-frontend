@@ -1,6 +1,11 @@
 import { apiRequest } from "@/api/client"
+import {
+  type AdPlacement,
+  type AdRequestPayload,
+} from "@/validation/ad-schema"
+import { isValidId } from "@/validation/helpers"
 
-export type AdPlacement = "HOME"
+export type { AdPlacement }
 
 export type Ad = {
   id: number
@@ -23,16 +28,7 @@ export type AdsListResponse =
     }
   | Ad[]
 
-export type CreateAdInput = {
-  title: string
-  description: string
-  imageUrl: string | null
-  linkUrl: string | null
-  placement: AdPlacement
-  isActive: boolean
-  startDate: string
-  endDate: string
-}
+export type CreateAdInput = AdRequestPayload
 
 export type UpdateAdInput = Partial<CreateAdInput>
 
@@ -41,7 +37,7 @@ function asArray<T>(response: unknown): T[] {
 
   if (Array.isArray(response)) return response as T[]
 
-  const maybe = response as any
+  const maybe = response as { data?: unknown }
 
   if (maybe?.data && Array.isArray(maybe.data)) {
     return maybe.data as T[]
@@ -59,6 +55,8 @@ export function getAds(activeOnly = false) {
 }
 
 export function getAdById(id: number) {
+  if (!isValidId(id)) throw new Error("Invalid ad id")
+
   return apiRequest<Ad>(`/ads/${id}`)
 }
 
@@ -70,6 +68,8 @@ export function createAd(data: CreateAdInput) {
 }
 
 export function updateAd(id: number, data: UpdateAdInput) {
+  if (!isValidId(id)) throw new Error("Invalid ad id")
+
   return apiRequest<Ad>(`/ads/${id}`, {
     method: "PATCH",
     body: JSON.stringify(data),
@@ -77,6 +77,8 @@ export function updateAd(id: number, data: UpdateAdInput) {
 }
 
 export function deleteAd(id: number) {
+  if (!isValidId(id)) throw new Error("Invalid ad id")
+
   return apiRequest<{ message: string }>(`/ads/${id}`, {
     method: "DELETE",
   })
