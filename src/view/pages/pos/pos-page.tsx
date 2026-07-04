@@ -1,7 +1,13 @@
 import { useMemo, useState } from "react"
 
 import { useCreateSaleInvoice, usePosProducts } from "@/hooks/usePos"
-import type { CreateSaleInvoicePayload, PosProduct } from "@/services/pos-service"
+import type { PosProduct } from "@/services/pos-service"
+import {
+  posCheckoutValuesToPayload,
+  posCheckoutZodErrorToFormErrors,
+  validatePosCartBeforeCheckout,
+  type PosCheckoutFormErrors,
+} from "@/validation/pos-schema"
 import {
   formatCurrency,
   getProductPrice,
@@ -17,6 +23,7 @@ export function PosPage() {
   const [amountPaid, setAmountPaid] = useState("")
   const [completeInvoice, setCompleteInvoice] = useState(true)
   const [cart, setCart] = useState<CartItem[]>([])
+  const [errors, setErrors] = useState<PosCheckoutFormErrors>({})
 
   const productsQuery = usePosProducts()
   const createInvoiceMutation = useCreateSaleInvoice()
@@ -49,6 +56,21 @@ export function PosPage() {
     }, 0)
   }, [cart])
 
+  function changeCustomerId(value: string) {
+    setCustomerId(value)
+    setErrors((previous) => ({ ...previous, customerId: undefined }))
+  }
+
+  function changeAmountPaid(value: string) {
+    setAmountPaid(value)
+    setErrors((previous) => ({ ...previous, amountPaid: undefined }))
+  }
+
+  function changeCompleteInvoice(value: boolean) {
+    setCompleteInvoice(value)
+    setErrors((previous) => ({ ...previous, amountPaid: undefined }))
+  }
+
   function addToCart(product: PosProduct) {
     if (product.quantityInStock <= 0) {
       return
@@ -73,6 +95,7 @@ export function PosPage() {
           : item
       )
     })
+    setErrors((previous) => ({ ...previous, cart: undefined }))
   }
 
   function decreaseQuantity(productId: number) {
@@ -85,6 +108,7 @@ export function PosPage() {
         )
         .filter((item) => item.quantity > 0)
     )
+    setErrors((previous) => ({ ...previous, cart: undefined }))
   }
 
   function increaseQuantity(productId: number) {
@@ -104,6 +128,7 @@ export function PosPage() {
         }
       })
     )
+    setErrors((previous) => ({ ...previous, cart: undefined }))
   }
 
   function changeQuantity(productId: number, quantity: number) {
@@ -133,64 +158,45 @@ export function PosPage() {
         })
         .filter((item) => item.quantity > 0)
     )
+    setErrors((previous) => ({ ...previous, cart: undefined }))
   }
 
   function removeFromCart(productId: number) {
     setCart((previous) =>
       previous.filter((item) => item.product.id !== productId)
     )
+    setErrors((previous) => ({ ...previous, cart: undefined }))
   }
 
   function clearCart() {
     setCart([])
     setAmountPaid("")
+    setErrors({})
   }
 
   function handleCreateInvoice() {
-    const customerIdValue = toEnglishDigits(customerId).trim()
-    const customerIdNumber = customerIdValue ? Number(customerIdValue) : null
-    const parsedAmountPaid = Number(toEnglishDigits(amountPaid))
-
-    if (
-      customerIdValue &&
-      (customerIdNumber === null ||
-        Number.isNaN(customerIdNumber) ||
-        customerIdNumber <= 0)
-    ) {
-      alert("يرجى إدخال رقم عميل صحيح أو ترك الحقل فارغاً.")
-      return
-    }
-
-    if (cart.length === 0) {
-      alert("يرجى إضافة منتج واحد على الأقل إلى السلة.")
-      return
-    }
-
-    if (Number.isNaN(parsedAmountPaid) || parsedAmountPaid < 0) {
-      alert("يرجى إدخال مبلغ مدفوع صحيح.")
-      return
-    }
-
-    if (completeInvoice && parsedAmountPaid < subtotal) {
-      alert("المبلغ المدفوع يجب أن يكون أكبر من أو يساوي إجمالي الفاتورة.")
-      return
-    }
-
-    createInvoiceMutation.reset()
-
-    const payload: CreateSaleInvoicePayload = {
-      discountId: null,
-      amountPaid: parsedAmountPaid,
-      complete: completeInvoice,
-      items: cart.map((item) => ({
+    const validationResult = validatePosCartBeforeCheckout({
+      cart: cart.map((item) => ({
         productId: item.product.id,
         quantity: item.quantity,
+        quantityInStock: item.product.quantityInStock,
       })),
+      customerId,
+      discountId: null,
+      amountPaid,
+      complete: completeInvoice,
+      subtotal,
+    })
+
+    if (!validationResult.success) {
+      setErrors(posCheckoutZodErrorToFormErrors(validationResult.error))
+      return
     }
 
-    if (customerIdNumber !== null) {
-      payload.customerId = customerIdNumber
-    }
+    setErrors({})
+    createInvoiceMutation.reset()
+
+    const payload = posCheckoutValuesToPayload(validationResult.data)
 
     createInvoiceMutation.mutate(payload, {
       onSuccess: () => {
@@ -243,9 +249,10 @@ export function PosPage() {
           isCreatingInvoice={createInvoiceMutation.isPending}
           isCreateInvoiceError={createInvoiceMutation.isError}
           isCreateInvoiceSuccess={createInvoiceMutation.isSuccess}
-          onCustomerIdChange={setCustomerId}
-          onAmountPaidChange={setAmountPaid}
-          onCompleteInvoiceChange={setCompleteInvoice}
+          errors={errors}
+          onCustomerIdChange={changeCustomerId}
+          onAmountPaidChange={changeAmountPaid}
+          onCompleteInvoiceChange={changeCompleteInvoice}
           onClearCart={clearCart}
           onCreateInvoice={handleCreateInvoice}
           onIncreaseQuantity={increaseQuantity}
