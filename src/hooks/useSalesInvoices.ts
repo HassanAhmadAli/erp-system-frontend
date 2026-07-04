@@ -8,6 +8,7 @@ import {
   type CreateSalesInvoicePayload,
   type SalesInvoiceStatus,
 } from "@/services/sales-invoices-service"
+import { isValidId } from "@/validation/helpers"
 
 export function useSalesInvoices() {
   return useQuery({
@@ -20,7 +21,7 @@ export function useSalesInvoice(invoiceId: number) {
   return useQuery({
     queryKey: ["sales-invoice", invoiceId],
     queryFn: () => getSalesInvoice(invoiceId),
-    enabled: Number.isFinite(invoiceId) && invoiceId > 0,
+    enabled: isValidId(invoiceId),
   })
 }
 

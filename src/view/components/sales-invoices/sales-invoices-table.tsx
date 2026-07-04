@@ -1,8 +1,11 @@
+import { useState } from "react"
 import { CheckCircle2, Eye, Loader2, Undo2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
 import { useUpdateSalesInvoiceStatus } from "@/hooks/useSalesInvoices"
+import { isValidId } from "@/validation/helpers"
+import { isSalesInvoiceStatus } from "@/validation/sales-invoice-schema"
 import type {
   SalesInvoice,
   SalesInvoiceStatus,
@@ -45,8 +48,21 @@ export function SalesInvoicesTable({
 }: SalesInvoicesTableProps) {
   const navigate = useNavigate()
   const updateStatusMutation = useUpdateSalesInvoiceStatus()
+  const [statusError, setStatusError] = useState("")
 
   function handleStatusUpdate(id: number, status: SalesInvoiceStatus) {
+    setStatusError("")
+
+    if (!isValidId(id)) {
+      setStatusError("رقم الفاتورة غير صالح.")
+      return
+    }
+
+    if (!isSalesInvoiceStatus(status)) {
+      setStatusError("حالة الفاتورة غير صالحة.")
+      return
+    }
+
     updateStatusMutation.mutate({ id, status })
   }
 
@@ -201,6 +217,12 @@ export function SalesInvoicesTable({
         <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
           فشل تحديث حالة الفاتورة. الحالة يجب أن تنتقل من Pending إلى Completed
           ثم إلى Returned.
+        </p>
+      )}
+
+      {statusError && (
+        <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          {statusError}
         </p>
       )}
     </>

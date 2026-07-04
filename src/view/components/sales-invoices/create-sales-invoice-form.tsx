@@ -2,6 +2,12 @@ import { type FormEvent, useState } from "react"
 import { CheckCircle2, Loader2, Plus, Trash2 } from "lucide-react"
 
 import { useCreateSalesInvoice } from "@/hooks/useSalesInvoices"
+import {
+  salesInvoiceSchema,
+  salesInvoiceValuesToPayload,
+  salesInvoiceZodErrorToFormErrors,
+  type SalesInvoiceFormErrors,
+} from "@/validation/sales-invoice-schema"
 
 type InvoiceFormItem = {
   productId: string
@@ -10,6 +16,14 @@ type InvoiceFormItem = {
 
 type CreateSalesInvoiceFormProps = {
   onCreated?: () => void
+}
+
+function ErrorText({ message }: { message?: string }) {
+  if (!message) return null
+
+  return (
+    <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  )
 }
 
 export function CreateSalesInvoiceForm({
@@ -21,6 +35,7 @@ export function CreateSalesInvoiceForm({
   const [discountId, setDiscountId] = useState("")
   const [amountPaid, setAmountPaid] = useState("0")
   const [complete, setComplete] = useState(false)
+  const [errors, setErrors] = useState<SalesInvoiceFormErrors>({})
   const [items, setItems] = useState<InvoiceFormItem[]>([
     { productId: "", quantity: "1" },
   ])
@@ -30,7 +45,23 @@ export function CreateSalesInvoiceForm({
     setDiscountId("")
     setAmountPaid("0")
     setComplete(false)
+    setErrors({})
     setItems([{ productId: "", quantity: "1" }])
+  }
+
+  function updateCustomerId(value: string) {
+    setCustomerId(value)
+    setErrors((currentErrors) => ({ ...currentErrors, customerId: undefined }))
+  }
+
+  function updateDiscountId(value: string) {
+    setDiscountId(value)
+    setErrors((currentErrors) => ({ ...currentErrors, discountId: undefined }))
+  }
+
+  function updateAmountPaid(value: string) {
+    setAmountPaid(value)
+    setErrors((currentErrors) => ({ ...currentErrors, amountPaid: undefined }))
   }
 
   function addItem() {
@@ -38,6 +69,7 @@ export function CreateSalesInvoiceForm({
       ...currentItems,
       { productId: "", quantity: "1" },
     ])
+    setErrors((currentErrors) => ({ ...currentErrors, items: undefined }))
   }
 
   function removeItem(index: number) {
@@ -46,6 +78,7 @@ export function CreateSalesInvoiceForm({
         ? currentItems
         : currentItems.filter((_, itemIndex) => itemIndex !== index)
     )
+    setErrors((currentErrors) => ({ ...currentErrors, items: undefined }))
   }
 
   function updateItem(
@@ -58,66 +91,33 @@ export function CreateSalesInvoiceForm({
         itemIndex === index ? { ...item, [field]: value } : item
       )
     )
+    setErrors((currentErrors) => ({ ...currentErrors, items: undefined }))
   }
 
   function handleCreateInvoice(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
 
-    const parsedCustomerId = Number(customerId)
-    const parsedAmountPaid = Number(amountPaid)
-    const parsedDiscountId = discountId.trim() ? Number(discountId) : null
+    const validationResult = salesInvoiceSchema.safeParse({
+      customerId,
+      discountId,
+      amountPaid,
+      items,
+      complete,
+    })
 
-    const parsedItems = items.map((item) => ({
-      productId: Number(item.productId),
-      quantity: Number(item.quantity),
-    }))
-
-    const hasInvalidItem = parsedItems.some(
-      (item) =>
-        !Number.isFinite(item.productId) ||
-        item.productId <= 0 ||
-        !Number.isFinite(item.quantity) ||
-        item.quantity <= 0
-    )
-
-    if (!Number.isFinite(parsedCustomerId) || parsedCustomerId <= 0) {
-      alert("أدخل رقم العميل بشكل صحيح")
+    if (!validationResult.success) {
+      setErrors(salesInvoiceZodErrorToFormErrors(validationResult.error))
       return
     }
 
-    if (!Number.isFinite(parsedAmountPaid) || parsedAmountPaid < 0) {
-      alert("أدخل المبلغ المدفوع بشكل صحيح")
-      return
-    }
+    setErrors({})
 
-    if (
-      parsedDiscountId !== null &&
-      (!Number.isFinite(parsedDiscountId) || parsedDiscountId <= 0)
-    ) {
-      alert("أدخل رقم الخصم بشكل صحيح أو اتركه فارغاً")
-      return
-    }
-
-    if (hasInvalidItem) {
-      alert("تأكد من أرقام المنتجات والكميات")
-      return
-    }
-
-    createMutation.mutate(
-      {
-        customerId: parsedCustomerId,
-        discountId: parsedDiscountId,
-        amountPaid: parsedAmountPaid,
-        items: parsedItems,
-        complete,
+    createMutation.mutate(salesInvoiceValuesToPayload(validationResult.data), {
+      onSuccess: () => {
+        resetCreateForm()
+        onCreated?.()
       },
-      {
-        onSuccess: () => {
-          resetCreateForm()
-          onCreated?.()
-        },
-      }
-    )
+    })
   }
 
   return (
@@ -150,11 +150,12 @@ export function CreateSalesInvoiceForm({
             </span>
             <input
               value={customerId}
-              onChange={(event) => setCustomerId(event.target.value)}
+              onChange={(event) => updateCustomerId(event.target.value)}
               placeholder="مثال: 1"
               inputMode="numeric"
               className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
             />
+            <ErrorText message={errors.customerId} />
           </label>
 
           <label className="space-y-2 text-right">
@@ -163,11 +164,12 @@ export function CreateSalesInvoiceForm({
             </span>
             <input
               value={discountId}
-              onChange={(event) => setDiscountId(event.target.value)}
-              placeholder="اتركه فارغاً بدون خصم"
+              onChange={(event) => updateDiscountId(event.target.value)}
+              placeholder="اتركه فارغًا بدون خصم"
               inputMode="numeric"
               className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
             />
+            <ErrorText message={errors.discountId} />
           </label>
 
           <label className="space-y-2 text-right">
@@ -176,11 +178,12 @@ export function CreateSalesInvoiceForm({
             </span>
             <input
               value={amountPaid}
-              onChange={(event) => setAmountPaid(event.target.value)}
+              onChange={(event) => updateAmountPaid(event.target.value)}
               placeholder="0"
               inputMode="decimal"
               className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
             />
+            <ErrorText message={errors.amountPaid} />
           </label>
 
           <label className="flex items-end gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5">
@@ -260,6 +263,7 @@ export function CreateSalesInvoiceForm({
               </div>
             ))}
           </div>
+          <ErrorText message={errors.items} />
         </div>
 
         {createMutation.isError && (
