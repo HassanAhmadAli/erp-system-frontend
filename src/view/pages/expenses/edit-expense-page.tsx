@@ -4,12 +4,43 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 
 import { useExpenseById, useUpdateExpense } from "@/hooks/Expenses/useExpenses"
 import { formatId } from "@/utils/number-formatters"
+import { isValidDateInputValue, isValidId } from "@/validation/helpers"
+import {
+  expenseFormValuesToPayload,
+  expenseSchema,
+  expenseZodErrorToFormErrors,
+  type ExpenseFormErrors,
+  type ExpenseFormValues,
+} from "@/validation/expense-schema"
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
   "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
+
+const EMPTY_FORM: ExpenseFormValues = {
+  description: "",
+  category: "",
+  amount: "",
+  expenseDate: "",
+}
+
+function toDateInputValue(value: string | null | undefined) {
+  if (!value) return ""
+
+  const candidate = value.slice(0, 10)
+
+  return isValidDateInputValue(candidate) ? candidate : ""
+}
+
+function ErrorText({ message }: { message?: string }) {
+  if (!message) return null
+
+  return (
+    <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  )
+}
 
 export function EditExpensePage() {
   const { id } = useParams()
@@ -19,49 +50,50 @@ export function EditExpensePage() {
   const { data: expense, isLoading, isError } = useExpenseById(expenseId)
   const updateMutation = useUpdateExpense()
 
-  const [description, setDescription] = useState("")
-  const [category, setCategory] = useState("")
-  const [amount, setAmount] = useState("")
-  const [expenseDate, setExpenseDate] = useState("")
+  const [form, setForm] = useState<ExpenseFormValues>(EMPTY_FORM)
+  const [errors, setErrors] = useState<ExpenseFormErrors>({})
   const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
-    if (expense) {
-      setDescription(expense.description ?? "")
-      setCategory(expense.category ?? "")
-      setAmount(String(expense.amount ?? ""))
-      setExpenseDate(expense.expenseDate?.slice(0, 10) ?? "")
-    }
+    if (!expense) return
+
+    setForm({
+      description: expense.description ?? "",
+      category: expense.category ?? "",
+      amount: String(expense.amount ?? ""),
+      expenseDate: toDateInputValue(expense.expenseDate),
+    })
+    setErrors({})
+    setErrorMessage("")
   }, [expense])
+
+  function setField(key: keyof ExpenseFormValues, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setErrorMessage("")
 
-    if (!description.trim()) {
-      setErrorMessage("الوصف مطلوب")
+    if (!isValidId(expenseId)) {
+      setErrorMessage("رقم المصروف غير صالح")
       return
     }
 
-    if (!category.trim()) {
-      setErrorMessage("الفئة مطلوبة")
+    const validationResult = expenseSchema.safeParse(form)
+
+    if (!validationResult.success) {
+      setErrors(expenseZodErrorToFormErrors(validationResult.error))
       return
     }
 
-    if (!amount || Number(amount) <= 0) {
-      setErrorMessage("المبلغ يجب أن يكون أكبر من صفر")
-      return
-    }
+    setErrors({})
 
     try {
       await updateMutation.mutateAsync({
         id: expenseId,
-        data: {
-          description: description.trim(),
-          category: category.trim(),
-          amount: Number(amount),
-          expenseDate,
-        },
+        data: expenseFormValuesToPayload(validationResult.data),
       })
 
       navigate(`/expenses/${expenseId}`)
@@ -70,7 +102,7 @@ export function EditExpensePage() {
     }
   }
 
-  if (!Number.isFinite(expenseId)) {
+  if (!isValidId(expenseId)) {
     return <ErrorMessage message="رقم المصروف غير صالح." />
   }
 
@@ -129,9 +161,10 @@ export function EditExpensePage() {
               id="edit-expense-description"
               className={inputClass}
               placeholder="أدخل وصف المصروف"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              value={form.description}
+              onChange={(event) => setField("description", event.target.value)}
             />
+            <ErrorText message={errors.description} />
           </div>
 
           <div>
@@ -143,9 +176,10 @@ export function EditExpensePage() {
               id="edit-expense-category"
               className={inputClass}
               placeholder="مثال: إيجار، رواتب، كهرباء"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
+              value={form.category}
+              onChange={(event) => setField("category", event.target.value)}
             />
+            <ErrorText message={errors.category} />
           </div>
 
           <div>
@@ -160,9 +194,10 @@ export function EditExpensePage() {
               min="0"
               className={inputClass}
               placeholder="أدخل المبلغ"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
+              value={form.amount}
+              onChange={(event) => setField("amount", event.target.value)}
             />
+            <ErrorText message={errors.amount} />
           </div>
 
           <div className="md:col-span-2">
@@ -174,9 +209,10 @@ export function EditExpensePage() {
               id="edit-expense-date"
               type="date"
               className={`${inputClass} [direction:ltr]`}
-              value={expenseDate}
-              onChange={(event) => setExpenseDate(event.target.value)}
+              value={form.expenseDate}
+              onChange={(event) => setField("expenseDate", event.target.value)}
             />
+            <ErrorText message={errors.expenseDate} />
           </div>
         </div>
 
