@@ -8,10 +8,7 @@ import {
   purchaseInvoiceZodErrorToFormErrors,
   type PurchaseInvoiceFormErrors,
 } from "@/validation/purchase-invoice-schema"
-import {
-  getNextYearDateInputValue,
-  getTodayDateTimeInputValue,
-} from "./purchase-invoice-format"
+import { getTodayDateTimeInputValue } from "./purchase-invoice-format"
 
 type InvoiceFormItem = {
   productId: string
@@ -41,6 +38,15 @@ function ErrorText({ message }: { message?: string }) {
   )
 }
 
+function getEmptyItem(): InvoiceFormItem {
+  return {
+    productId: "",
+    quantity: "1",
+    unitCost: "",
+    expiryDate: "",
+  }
+}
+
 export function CreatePurchaseInvoiceForm({
   onCreated,
 }: CreatePurchaseInvoiceFormProps) {
@@ -50,28 +56,14 @@ export function CreatePurchaseInvoiceForm({
   const [invoiceDate, setInvoiceDate] = useState(getTodayDateTimeInputValue())
   const [receive, setReceive] = useState(false)
   const [errors, setErrors] = useState<PurchaseInvoiceFormErrors>({})
-  const [items, setItems] = useState<InvoiceFormItem[]>([
-    {
-      productId: "",
-      quantity: "1",
-      unitCost: "",
-      expiryDate: getNextYearDateInputValue(),
-    },
-  ])
+  const [items, setItems] = useState<InvoiceFormItem[]>([getEmptyItem()])
 
   function resetCreateForm() {
     setSupplierId("")
     setInvoiceDate(getTodayDateTimeInputValue())
     setReceive(false)
     setErrors({})
-    setItems([
-      {
-        productId: "",
-        quantity: "1",
-        unitCost: "",
-        expiryDate: getNextYearDateInputValue(),
-      },
-    ])
+    setItems([getEmptyItem()])
   }
 
   function updateSupplierId(value: string) {
@@ -85,15 +77,7 @@ export function CreatePurchaseInvoiceForm({
   }
 
   function addItem() {
-    setItems((currentItems) => [
-      ...currentItems,
-      {
-        productId: "",
-        quantity: "1",
-        unitCost: "",
-        expiryDate: getNextYearDateInputValue(),
-      },
-    ])
+    setItems((currentItems) => [...currentItems, getEmptyItem()])
     setErrors((currentErrors) => ({ ...currentErrors, items: undefined }))
   }
 
@@ -103,6 +87,7 @@ export function CreatePurchaseInvoiceForm({
         ? currentItems
         : currentItems.filter((_, itemIndex) => itemIndex !== index)
     )
+
     setErrors((currentErrors) => ({ ...currentErrors, items: undefined }))
   }
 
@@ -116,6 +101,7 @@ export function CreatePurchaseInvoiceForm({
         itemIndex === index ? { ...item, [field]: value } : item
       )
     )
+
     setErrors((currentErrors) => ({ ...currentErrors, items: undefined }))
   }
 
@@ -158,7 +144,7 @@ export function CreatePurchaseInvoiceForm({
 
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
               البيانات المطلوبة: المورد، تاريخ الفاتورة، المنتجات، تكلفة الوحدة،
-              تاريخ الانتهاء، وخيار الاستلام.
+              وخيار الاستلام. تاريخ انتهاء المنتج اختياري.
             </p>
           </div>
 
@@ -287,7 +273,7 @@ export function CreatePurchaseInvoiceForm({
 
                 <label className="space-y-2 text-right">
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
-                    تاريخ الانتهاء
+                    تاريخ الانتهاء اختياري
                   </span>
 
                   <input
@@ -312,6 +298,7 @@ export function CreatePurchaseInvoiceForm({
               </div>
             ))}
           </div>
+
           <ErrorText message={errors.items} />
         </div>
 

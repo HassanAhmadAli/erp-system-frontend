@@ -39,6 +39,10 @@ function dateTimeInputToIsoString(value: string) {
   return new Date(value).toISOString()
 }
 
+function hasOptionalDateValue(value: string | null | undefined) {
+  return Boolean(value?.trim())
+}
+
 export const purchaseInvoiceSchema = z
   .object({
     supplierId: z.union([z.string(), z.number()]).nullish(),
@@ -109,7 +113,7 @@ export const purchaseInvoiceSchema = z
         })
       }
 
-      if (unitCost == null || unitCost <= 0) {
+      if (unitCost == null) {
         ctx.addIssue({
           code: "custom",
           message: "تكلفة الوحدة يجب أن تكون رقمًا أكبر من الصفر",
@@ -117,7 +121,10 @@ export const purchaseInvoiceSchema = z
         })
       }
 
-      if (!isValidDateInputValue(item.expiryDate)) {
+      if (
+        hasOptionalDateValue(item.expiryDate) &&
+        !isValidDateInputValue(item.expiryDate)
+      ) {
         ctx.addIssue({
           code: "custom",
           message: "أدخل تاريخ الانتهاء بشكل صحيح",
@@ -133,7 +140,7 @@ export type PurchaseInvoiceItemPayload = {
   productId: number
   quantity: number
   unitCost: number
-  expiryDate: string
+  expiryDate?: string
 }
 
 export type PurchaseInvoicePayload = {
@@ -150,7 +157,9 @@ export type PurchaseInvoiceFormErrors = Partial<
 export function isPurchaseInvoiceStatus(
   status: unknown
 ): status is PurchaseInvoiceStatus {
-  return PURCHASE_INVOICE_STATUS_OPTIONS.includes(status as PurchaseInvoiceStatus)
+  return PURCHASE_INVOICE_STATUS_OPTIONS.includes(
+    status as PurchaseInvoiceStatus
+  )
 }
 
 export function purchaseInvoiceZodErrorToFormErrors(error: z.ZodError) {
@@ -186,6 +195,7 @@ export function purchaseInvoiceValuesToPayload(
       const productId = parsePositiveInteger(item.productId)
       const quantity = parsePositiveInteger(item.quantity)
       const unitCost = parsePositiveNumber(item.unitCost)
+      const expiryDate = item.expiryDate?.trim()
 
       if (productId == null || quantity == null || unitCost == null) {
         throw new Error("Invalid purchase invoice item")
@@ -195,7 +205,9 @@ export function purchaseInvoiceValuesToPayload(
         productId,
         quantity,
         unitCost,
-        expiryDate: dateInputToIsoString(item.expiryDate ?? ""),
+        ...(expiryDate
+          ? { expiryDate: dateInputToIsoString(expiryDate) }
+          : {}),
       }
     }),
   }

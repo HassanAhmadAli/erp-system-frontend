@@ -5,7 +5,7 @@ import { isValidId, normalizeText, optionalText } from "@/validation/helpers"
 export type Category = {
   id: number
   name: string
-  description?: string
+  description?: string | null
   _count?: { products: number }
 }
 
@@ -17,12 +17,32 @@ export type CategoryListResponse = {
   isFinalPage?: boolean
 }
 
-export type CreateCategoryInput = {
-  name: string
-  description?: string
+export type CreateCategoryInput = CategoryRequestPayload
+export type UpdateCategoryInput = Partial<CategoryRequestPayload>
+
+export type CategoriesQuery = {
+  search?: string
+  page?: number
+  limit?: number
+  offset?: number
+  deleted?: boolean
 }
 
-export type UpdateCategoryInput = Partial<CreateCategoryInput>
+export type CategoryDetails = {
+  id: number
+  name: string
+  description?: string | null
+  products: {
+    id: number
+    name: string
+    barcode: string
+    sellingPrice: string
+    quantityInStock: number
+  }[]
+  _count: {
+    products: number
+  }
+}
 
 function normalizeCategoryResponse(
   response: CategoryListResponse | Category[]
@@ -40,85 +60,89 @@ function normalizeCategoryResponse(
   return response
 }
 
-function cleanCategoryPayload<T extends UpdateCategoryInput>(data: T) {
+function isPositiveSafeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+}
+
+function isNonNegativeSafeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0
+}
+
+function buildCategoryQuery(params?: CategoriesQuery) {
+  const query = new URLSearchParams()
+
+  const search = optionalText(params?.search)
+  if (search) {
+    query.append("search", search)
+  }
+
+  if (isPositiveSafeInteger(params?.limit)) {
+    query.append("limit", String(params.limit))
+  }
+
+  if (isNonNegativeSafeInteger(params?.offset)) {
+    query.append("offset", String(params.offset))
+  } else if (
+    isPositiveSafeInteger(params?.page) &&
+    isPositiveSafeInteger(params?.limit)
+  ) {
+    const offset = (params.page - 1) * params.limit
+    query.append("offset", String(offset))
+  }
+
+  if (typeof params?.deleted === "boolean") {
+    query.append("deleted", String(params.deleted))
+  }
+
+  const queryString = query.toString()
+
+  return queryString ? `?${queryString}` : ""
+}
+
+function cleanCreateCategoryPayload(
+  data: CreateCategoryInput
+): CategoryRequestPayload {
+  const description = optionalText(data.description)
+
+  return {
+    name: normalizeText(data.name),
+    ...(description ? { description } : {}),
+  }
+}
+
+function cleanUpdateCategoryPayload(data: UpdateCategoryInput) {
   const payload: UpdateCategoryInput = {}
 
   if (data.name != null) {
     payload.name = normalizeText(data.name)
   }
 
-  const description = optionalText(data.description)
-  if (description) {
-    payload.description = description
+  if (data.description != null) {
+    const description = optionalText(data.description)
+
+    if (description) {
+      payload.description = description
+    }
   }
 
-  return payload as T extends CreateCategoryInput
-    ? CategoryRequestPayload
-    : UpdateCategoryInput
+  return payload
 }
 
-export async function getCategories(params?: {
-  search?: string
-  page?: number
-  limit?: number
-}) {
-  const query = new URLSearchParams()
+export async function getCategories(params?: CategoriesQuery) {
+  const response = await apiRequest<CategoryListResponse | Category[]>(
+    `/category${buildCategoryQuery(params)}`
+  )
 
-  if (params?.search) query.append("search", params.search)
-  if (params?.page) query.append("page", String(params.page))
-  if (params?.limit) query.append("limit", String(params.limit))
-
-  const qs = query.toString()
-  const endpoint = qs ? `/category?${qs}` : "/category"
-  const response = await apiRequest<CategoryListResponse | Category[]>(endpoint)
   return normalizeCategoryResponse(response)
 }
 
 export function createCategory(data: CreateCategoryInput) {
-  return apiRequest("/category", {
+  return apiRequest<Category>("/category", {
     method: "POST",
-    body: JSON.stringify(cleanCategoryPayload(data)),
-  })
-}
-//  ver  ONE
-
-// export function updateCategory(
-//   id: number,
-//   data: { name?: string; description?: string }
-// ) {
-//   return apiRequest(`/category/${id}`, {
-//     method: "PATCH",
-//     body: JSON.stringify(data),
-//   })
-// }
-
-export function deleteCategory(id: number) {
-  if (!isValidId(id)) {
-    throw new Error("Invalid category id")
-  }
-
-  return apiRequest(`/category/${id}`, {
-    method: "DELETE",
+    body: JSON.stringify(cleanCreateCategoryPayload(data)),
   })
 }
 
-export type CategoryDetails = {
-  id: number
-  name: string
-  description?: string
-  products: {
-    id: number
-    name: string
-    barcode: string
-    sellingPrice: string
-    quantityInStock: number
-  }[]
-  _count: {
-    products: number
-  }
-}
-
-// GET ONE
 export function getCategoryById(id: number) {
   if (!isValidId(id)) {
     throw new Error("Invalid category id")
@@ -127,14 +151,23 @@ export function getCategoryById(id: number) {
   return apiRequest<CategoryDetails>(`/category/${id}`)
 }
 
-//UPDATE
 export function updateCategory(id: number, data: UpdateCategoryInput) {
   if (!isValidId(id)) {
     throw new Error("Invalid category id")
   }
 
-  return apiRequest(`/category/${id}`, {
+  return apiRequest<Category>(`/category/${id}`, {
     method: "PATCH",
-    body: JSON.stringify(cleanCategoryPayload(data)),
+    body: JSON.stringify(cleanUpdateCategoryPayload(data)),
+  })
+}
+
+export function deleteCategory(id: number) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid category id")
+  }
+
+  return apiRequest<{ message: string }>(`/category/${id}`, {
+    method: "DELETE",
   })
 }

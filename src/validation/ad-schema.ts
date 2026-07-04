@@ -8,7 +8,7 @@ import {
 } from "./helpers"
 import { requiredText } from "./zod-helpers"
 
-export const AD_PLACEMENTS = ["HOME"] as const
+export const AD_PLACEMENTS = ["HOME", "CHECKOUT", "SIDEBAR"] as const
 export type AdPlacement = (typeof AD_PLACEMENTS)[number]
 
 const DATE_TIME_INPUT_PATTERN =
@@ -21,6 +21,7 @@ function normalizeDateTimeInput(value: string) {
 function parseDateTimeInput(value: string) {
   const normalized = normalizeDateTimeInput(value)
   const match = DATE_TIME_INPUT_PATTERN.exec(normalized)
+
   if (!match) return null
 
   const year = Number(match[1])
@@ -31,7 +32,10 @@ function parseDateTimeInput(value: string) {
   const seconds = Number(match[6] ?? "0")
 
   const date = new Date(year, month - 1, day, hours, minutes, seconds)
-  if (!Number.isFinite(date.getTime())) return null
+
+  if (!Number.isFinite(date.getTime())) {
+    return null
+  }
 
   if (
     date.getFullYear() !== year ||
@@ -53,7 +57,11 @@ function isValidDateTimeInput(value: string) {
 
 function dateTimeInputToIsoString(value: string) {
   const date = parseDateTimeInput(value)
-  if (!date) throw new Error("Invalid ad date")
+
+  if (!date) {
+    throw new Error("Invalid ad date")
+  }
+
   return date.toISOString()
 }
 
@@ -77,24 +85,28 @@ function requiredDateTimeInput(fieldMessage: string) {
 }
 
 function optionalHttpUrl(maxMessage: string) {
-  return z.string().optional().superRefine((value, ctx) => {
-    const normalized = normalizeText(value ?? "")
-    if (!normalized) return
+  return z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      const normalized = normalizeText(value ?? "")
 
-    if (normalized.length > 500) {
-      ctx.addIssue({
-        code: "custom",
-        message: maxMessage,
-      })
-    }
+      if (!normalized) return
 
-    if (!isHttpUrl(normalized)) {
-      ctx.addIssue({
-        code: "custom",
-        message: "أدخل رابطًا صالحًا يبدأ بـ http أو https.",
-      })
-    }
-  })
+      if (normalized.length > 500) {
+        ctx.addIssue({
+          code: "custom",
+          message: maxMessage,
+        })
+      }
+
+      if (!isHttpUrl(normalized)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "أدخل رابطًا صالحًا يبدأ بـ http أو https.",
+        })
+      }
+    })
 }
 
 export const adSchema = z
@@ -106,6 +118,7 @@ export const adSchema = z
       max: 120,
       maxMessage: "عنوان الإعلان يجب ألا يتجاوز 120 حرفًا.",
     }),
+
     description: requiredText({
       requiredMessage: "وصف الإعلان مطلوب.",
       min: 2,
@@ -113,20 +126,21 @@ export const adSchema = z
       max: 500,
       maxMessage: "وصف الإعلان يجب ألا يتجاوز 500 حرف.",
     }),
+
     imageUrl: optionalHttpUrl("رابط الصورة يجب ألا يتجاوز 500 حرف."),
+
     linkUrl: optionalHttpUrl("رابط الإعلان يجب ألا يتجاوز 500 حرف."),
-    placement: z.string().superRefine((value, ctx) => {
-      if (!AD_PLACEMENTS.includes(value as AdPlacement)) {
-        ctx.addIssue({
-          code: "custom",
-          message: "مكان ظهور الإعلان غير صالح.",
-        })
-      }
+
+    placement: z.enum(AD_PLACEMENTS, {
+      error: "مكان ظهور الإعلان غير صالح.",
     }),
+
     isActive: z.boolean({
       error: "حالة الإعلان غير صالحة.",
     }),
+
     startDate: requiredDateTimeInput("تاريخ بداية الإعلان مطلوب."),
+
     endDate: requiredDateTimeInput("تاريخ نهاية الإعلان مطلوب."),
   })
   .superRefine((values, ctx) => {
@@ -164,6 +178,7 @@ export function adZodErrorToFormErrors(error: z.ZodError) {
 
   for (const issue of error.issues) {
     const field = issue.path[0]
+
     if (
       field !== "title" &&
       field !== "description" &&
@@ -183,21 +198,18 @@ export function adZodErrorToFormErrors(error: z.ZodError) {
   return errors
 }
 
-export function adFormValuesToPayload(
-  values: AdFormValues
-): AdRequestPayload {
+export function adFormValuesToPayload(values: AdFormValues): AdRequestPayload {
   const title = normalizeText(values.title)
   const description = normalizeText(values.description)
   const imageUrl = optionalText(values.imageUrl) ?? null
   const linkUrl = optionalText(values.linkUrl) ?? null
-  const placement = values.placement as AdPlacement
 
   return {
     title,
     description,
     imageUrl,
     linkUrl,
-    placement,
+    placement: values.placement,
     isActive: values.isActive,
     startDate: dateTimeInputToIsoString(values.startDate),
     endDate: dateTimeInputToIsoString(values.endDate),

@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom"
 
 import { useCreateAd } from "@/hooks/useAds"
 import {
+  AD_PLACEMENTS,
   adFormValuesToPayload,
   adSchema,
   adZodErrorToFormErrors,
@@ -16,6 +17,12 @@ const inputClass =
   "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-3 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const dateInputClass = `${inputClass} text-left [direction:ltr]`
+
+const placementLabels: Record<AdPlacement, string> = {
+  HOME: "الصفحة الرئيسية",
+  CHECKOUT: "صفحة الدفع",
+  SIDEBAR: "الشريط الجانبي",
+}
 
 export function CreateAdPage() {
   const navigate = useNavigate()
@@ -176,10 +183,16 @@ export function CreateAdPage() {
 
             <select
               value={placement}
-              onChange={(event) => setPlacement(event.target.value as AdPlacement)}
+              onChange={(event) =>
+                setPlacement(event.target.value as AdPlacement)
+              }
               className={inputClass}
             >
-              <option value="HOME">الصفحة الرئيسية</option>
+              {AD_PLACEMENTS.map((placementOption) => (
+                <option key={placementOption} value={placementOption}>
+                  {placementLabels[placementOption]}
+                </option>
+              ))}
             </select>
 
             {formErrors.placement && (
