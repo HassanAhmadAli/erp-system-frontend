@@ -1,4 +1,12 @@
 import { apiRequest, buildQuery } from "@/api/client"
+import {
+  customerFormValuesToPayload,
+  customerSchema,
+  isCustomerStatus,
+  type CustomerRequestPayload,
+  type CustomerStatus,
+} from "@/validation/customer-schema"
+import { isValidId } from "@/validation/helpers"
 
 export type CustomerUser = {
   id: number
@@ -30,6 +38,10 @@ export type CustomersQuery = {
   offset?: number
 }
 
+export type CreateCustomerInput = CustomerRequestPayload
+export type UpdateCustomerInput = Partial<CustomerRequestPayload>
+export type { CustomerStatus }
+
 export function normalizeCustomers(
   response?: CustomersResponse | Customer[] | null
 ) {
@@ -45,10 +57,22 @@ export async function getCustomers(params?: CustomersQuery) {
 }
 
 export async function getCustomer(id: number) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid customer id")
+  }
+
   return apiRequest<Customer>(`/customer/${id}`)
 }
 
-export async function updateCustomerStatus(id: number, status: string) {
+export async function updateCustomerStatus(id: number, status: CustomerStatus) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid customer id")
+  }
+
+  if (!isCustomerStatus(status)) {
+    throw new Error("Invalid customer status")
+  }
+
   return apiRequest<Customer>(`/customer/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),
@@ -56,8 +80,22 @@ export async function updateCustomerStatus(id: number, status: string) {
 }
 
 export async function updateCustomerLoyalty(id: number, loyaltyPoints: number) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid customer id")
+  }
+
+  const validationResult = customerSchema.safeParse({ loyaltyPoints })
+  if (!validationResult.success) {
+    throw new Error("Invalid customer loyalty points")
+  }
+
+  const payload = customerFormValuesToPayload(validationResult.data)
+  if (payload.loyaltyPoints == null) {
+    throw new Error("Invalid customer loyalty points")
+  }
+
   return apiRequest<Customer>(`/customer/${id}/loyalty`, {
     method: "PATCH",
-    body: JSON.stringify({ loyaltyPoints }),
+    body: JSON.stringify({ loyaltyPoints: payload.loyaltyPoints }),
   })
 }
