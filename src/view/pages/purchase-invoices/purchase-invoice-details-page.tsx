@@ -64,17 +64,17 @@ type PurchaseInvoice = {
 }
 
 const statusLabels: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  RECEIVED: "مستلمة",
+  PENDING: "معلقة",
   COMPLETED: "مكتملة",
   CANCELLED: "ملغاة",
+  REFUNDED: "مستردة",
 }
 
 const statusStyles: Record<string, string> = {
   PENDING: "bg-amber-50 text-amber-700 ring-amber-200",
-  RECEIVED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   COMPLETED: "bg-emerald-50 text-emerald-700 ring-emerald-200",
   CANCELLED: "bg-rose-50 text-rose-700 ring-rose-200",
+  REFUNDED: "bg-sky-50 text-sky-700 ring-sky-200",
 }
 
 function getPurchaseInvoice(id: number) {

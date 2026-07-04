@@ -9,9 +9,9 @@ import {
 
 export const PURCHASE_INVOICE_STATUS_OPTIONS = [
   "PENDING",
-  "RECEIVED",
   "COMPLETED",
   "CANCELLED",
+  "REFUNDED",
 ] as const
 
 export type PurchaseInvoiceStatus =

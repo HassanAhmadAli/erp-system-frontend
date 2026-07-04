@@ -1,7 +1,5 @@
 import { apiRequest, buildQuery } from "@/api/client"
 import {
-  customerFormValuesToPayload,
-  customerSchema,
   isCustomerStatus,
   type CustomerRequestPayload,
   type CustomerStatus,
@@ -75,8 +73,14 @@ export async function updateCustomerStatus(id: number, status: CustomerStatus) {
 
   return apiRequest<Customer>(`/customer/${id}/status`, {
     method: "PATCH",
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({
+      isActive: status === "active",
+    }),
   })
+}
+
+function isValidLoyaltyPoints(value: number) {
+  return Number.isSafeInteger(value) && value >= 0
 }
 
 export async function updateCustomerLoyalty(id: number, loyaltyPoints: number) {
@@ -84,18 +88,14 @@ export async function updateCustomerLoyalty(id: number, loyaltyPoints: number) {
     throw new Error("Invalid customer id")
   }
 
-  const validationResult = customerSchema.safeParse({ loyaltyPoints })
-  if (!validationResult.success) {
-    throw new Error("Invalid customer loyalty points")
-  }
-
-  const payload = customerFormValuesToPayload(validationResult.data)
-  if (payload.loyaltyPoints == null) {
+  if (!isValidLoyaltyPoints(loyaltyPoints)) {
     throw new Error("Invalid customer loyalty points")
   }
 
   return apiRequest<Customer>(`/customer/${id}/loyalty`, {
     method: "PATCH",
-    body: JSON.stringify({ loyaltyPoints: payload.loyaltyPoints }),
+    body: JSON.stringify({
+      points: loyaltyPoints,
+    }),
   })
 }
