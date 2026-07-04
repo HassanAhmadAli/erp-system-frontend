@@ -1,21 +1,59 @@
 import { useEffect, useState } from "react"
 import { ArrowRight, Percent } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
-import { useForm } from "react-hook-form"
+import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
+import { DiscountForm } from "@/view/components/discount-form"
 import {
-  DiscountForm,
+  discountSchema,
   type DiscountFormValues,
-} from "@/view/components/discount-form"
-import { discountSchema } from "@/validation/discount-schema"
+} from "@/validation/discount-schema"
 import { getDiscountById, updateDiscount } from "@/services/discount-service"
 import { formatId } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
+function isValidId(value: number) {
+  return Number.isSafeInteger(value) && value > 0
+}
+
 function toDateInputValue(value: string | null | undefined) {
   if (!value) return ""
-  return new Date(value).toISOString().slice(0, 10)
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return ""
+  }
+
+  return date.toISOString().slice(0, 10)
+}
+
+function toEditableScope(
+  scope: string | null | undefined
+): DiscountFormValues["scope"] {
+  if (scope === "CATEGORY" || scope === "PRODUCT") {
+    return scope
+  }
+
+  return "GLOBAL"
+}
+
+function getOptionalNumberField(
+  source: unknown,
+  key: string
+): string {
+  if (!source || typeof source !== "object") {
+    return ""
+  }
+
+  const value = (source as Record<string, unknown>)[key]
+
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return ""
+  }
+
+  return String(value)
 }
 
 export function EditDiscountPage() {
@@ -34,7 +72,7 @@ export function EditDiscountPage() {
     watch,
     formState: { errors },
   } = useForm<DiscountFormValues>({
-    resolver: zodResolver(discountSchema),
+    resolver: zodResolver(discountSchema) as Resolver<DiscountFormValues>,
     defaultValues: {
       name: "",
       type: "PERCENTAGE",
@@ -52,7 +90,7 @@ export function EditDiscountPage() {
 
   useEffect(() => {
     async function loadDiscount() {
-      if (!Number.isFinite(discountId)) return
+      if (!isValidId(discountId)) return
 
       try {
         setLoadError("")
@@ -61,14 +99,20 @@ export function EditDiscountPage() {
         reset({
           name: discount.name ?? "",
           type: discount.type,
-          scope: discount.scope,
+          scope: toEditableScope(discount.scope),
           value: String(discount.value ?? ""),
-          categoryId: "",
-          productId: "",
-          maxInvoiceValue: discount.maxInvoiceValue
-            ? String(discount.maxInvoiceValue)
-            : "",
-          maxUses: discount.maxUses ? String(discount.maxUses) : "",
+          categoryId: getOptionalNumberField(discount, "categoryId"),
+          productId: getOptionalNumberField(discount, "productId"),
+          maxInvoiceValue:
+            typeof discount.maxInvoiceValue === "number" &&
+            Number.isFinite(discount.maxInvoiceValue)
+              ? String(discount.maxInvoiceValue)
+              : "",
+          maxUses:
+            typeof discount.maxUses === "number" &&
+            Number.isFinite(discount.maxUses)
+              ? String(discount.maxUses)
+              : "",
           startDate: toDateInputValue(discount.startDate),
           endDate: toDateInputValue(discount.endDate),
           isActive: discount.isActive,
@@ -83,7 +127,7 @@ export function EditDiscountPage() {
   }, [discountId, reset])
 
   async function onSubmit(data: DiscountFormValues) {
-    if (!Number.isFinite(discountId)) return
+    if (!isValidId(discountId)) return
 
     try {
       setLoading(true)
@@ -100,7 +144,7 @@ export function EditDiscountPage() {
     }
   }
 
-  if (!Number.isFinite(discountId)) {
+  if (!isValidId(discountId)) {
     return (
       <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
         <p className="text-red-500 dark:text-red-300">رقم الخصم غير صالح.</p>

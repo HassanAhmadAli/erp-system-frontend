@@ -1,31 +1,98 @@
 import { z } from "zod"
 
+import {
+  dateInputText,
+  finiteNumberText,
+  optionalDateInputText,
+  optionalPositiveIntegerText,
+  optionalPositiveNumberText,
+  requiredText,
+  validateDateRange,
+} from "./zod-helpers"
+import { parseFiniteNumber, parsePositiveInteger } from "./helpers"
+
+export const discountTypeSchema = z.enum(["PERCENTAGE", "FIXED_AMOUNT"])
+
+// CUSTOMER is intentionally not allowed in this form yet because the current UI
+// does not have a customer selector. Add it back only when customerId is included
+// and validated in the form payload.
+export const discountScopeSchema = z.enum(["GLOBAL", "CATEGORY", "PRODUCT"])
+
 export const discountSchema = z
   .object({
-    name: z.string().min(2),
+    name: requiredText({
+      min: 2,
+      max: 100,
+      requiredMessage: "اسم الخصم مطلوب",
+      minMessage: "اسم الخصم يجب أن يكون حرفين على الأقل",
+      maxMessage: "اسم الخصم يجب ألا يتجاوز 100 حرف",
+    }),
 
-    type: z.enum(["PERCENTAGE", "FIXED_AMOUNT"]),
-    scope: z.enum(["GLOBAL", "CATEGORY", "PRODUCT", "CUSTOMER"]),
+    type: discountTypeSchema,
+    scope: discountScopeSchema,
 
-    value: z.string().min(1), // IMPORTANT
+    value: finiteNumberText({
+      requiredMessage: "قيمة الخصم مطلوبة",
+      invalidMessage: "أدخل قيمة خصم صالحة",
+    }),
 
-    // Scope-specific targets (validated against scope below)
-    categoryId: z.string().optional(),
-    productId: z.string().optional(),
+    categoryId: optionalPositiveIntegerText({
+      invalidMessage: "اختر تصنيفًا صالحًا",
+    }),
+    productId: optionalPositiveIntegerText({
+      invalidMessage: "اختر منتجًا صالحًا",
+    }),
 
-    maxInvoiceValue: z.string().optional(),
-    maxUses: z.string().optional(),
+    maxInvoiceValue: optionalPositiveNumberText({
+      invalidMessage: "أقصى قيمة للفاتورة يجب أن تكون أكبر من الصفر",
+    }),
+    maxUses: optionalPositiveIntegerText({
+      invalidMessage: "عدد مرات الاستخدام يجب أن يكون رقمًا صحيحًا أكبر من الصفر",
+    }),
 
-    startDate: z.string(),
-    endDate: z.string().optional(),
+    startDate: dateInputText("تاريخ البداية مطلوب"),
+    endDate: optionalDateInputText(),
 
     isActive: z.boolean().default(true),
   })
-  .refine((data) => data.scope !== "CATEGORY" || !!data.categoryId, {
-    message: "يرجى اختيار التصنيف",
-    path: ["categoryId"],
+  .superRefine((data, ctx) => {
+    const value = parseFiniteNumber(data.value)
+
+    if (value != null && data.type === "PERCENTAGE") {
+      if (value <= 0 || value > 100) {
+        ctx.addIssue({
+          code: "custom",
+          message: "النسبة يجب أن تكون أكبر من 0 وأقل أو تساوي 100",
+          path: ["value"],
+        })
+      }
+    }
+
+    if (value != null && data.type === "FIXED_AMOUNT" && value <= 0) {
+      ctx.addIssue({
+        code: "custom",
+        message: "مبلغ الخصم يجب أن يكون أكبر من الصفر",
+        path: ["value"],
+      })
+    }
+
+    if (data.scope === "CATEGORY" && parsePositiveInteger(data.categoryId) == null) {
+      ctx.addIssue({
+        code: "custom",
+        message: "يرجى اختيار التصنيف",
+        path: ["categoryId"],
+      })
+    }
+
+    if (data.scope === "PRODUCT" && parsePositiveInteger(data.productId) == null) {
+      ctx.addIssue({
+        code: "custom",
+        message: "يرجى اختيار المنتج",
+        path: ["productId"],
+      })
+    }
+
+    validateDateRange(ctx, data.startDate, data.endDate, "endDate")
   })
-  .refine((data) => data.scope !== "PRODUCT" || !!data.productId, {
-    message: "يرجى اختيار المنتج",
-    path: ["productId"],
-  })
+
+export type DiscountFormValues = z.input<typeof discountSchema>
