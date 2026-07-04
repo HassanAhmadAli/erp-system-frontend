@@ -1,4 +1,6 @@
 import { apiRequest } from "@/api/client"
+import type { CategoryRequestPayload } from "@/validation/category-schema"
+import { isValidId, normalizeText, optionalText } from "@/validation/helpers"
 
 export type Category = {
   id: number
@@ -15,6 +17,13 @@ export type CategoryListResponse = {
   isFinalPage?: boolean
 }
 
+export type CreateCategoryInput = {
+  name: string
+  description?: string
+}
+
+export type UpdateCategoryInput = Partial<CreateCategoryInput>
+
 function normalizeCategoryResponse(
   response: CategoryListResponse | Category[]
 ): CategoryListResponse {
@@ -29,6 +38,23 @@ function normalizeCategoryResponse(
   }
 
   return response
+}
+
+function cleanCategoryPayload<T extends UpdateCategoryInput>(data: T) {
+  const payload: UpdateCategoryInput = {}
+
+  if (data.name != null) {
+    payload.name = normalizeText(data.name)
+  }
+
+  const description = optionalText(data.description)
+  if (description) {
+    payload.description = description
+  }
+
+  return payload as T extends CreateCategoryInput
+    ? CategoryRequestPayload
+    : UpdateCategoryInput
 }
 
 export async function getCategories(params?: {
@@ -48,10 +74,10 @@ export async function getCategories(params?: {
   return normalizeCategoryResponse(response)
 }
 
-export function createCategory(data: { name: string; description?: string }) {
+export function createCategory(data: CreateCategoryInput) {
   return apiRequest("/category", {
     method: "POST",
-    body: JSON.stringify(data),
+    body: JSON.stringify(cleanCategoryPayload(data)),
   })
 }
 //  ver  ONE
@@ -67,6 +93,10 @@ export function createCategory(data: { name: string; description?: string }) {
 // }
 
 export function deleteCategory(id: number) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid category id")
+  }
+
   return apiRequest(`/category/${id}`, {
     method: "DELETE",
   })
@@ -90,16 +120,21 @@ export type CategoryDetails = {
 
 // GET ONE
 export function getCategoryById(id: number) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid category id")
+  }
+
   return apiRequest<CategoryDetails>(`/category/${id}`)
 }
 
 //UPDATE
-export function updateCategory(
-  id: number,
-  data: { name?: string; description?: string }
-) {
+export function updateCategory(id: number, data: UpdateCategoryInput) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid category id")
+  }
+
   return apiRequest(`/category/${id}`, {
     method: "PATCH",
-    body: JSON.stringify(data),
+    body: JSON.stringify(cleanCategoryPayload(data)),
   })
 }

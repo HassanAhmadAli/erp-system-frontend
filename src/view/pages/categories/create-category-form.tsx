@@ -4,6 +4,13 @@ import { Link, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
 
 import { createCategory } from "@/services/category-service"
+import {
+  categoryFormValuesToPayload,
+  categorySchema,
+  categoryZodErrorToFormErrors,
+  type CategoryFormErrors,
+  type CategoryFormValues,
+} from "@/validation/category-schema"
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
@@ -11,41 +18,59 @@ const inputClass =
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
+const EMPTY_FORM: CategoryFormValues = {
+  name: "",
+  description: "",
+}
+
 type CreateCategoryFormProps = {
   onSuccess?: () => void
+}
+
+function ErrorText({ message }: { message?: string }) {
+  if (!message) return null
+
+  return (
+    <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  )
 }
 
 export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
-  const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
+  const [form, setForm] = useState<CategoryFormValues>(EMPTY_FORM)
+  const [errors, setErrors] = useState<CategoryFormErrors>({})
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{
     type: "success" | "error" | ""
     text: string
   }>({ type: "", text: "" })
 
+  function setField(key: keyof CategoryFormValues, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage({ type: "", text: "" })
 
-    if (!name.trim()) {
-      setMessage({ type: "error", text: "اسم التصنيف مطلوب" })
+    const validationResult = categorySchema.safeParse(form)
+
+    if (!validationResult.success) {
+      setErrors(categoryZodErrorToFormErrors(validationResult.error))
       return
     }
+
+    setErrors({})
 
     try {
       setLoading(true)
 
-      await createCategory({
-        name: name.trim(),
-        description: description.trim(),
-      })
+      await createCategory(categoryFormValuesToPayload(validationResult.data))
 
-      setName("")
-      setDescription("")
+      setForm(EMPTY_FORM)
 
       queryClient.invalidateQueries({
         queryKey: ["categories"],
@@ -123,9 +148,10 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
             id="category-name"
             className={inputClass}
             placeholder="أدخل اسم التصنيف"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+            value={form.name}
+            onChange={(event) => setField("name", event.target.value)}
           />
+          <ErrorText message={errors.name} />
         </div>
 
         <div>
@@ -137,9 +163,10 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
             id="category-description"
             className={`${inputClass} min-h-28 resize-none`}
             placeholder="أدخل وصف التصنيف (اختياري)"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
+            value={form.description}
+            onChange={(event) => setField("description", event.target.value)}
           />
+          <ErrorText message={errors.description} />
         </div>
 
         <div className="flex flex-col gap-2 border-t border-[var(--erp-border)] pt-4 sm:flex-row sm:justify-end">
