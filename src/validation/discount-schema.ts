@@ -1,6 +1,17 @@
 import { z } from "zod"
 
 import {
+  dateInputToIsoString,
+  normalizeText,
+  optionalDateInputToIsoString,
+  optionalPositiveIntegerOrNull,
+  optionalPositiveNumberOrNull,
+  parseFiniteNumber,
+  parsePositiveInteger,
+  requireFiniteNumber,
+  requirePositiveInteger,
+} from "./helpers"
+import {
   dateInputText,
   finiteNumberText,
   optionalDateInputText,
@@ -9,14 +20,15 @@ import {
   requiredText,
   validateDateRange,
 } from "./zod-helpers"
-import { parseFiniteNumber, parsePositiveInteger } from "./helpers"
 
 export const discountTypeSchema = z.enum(["PERCENTAGE", "FIXED_AMOUNT"])
 
-// CUSTOMER is intentionally not allowed in this form yet because the current UI
-// does not have a customer selector. Add it back only when customerId is included
-// and validated in the form payload.
+// Backend-supported scopes only.
+// CUSTOMER is intentionally not allowed because the backend enum does not support it.
 export const discountScopeSchema = z.enum(["GLOBAL", "CATEGORY", "PRODUCT"])
+
+export type DiscountType = z.infer<typeof discountTypeSchema>
+export type DiscountScope = z.infer<typeof discountScopeSchema>
 
 export const discountSchema = z
   .object({
@@ -39,6 +51,7 @@ export const discountSchema = z
     categoryId: optionalPositiveIntegerText({
       invalidMessage: "اختر تصنيفًا صالحًا",
     }),
+
     productId: optionalPositiveIntegerText({
       invalidMessage: "اختر منتجًا صالحًا",
     }),
@@ -46,8 +59,10 @@ export const discountSchema = z
     maxInvoiceValue: optionalPositiveNumberText({
       invalidMessage: "أقصى قيمة للفاتورة يجب أن تكون أكبر من الصفر",
     }),
+
     maxUses: optionalPositiveIntegerText({
-      invalidMessage: "عدد مرات الاستخدام يجب أن يكون رقمًا صحيحًا أكبر من الصفر",
+      invalidMessage:
+        "عدد مرات الاستخدام يجب أن يكون رقمًا صحيحًا أكبر من الصفر",
     }),
 
     startDate: dateInputText("تاريخ البداية مطلوب"),
@@ -76,7 +91,10 @@ export const discountSchema = z
       })
     }
 
-    if (data.scope === "CATEGORY" && parsePositiveInteger(data.categoryId) == null) {
+    if (
+      data.scope === "CATEGORY" &&
+      parsePositiveInteger(data.categoryId) == null
+    ) {
       ctx.addIssue({
         code: "custom",
         message: "يرجى اختيار التصنيف",
@@ -84,7 +102,10 @@ export const discountSchema = z
       })
     }
 
-    if (data.scope === "PRODUCT" && parsePositiveInteger(data.productId) == null) {
+    if (
+      data.scope === "PRODUCT" &&
+      parsePositiveInteger(data.productId) == null
+    ) {
       ctx.addIssue({
         code: "custom",
         message: "يرجى اختيار المنتج",
@@ -96,3 +117,47 @@ export const discountSchema = z
   })
 
 export type DiscountFormValues = z.input<typeof discountSchema>
+
+export type DiscountRequestPayload = {
+  name: string
+  type: DiscountType
+  scope: DiscountScope
+  value: string
+  maxInvoiceValue: number | null
+  maxUses: number | null
+  startDate: string
+  endDate: string | null
+  isActive: boolean
+  categoryId?: number
+  productId?: number
+}
+
+export function discountFormValuesToPayload(
+  values: DiscountFormValues
+): DiscountRequestPayload {
+  const value = requireFiniteNumber(values.value, "discount value")
+  const maxInvoiceValue = optionalPositiveNumberOrNull(values.maxInvoiceValue)
+  const maxUses = optionalPositiveIntegerOrNull(values.maxUses)
+
+  const payload: DiscountRequestPayload = {
+    name: normalizeText(values.name),
+    type: values.type,
+    scope: values.scope,
+    value: String(value),
+    maxInvoiceValue,
+    maxUses,
+    startDate: dateInputToIsoString(values.startDate),
+    endDate: optionalDateInputToIsoString(values.endDate),
+    isActive: values.isActive ?? true,
+  }
+
+  if (values.scope === "CATEGORY") {
+    payload.categoryId = requirePositiveInteger(values.categoryId, "categoryId")
+  }
+
+  if (values.scope === "PRODUCT") {
+    payload.productId = requirePositiveInteger(values.productId, "productId")
+  }
+
+  return payload
+}

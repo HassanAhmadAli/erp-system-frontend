@@ -24,7 +24,6 @@ function getDiscountScopeLabel(scope: DiscountScope) {
     GLOBAL: "عام",
     CATEGORY: "تصنيف",
     PRODUCT: "منتج",
-    CUSTOMER: "عميل",
   }
 
   return labels[scope]
@@ -49,6 +48,7 @@ export function DiscountsPage() {
   const [scopeFilter, setScopeFilter] = useState("")
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
+  const [actionError, setActionError] = useState("")
 
   const limit = 10
 
@@ -75,12 +75,13 @@ export function DiscountsPage() {
 
     try {
       setIsDeleting(true)
+      setActionError("")
       await deleteDiscount(deleteId)
       setDeleteId(null)
       refetch()
     } catch (err) {
       console.error(err)
-      alert("فشل حذف الخصم")
+      setActionError("فشل حذف الخصم")
     } finally {
       setIsDeleting(false)
     }
@@ -88,11 +89,12 @@ export function DiscountsPage() {
 
   async function handleToggle(id: number, current: boolean) {
     try {
+      setActionError("")
       await toggleDiscount(id, !current)
       refetch()
     } catch (err) {
       console.error(err)
-      alert("فشل تغيير حالة الخصم")
+      setActionError("فشل تغيير حالة الخصم")
     }
   }
 
@@ -163,9 +165,14 @@ export function DiscountsPage() {
             <option value="GLOBAL">عام</option>
             <option value="CATEGORY">تصنيف</option>
             <option value="PRODUCT">منتج</option>
-            <option value="CUSTOMER">عميل</option>
           </select>
         </div>
+
+        {actionError && (
+          <p className="mb-5 rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
+            {actionError}
+          </p>
+        )}
 
         {isLoading && (
           <p className="text-sm text-[var(--erp-muted)]">
@@ -262,9 +269,7 @@ export function DiscountsPage() {
                         </Link>
 
                         <Button
-                          variant={
-                            discount.isActive ? "destructive" : "success"
-                          }
+                          variant={discount.isActive ? "destructive" : "success"}
                           size="xs"
                           onClick={() =>
                             handleToggle(discount.id, discount.isActive)
