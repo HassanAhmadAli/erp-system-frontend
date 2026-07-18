@@ -1,31 +1,17 @@
 import { useMutation, useQuery } from "@tanstack/react-query"
 
 import {
-  getDiscounts,
-  getActiveDiscounts,
-  getDiscountById,
-  getBestDiscount,
   calculateDiscount,
-  type DiscountType,
-  type DiscountScope,
+  getActiveDiscounts,
+  getBestDiscount,
+  getDiscountById,
+  getDiscounts,
   type BestDiscountParams,
   type CalculateDiscountParams,
+  type DiscountScope,
+  type DiscountType,
 } from "@/services/discount-service"
-
-/* ========================================
-   GET ALL
-======================================== */
-
-// export function useDiscounts() {
-//   return useQuery({
-//     queryKey: ["discounts"],
-//     queryFn: getDiscounts,
-//   })
-// }
-
-/* ========================================
-   GET ACTIVE
-======================================== */
+import { isValidId } from "@/validation/helpers"
 
 export function useActiveDiscounts() {
   return useQuery({
@@ -34,15 +20,11 @@ export function useActiveDiscounts() {
   })
 }
 
-/* ========================================
-   GET BY ID
-======================================== */
-
 export function useDiscountById(id: number) {
   return useQuery({
     queryKey: ["discount", id],
     queryFn: () => getDiscountById(id),
-    enabled: !!id,
+    enabled: isValidId(id),
   })
 }
 
@@ -59,19 +41,11 @@ export function useDiscounts(params?: {
   })
 }
 
-/* ========================================
-   GET BEST DISCOUNT (mutation)
-======================================== */
-
 export function useBestDiscount() {
   return useMutation({
     mutationFn: (params: BestDiscountParams) => getBestDiscount(params),
   })
 }
-
-/* ========================================
-   CALCULATE DISCOUNT (mutation)
-======================================== */
 
 export function useCalculateDiscount() {
   return useMutation({

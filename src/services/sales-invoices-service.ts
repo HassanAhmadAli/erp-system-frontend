@@ -1,14 +1,17 @@
 import { apiRequest } from "@/api/client"
+import {
+  SALES_INVOICE_STATUS_OPTIONS,
+  isSalesInvoiceStatus,
+  type SalesInvoiceItemPayload,
+  type SalesInvoicePayload,
+  type SalesInvoiceStatus,
+} from "@/validation/sales-invoice-schema"
+import { isValidId } from "@/validation/helpers"
 
 export const SALES_INVOICES_ENDPOINT = "/sales/invoices"
 
-export const SALES_INVOICE_STATUS_OPTIONS = [
-  "PENDING",
-  "COMPLETED",
-  "REFUNDED",
-] as const
-
-export type SalesInvoiceStatus = (typeof SALES_INVOICE_STATUS_OPTIONS)[number]
+export { SALES_INVOICE_STATUS_OPTIONS }
+export type { SalesInvoiceStatus }
 
 export type SalesInvoiceItem = {
   id?: number
@@ -67,38 +70,53 @@ export type SalesInvoicesResponse =
       isFinalPage?: boolean
     }
 
-export type CreateSalesInvoiceItem = {
-  productId: number
-  quantity: number
-}
+export type CreateSalesInvoiceItem = SalesInvoiceItemPayload
 
-export type CreateSalesInvoicePayload = {
-  customerId: number
-  discountId: number | null
-  amountPaid: number
-  items: CreateSalesInvoiceItem[]
-  complete: boolean
-}
+export type CreateSalesInvoicePayload = SalesInvoicePayload
 
-export function normalizeSalesInvoices(response?: SalesInvoicesResponse) {
+export function normalizeSalesInvoices(response?: unknown): SalesInvoice[] {
   if (!response) return []
 
   if (Array.isArray(response)) {
-    return response
+    return response as SalesInvoice[]
   }
 
-  return response.data ?? []
+  if (typeof response !== "object") {
+    return []
+  }
+
+  const data = (response as { data?: unknown }).data
+
+  if (Array.isArray(data)) {
+    return data as SalesInvoice[]
+  }
+
+  if (data && typeof data === "object") {
+    const nestedData = (data as { data?: unknown }).data
+
+    if (Array.isArray(nestedData)) {
+      return nestedData as SalesInvoice[]
+    }
+  }
+
+  return []
 }
 
-export async function getSalesInvoices() {
+export async function getSalesInvoices(): Promise<SalesInvoicesResponse> {
   return apiRequest<SalesInvoicesResponse>(SALES_INVOICES_ENDPOINT)
 }
 
-export async function getSalesInvoice(id: number) {
+export async function getSalesInvoice(id: number): Promise<SalesInvoice> {
+  if (!isValidId(id)) {
+    throw new Error("Invalid sales invoice id")
+  }
+
   return apiRequest<SalesInvoice>(`${SALES_INVOICES_ENDPOINT}/${id}`)
 }
 
-export async function createSalesInvoice(payload: CreateSalesInvoicePayload) {
+export async function createSalesInvoice(
+  payload: CreateSalesInvoicePayload
+): Promise<SalesInvoice> {
   return apiRequest<SalesInvoice>(SALES_INVOICES_ENDPOINT, {
     method: "POST",
     body: JSON.stringify(payload),
@@ -108,7 +126,15 @@ export async function createSalesInvoice(payload: CreateSalesInvoicePayload) {
 export async function updateSalesInvoiceStatus(
   id: number,
   status: SalesInvoiceStatus
-) {
+): Promise<SalesInvoice> {
+  if (!isValidId(id)) {
+    throw new Error("Invalid sales invoice id")
+  }
+
+  if (!isSalesInvoiceStatus(status)) {
+    throw new Error("Invalid sales invoice status")
+  }
+
   return apiRequest<SalesInvoice>(`${SALES_INVOICES_ENDPOINT}/${id}/status`, {
     method: "PATCH",
     body: JSON.stringify({ status }),

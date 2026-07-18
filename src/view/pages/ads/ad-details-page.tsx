@@ -15,6 +15,7 @@ import { Link, useNavigate, useParams } from "react-router-dom"
 import { useAdById, useDeleteAd } from "@/hooks/useAds"
 import { PERMISSIONS } from "@/auth/permissions"
 import { usePermissions } from "@/hooks/usePermissions"
+import { isValidId } from "@/validation/helpers"
 import { formatDateTime, formatId } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
@@ -46,7 +47,7 @@ export function AdDetailsPage() {
     })
   }
 
-  if (!Number.isFinite(adId)) {
+  if (!isValidId(adId)) {
     return <ErrorState message="رقم الإعلان غير صالح." />
   }
 

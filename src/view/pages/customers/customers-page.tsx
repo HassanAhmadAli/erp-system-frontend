@@ -7,6 +7,11 @@ import {
   useCustomers,
   useUpdateCustomerStatus,
 } from "@/hooks/Suppliers/useCustomers"
+import {
+  isCustomerStatus,
+  type CustomerStatus,
+} from "@/validation/customer-schema"
+import { isValidId } from "@/validation/helpers"
 import { CustomerStatusBadge } from "@/view/components/customers/customer-status-badge"
 import { formatCurrency, formatNumber } from "@/utils/number-formatters"
 
@@ -35,6 +40,7 @@ type CustomersResponse = {
 
 export function CustomersPage() {
   const [search, setSearch] = useState("")
+  const [statusError, setStatusError] = useState("")
 
   const { data, isLoading, isError } = useCustomers()
   const updateStatus = useUpdateCustomerStatus()
@@ -61,6 +67,22 @@ export function CustomersPage() {
       .toLowerCase()
       .includes(search.toLowerCase())
   })
+
+  function handleStatusUpdate(id: number, status: CustomerStatus) {
+    setStatusError("")
+
+    if (!isValidId(id)) {
+      setStatusError("رقم العميل غير صالح.")
+      return
+    }
+
+    if (!isCustomerStatus(status)) {
+      setStatusError("حالة العميل غير صالحة.")
+      return
+    }
+
+    updateStatus.mutate({ id, status })
+  }
 
   return (
     <div className="space-y-6 text-right text-[var(--erp-text)]">
@@ -123,6 +145,12 @@ export function CustomersPage() {
         {isError && (
           <p className="text-red-500 dark:text-red-300">
             حدث خطأ أثناء تحميل العملاء.
+          </p>
+        )}
+
+        {statusError && (
+          <p className="mb-3 text-sm text-red-500 dark:text-red-300">
+            {statusError}
           </p>
         )}
 
@@ -196,12 +224,12 @@ export function CustomersPage() {
 
                             <button
                               disabled={updateStatus.isPending}
-                              onClick={() => {
-                                updateStatus.mutate({
-                                  id: customer.id,
-                                  status: isActive ? "inactive" : "active",
-                                })
-                              }}
+                              onClick={() =>
+                                handleStatusUpdate(
+                                  customer.id,
+                                  isActive ? "inactive" : "active"
+                                )
+                              }
                               className={
                                 isActive
                                   ? "rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25"

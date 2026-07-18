@@ -12,21 +12,21 @@ import {
 } from "@/utils/number-formatters"
 
 export const purchaseInvoiceStatusLabels: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  RECEIVED: "مستلمة",
+  PENDING: "معلقة",
   COMPLETED: "مكتملة",
   CANCELLED: "ملغاة",
+  REFUNDED: "مستردة",
 }
 
 const purchaseInvoiceStatusStyles: Record<string, string> = {
   PENDING:
     "bg-amber-500/10 text-amber-700 ring-amber-500/20 dark:bg-amber-500/15 dark:text-amber-300",
-  RECEIVED:
-    "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300",
   COMPLETED:
     "bg-emerald-500/10 text-emerald-700 ring-emerald-500/20 dark:bg-emerald-500/15 dark:text-emerald-300",
   CANCELLED:
     "bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:bg-rose-500/15 dark:text-rose-300",
+  REFUNDED:
+    "bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:bg-sky-500/15 dark:text-sky-300",
 }
 
 export function formatNumber(value?: string | number | null) {

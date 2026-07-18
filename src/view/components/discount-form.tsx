@@ -7,20 +7,7 @@ import type {
 import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
 import { useProducts } from "@/hooks/Products/useProducts"
 import { normalizeProducts } from "@/services/product-service"
-
-export type DiscountFormValues = {
-  name: string
-  type: "PERCENTAGE" | "FIXED_AMOUNT"
-  scope: "GLOBAL" | "CATEGORY" | "PRODUCT" | "CUSTOMER"
-  value: string
-  categoryId?: string
-  productId?: string
-  maxInvoiceValue?: string
-  maxUses?: string
-  startDate: string
-  endDate?: string
-  isActive?: boolean
-}
+import type { DiscountFormValues } from "@/validation/discount-schema"
 
 type DiscountFormProps = {
   register: UseFormRegister<DiscountFormValues>
@@ -81,7 +68,6 @@ export function DiscountForm({ register, errors, watch }: DiscountFormProps) {
           <option value="GLOBAL">عام لكل المتجر</option>
           <option value="CATEGORY">تصنيف محدد</option>
           <option value="PRODUCT">منتج محدد</option>
-          <option value="CUSTOMER">عميل محدد</option>
         </select>
         <ErrorText message={errors.scope?.message} />
       </div>
@@ -92,7 +78,7 @@ export function DiscountForm({ register, errors, watch }: DiscountFormProps) {
           <select {...register("categoryId")} className={selectClass}>
             <option value="">اختر التصنيف</option>
             {categories.map((category) => (
-              <option key={category.id} value={category.id}>
+              <option key={category.id} value={String(category.id)}>
                 {category.name}
               </option>
             ))}
@@ -107,21 +93,12 @@ export function DiscountForm({ register, errors, watch }: DiscountFormProps) {
           <select {...register("productId")} className={selectClass}>
             <option value="">اختر المنتج</option>
             {products.map((product) => (
-              <option key={product.id} value={product.id}>
+              <option key={product.id} value={String(product.id)}>
                 {product.name}
               </option>
             ))}
           </select>
           <ErrorText message={errors.productId?.message} />
-        </div>
-      )}
-
-      {scope === "CUSTOMER" && (
-        <div className="md:col-span-2">
-          <p className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3 text-sm text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-            ملاحظة: تم اختيار نطاق العميل، لكن النموذج الحالي لا يحتوي بعد على
-            اختيار العميل. يمكن إضافته لاحقاً بعد توفر مكوّن اختيار العملاء.
-          </p>
         </div>
       )}
 

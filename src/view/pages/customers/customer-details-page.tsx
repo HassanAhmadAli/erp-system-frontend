@@ -11,6 +11,7 @@ import {
   formatId,
   formatNumber,
 } from "@/utils/number-formatters"
+import { isValidId } from "@/validation/helpers"
 
 export function CustomerDetailsPage() {
   const { id } = useParams()
@@ -18,7 +19,7 @@ export function CustomerDetailsPage() {
 
   const { data: customer, isLoading, isError } = useCustomer(customerId)
 
-  if (!Number.isFinite(customerId)) {
+  if (!isValidId(customerId)) {
     return <ErrorMessage message="رقم العميل غير صالح." />
   }
 

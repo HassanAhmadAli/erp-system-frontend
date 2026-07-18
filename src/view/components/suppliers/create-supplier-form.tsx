@@ -2,6 +2,13 @@ import { type FormEvent, useState } from "react"
 import { useNavigate } from "react-router-dom"
 
 import { useCreateSupplier } from "@/hooks/Suppliers/useCreateSupplier"
+import {
+  supplierFormValuesToPayload,
+  supplierSchema,
+  supplierZodErrorToFormErrors,
+  type SupplierFormErrors,
+  type SupplierFormValues,
+} from "@/validation/supplier-schema"
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
@@ -9,42 +16,51 @@ const inputClass =
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
+const EMPTY_FORM: SupplierFormValues = {
+  fullName: "",
+  phone: "",
+  email: "",
+  address: "",
+}
+
+function ErrorText({ message }: { message?: string }) {
+  if (!message) return null
+
+  return (
+    <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  )
+}
+
 export function CreateSupplierForm() {
   const navigate = useNavigate()
   const mutation = useCreateSupplier()
 
-  const [fullName, setFullName] = useState("")
-  const [phone, setPhone] = useState("")
-  const [email, setEmail] = useState("")
-  const [address, setAddress] = useState("")
+  const [form, setForm] = useState<SupplierFormValues>(EMPTY_FORM)
+  const [errors, setErrors] = useState<SupplierFormErrors>({})
   const [errorMessage, setErrorMessage] = useState("")
+
+  function setField(key: keyof SupplierFormValues, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setErrorMessage("")
 
-    if (!fullName.trim()) {
-      setErrorMessage("اسم المورد مطلوب")
+    const validationResult = supplierSchema.safeParse(form)
+
+    if (!validationResult.success) {
+      setErrors(supplierZodErrorToFormErrors(validationResult.error))
       return
     }
 
-    if (!phone.trim()) {
-      setErrorMessage("رقم الهاتف مطلوب")
-      return
-    }
-
-    if (!email.trim()) {
-      setErrorMessage("البريد الإلكتروني مطلوب")
-      return
-    }
+    setErrors({})
 
     try {
-      await mutation.mutateAsync({
-        fullName: fullName.trim(),
-        phone: phone.trim(),
-        email: email.trim(),
-        address: address.trim(),
-      })
+      await mutation.mutateAsync(
+        supplierFormValuesToPayload(validationResult.data)
+      )
 
       navigate("/suppliers")
     } catch (error: unknown) {
@@ -66,11 +82,12 @@ export function CreateSupplierForm() {
           </label>
           <input
             id="supplier-fullName"
-            value={fullName}
-            onChange={(event) => setFullName(event.target.value)}
+            value={form.fullName}
+            onChange={(event) => setField("fullName", event.target.value)}
             placeholder="أدخل اسم المورد"
             className={inputClass}
           />
+          <ErrorText message={errors.fullName} />
         </div>
 
         <div>
@@ -79,11 +96,12 @@ export function CreateSupplierForm() {
           </label>
           <input
             id="supplier-phone"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
+            value={form.phone}
+            onChange={(event) => setField("phone", event.target.value)}
             placeholder="أدخل رقم الهاتف"
             className={inputClass}
           />
+          <ErrorText message={errors.phone} />
         </div>
 
         <div>
@@ -93,11 +111,12 @@ export function CreateSupplierForm() {
           <input
             id="supplier-email"
             type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
+            value={form.email}
+            onChange={(event) => setField("email", event.target.value)}
             placeholder="أدخل البريد الإلكتروني"
             className={inputClass}
           />
+          <ErrorText message={errors.email} />
         </div>
 
         <div>
@@ -106,11 +125,12 @@ export function CreateSupplierForm() {
           </label>
           <input
             id="supplier-address"
-            value={address}
-            onChange={(event) => setAddress(event.target.value)}
+            value={form.address}
+            onChange={(event) => setField("address", event.target.value)}
             placeholder="أدخل عنوان المورد"
             className={inputClass}
           />
+          <ErrorText message={errors.address} />
         </div>
       </div>
 

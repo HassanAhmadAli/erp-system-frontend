@@ -96,8 +96,8 @@ export function ProductImportPage() {
                     await importMutation.mutateAsync(selectedFile)
                     setSelectedFile(null)
                     setMessage("تم بدء عملية الاستيراد")
-                  } catch (err: any) {
-                    setMessage(err?.message || "فشل بدء الاستيراد")
+                  } catch (err: unknown) {
+                    setMessage(err instanceof Error ? err.message : "فشل بدء الاستيراد")
                   }
                 })()
               }}

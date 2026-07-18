@@ -4,11 +4,11 @@ import { Link, useNavigate } from "react-router-dom"
 import { useForm, type Resolver } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 
+import { DiscountForm } from "@/view/components/discount-form"
 import {
-  DiscountForm,
+  discountSchema,
   type DiscountFormValues,
-} from "@/view/components/discount-form"
-import { discountSchema } from "@/validation/discount-schema"
+} from "@/validation/discount-schema"
 import { createDiscount } from "@/services/discount-service"
 import { Button } from "@/view/components/ui/button"
 

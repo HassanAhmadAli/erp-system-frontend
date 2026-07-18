@@ -3,6 +3,7 @@ import { Loader2, Receipt, ShoppingCart } from "lucide-react"
 import { Button } from "@/view/components/ui/button"
 import { formatCurrency, toEnglishDigits } from "@/utils/number-formatters"
 import { PosCustomerSelect } from "@/view/components/pos/pos-customer-select"
+import type { PosCheckoutFormErrors } from "@/validation/pos-schema"
 import type { CartItem } from "./types"
 import { PosCartItem } from "./pos-cart-item"
 
@@ -15,6 +16,7 @@ type PosCartPanelProps = {
   isCreatingInvoice: boolean
   isCreateInvoiceError: boolean
   isCreateInvoiceSuccess: boolean
+  errors: PosCheckoutFormErrors
   onCustomerIdChange: (value: string) => void
   onAmountPaidChange: (value: string) => void
   onCompleteInvoiceChange: (value: boolean) => void
@@ -22,6 +24,7 @@ type PosCartPanelProps = {
   onCreateInvoice: () => void
   onIncreaseQuantity: (productId: number) => void
   onDecreaseQuantity: (productId: number) => void
+  onQuantityChange: (productId: number, quantity: number) => void
   onRemoveFromCart: (productId: number) => void
 }
 
@@ -34,6 +37,7 @@ export function PosCartPanel({
   isCreatingInvoice,
   isCreateInvoiceError,
   isCreateInvoiceSuccess,
+  errors,
   onCustomerIdChange,
   onAmountPaidChange,
   onCompleteInvoiceChange,
@@ -41,6 +45,7 @@ export function PosCartPanel({
   onCreateInvoice,
   onIncreaseQuantity,
   onDecreaseQuantity,
+  onQuantityChange,
   onRemoveFromCart,
 }: PosCartPanelProps) {
   return (
@@ -54,6 +59,11 @@ export function PosCartPanel({
 
       <div className="space-y-4">
         <PosCustomerSelect value={customerId} onChange={onCustomerIdChange} />
+        {errors.customerId && (
+          <p className="text-xs text-red-500 dark:text-red-300">
+            {errors.customerId}
+          </p>
+        )}
 
         <div className="max-h-[340px] space-y-3 overflow-y-auto pr-1">
           {cart.length === 0 ? (
@@ -75,11 +85,17 @@ export function PosCartPanel({
                 item={item}
                 onIncreaseQuantity={onIncreaseQuantity}
                 onDecreaseQuantity={onDecreaseQuantity}
+                onQuantityChange={onQuantityChange}
                 onRemoveFromCart={onRemoveFromCart}
               />
             ))
           )}
         </div>
+        {errors.cart && (
+          <p className="text-xs text-red-500 dark:text-red-300">
+            {errors.cart}
+          </p>
+        )}
 
         <div className="border-t border-[var(--erp-border)] pt-4">
           <div className="flex items-center justify-between text-sm">
@@ -109,6 +125,11 @@ export function PosCartPanel({
               placeholder="Enter paid amount"
               className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-left text-sm text-[var(--erp-text)] outline-none placeholder:text-[var(--erp-muted)]"
             />
+            {errors.amountPaid && (
+              <p className="mt-1 text-right text-xs text-red-500 dark:text-red-300">
+                {errors.amountPaid}
+              </p>
+            )}
           </label>
 
           <label className="mt-4 flex items-center gap-2 text-sm text-[var(--erp-text)]">
@@ -145,7 +166,7 @@ export function PosCartPanel({
             </Button>
 
             <Button
-              disabled={cart.length === 0 || isCreatingInvoice}
+              disabled={isCreatingInvoice}
               onClick={onCreateInvoice}
             >
               {isCreatingInvoice ? (

@@ -1,9 +1,13 @@
 import { useMemo } from "react"
 
-import { usePurchaseInvoices } from "@/hooks/Purchases/usePurchases"
+import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices"
 import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
 import { buildInvoiceCharts } from "@/lib/report-chart-data"
 import { toNumber } from "@/lib/report-parsers"
+import {
+  normalizePurchaseInvoices,
+  type PurchaseInvoice,
+} from "@/services/purchase-invoices-service"
 import { BarChart } from "@/view/components/charts/bar-chart"
 import { DonutChart } from "@/view/components/charts/donut-chart"
 import { LineChart } from "@/view/components/charts/line-chart"
@@ -13,30 +17,52 @@ import { ReportLayout } from "@/view/components/reports/report-layout"
 import { ReportMetrics } from "@/view/components/reports/report-metrics"
 import { ReportTable } from "@/view/components/reports/report-table"
 
+type NormalizedPurchaseInvoice = {
+  id: number
+  status: string
+  invoiceDate?: string
+  totalAmount?: string | number
+  supplier: string
+}
+
 export function ReportPurchasesPage() {
   const { from, to, setFrom, setTo, range } = useReportDateRange()
-  const { data: invoices = [], isLoading, isError } = usePurchaseInvoices()
+  const { data, isLoading, isError } = usePurchaseInvoices()
 
-  const normalized = useMemo(
+  const invoices = useMemo<PurchaseInvoice[]>(
+    () => normalizePurchaseInvoices(data),
+    [data]
+  )
+
+  const normalized = useMemo<NormalizedPurchaseInvoice[]>(
     () =>
       invoices.map((inv) => ({
         id: inv.id,
-        status: inv.status,
-        invoiceDate: inv.invoiceDate,
-        totalAmount: inv.total,
-        supplier: inv.supplier?.fullName ?? String(inv.supplierId),
+        status: String(inv.status ?? "UNKNOWN"),
+        invoiceDate: inv.invoiceDate ?? inv.createdAt,
+        totalAmount: inv.finalAmount ?? inv.totalAmount ?? inv.subtotal,
+        supplier:
+          inv.supplier?.companyName ??
+          inv.supplier?.name ??
+          inv.supplier?.fullName ??
+          inv.supplier?.user?.fullName ??
+          String(inv.supplierId ?? "غير محدد"),
       })),
     [invoices]
   )
 
-  const filtered = useMemo(() => {
+  const filtered = useMemo<NormalizedPurchaseInvoice[]>(() => {
     if (!from && !to) return normalized
 
     return normalized.filter((inv) => {
       if (!inv.invoiceDate) return true
+
       const date = new Date(inv.invoiceDate).getTime()
+
+      if (Number.isNaN(date)) return true
       if (from && date < new Date(`${from}T00:00:00`).getTime()) return false
       if (to && date > new Date(`${to}T23:59:59`).getTime()) return false
+
       return true
     })
   }, [normalized, from, to])

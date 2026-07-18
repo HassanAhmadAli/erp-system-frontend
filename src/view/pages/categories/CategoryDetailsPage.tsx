@@ -17,6 +17,7 @@ import {
   formatId,
   formatNumber,
 } from "@/utils/number-formatters"
+import { isValidId } from "@/validation/helpers"
 import { CustomerInfoCard } from "@/view/components/customers/customer-info-card"
 import { CustomerInfoRow } from "@/view/components/customers/customer-info-row"
 import { Button } from "@/view/components/ui/button"
@@ -28,10 +29,10 @@ export function CategoryDetailsPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["category", id],
     queryFn: () => getCategoryById(categoryId),
-    enabled: Number.isFinite(categoryId),
+    enabled: isValidId(categoryId),
   })
 
-  if (!Number.isFinite(categoryId)) {
+  if (!isValidId(categoryId)) {
     return <ErrorMessage message="رقم التصنيف غير صالح." />
   }
 

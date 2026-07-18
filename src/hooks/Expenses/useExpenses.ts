@@ -20,7 +20,7 @@ export function useExpenseById(id: number) {
   return useQuery({
     queryKey: ["expense", id],
     queryFn: () => getExpenseById(id),
-    enabled: Number.isFinite(id),
+    enabled: Number.isSafeInteger(id) && id > 0,
   })
 }
 

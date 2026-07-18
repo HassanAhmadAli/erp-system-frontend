@@ -8,159 +8,306 @@ export type RouteAccessRule = {
   rolesOnly?: readonly Exclude<UserRole, "CUSTOMER">[]
 }
 
-const ROUTE_ACCESS_RULES: RouteAccessRule[] = [
-  {
-    test: (path) => path === "/overview",
-    rolesOnly: ["STORE_MANAGER"],
-  },
-  {
-    test: (path) => path === "/accountant/overview",
-    permissions: [PERMISSIONS.REPORTS_VIEW],
-  },
-  { test: (path) => path === "/pos", permissions: [PERMISSIONS.SALES_CREATE] },
-  {
-    test: (path) => /^\/orders\/\d+$/.test(path),
-    permissions: [PERMISSIONS.ORDERS_VIEW],
-  },
-  {
-    test: (path) => path === "/orders",
-    permissions: [PERMISSIONS.ORDERS_VIEW],
-  },
-  {
-    test: (path) => /^\/sales-invoices\/\d+$/.test(path),
-    permissions: [PERMISSIONS.SALES_VIEW],
-  },
-  {
-    test: (path) => path === "/sales-invoices",
-    permissions: [PERMISSIONS.SALES_VIEW],
-  },
-  {
-    test: (path) => /^\/purchase-invoices\/\d+$/.test(path),
-    permissions: [PERMISSIONS.PURCHASES_VIEW],
-  },
-  {
-    test: (path) => path === "/purchase-invoices",
-    permissions: [PERMISSIONS.PURCHASES_VIEW],
-  },
-  {
-    test: (path) => path === "/customers" || /^\/customers\/\d+$/.test(path),
-    permissions: [PERMISSIONS.CUSTOMERS_VIEW],
-  },
-  {
-    test: (path) => path === "/ads/create",
-    permissions: [PERMISSIONS.ADS_MANAGE],
-  },
-  {
-    test: (path) => /^\/ads\/\d+$/.test(path),
-    permissions: [PERMISSIONS.ADS_MANAGE],
-  },
-  {
-    test: (path) => path === "/inventory",
-    permissions: [PERMISSIONS.PRODUCT_MANAGE],
-  },
-  {
-    test: (path) => path === "/categories/create",
-    permissions: [PERMISSIONS.CATEGORY_MANAGE],
-  },
-  {
-    test: (path) => /^\/categories\/\d+\/edit$/.test(path),
-    permissions: [PERMISSIONS.CATEGORY_MANAGE],
-  },
-  {
-    test: (path) => path === "/suppliers/create",
-    permissions: [PERMISSIONS.SUPPLIER_MANAGE],
-  },
-  {
-    test: (path) => /^\/suppliers\/\d+\/edit$/.test(path),
-    permissions: [PERMISSIONS.SUPPLIER_MANAGE],
-  },
-  {
-    test: (path) => path === "/products/import" || path === "/products/create",
-    permissions: [PERMISSIONS.PRODUCT_CREATE],
-  },
-  {
-    test: (path) => /^\/products\/\d+\/edit$/.test(path),
-    permissions: [PERMISSIONS.PRODUCT_MANAGE],
-  },
-  {
-    test: (path) => /^\/products\/\d+\/photos$/.test(path),
-    permissions: [PERMISSIONS.PRODUCT_MANAGE],
-  },
-  {
-    test: (path) => path === "/discounts/create",
-    permissions: [PERMISSIONS.DISCOUNT_MANAGE],
-  },
-  {
-    test: (path) => /^\/discounts\/\d+(\/edit)?$/.test(path),
-    permissions: [PERMISSIONS.DISCOUNT_MANAGE],
-  },
-  {
-    test: (path) => path === "/discounts",
-    permissions: [PERMISSIONS.DISCOUNT_MANAGE],
-  },
-  {
-    test: (path) => path === "/expenses/create",
-    permissions: [PERMISSIONS.EXPENSES_MANAGE],
-  },
-  {
-    test: (path) => /^\/expenses\/\d+\/edit$/.test(path),
-    permissions: [PERMISSIONS.EXPENSES_MANAGE],
-  },
-  {
-    test: (path) => /^\/expenses\/\d+$/.test(path) || path === "/expenses",
-    permissions: [PERMISSIONS.EXPENSES_VIEW],
-  },
-  {
-    test: (path) => path.startsWith("/reports"),
-    permissions: [PERMISSIONS.REPORTS_VIEW],
-  },
-  {
-    test: (path) => path === "/financial/recalculate",
-    permissions: [PERMISSIONS.FINANCIALS_MANAGE],
-  },
-  {
-    test: (path) => path.startsWith("/financial"),
-    permissions: [PERMISSIONS.FINANCIALS_VIEW],
-  },
-  {
-    test: (path) => path === "/loyalty-rewards",
-    permissions: [
-      PERMISSIONS.LOYALTY_REWARDS_MANAGE,
-      PERMISSIONS.LOYALTY_POLICY_MANAGE,
-    ],
-  },
-  {
-    test: (path) => path.startsWith("/audit-logs"),
-    permissions: [PERMISSIONS.AUDIT_LOGS_VIEW],
-  },
-]
-
 export type SidebarAccess = {
   to: string
   permissions?: readonly Permission[]
   rolesOnly?: readonly Exclude<UserRole, "CUSTOMER">[]
 }
 
+function isExact(pathname: string, target: string) {
+  return pathname === target
+}
+
+function isNumericDetailsRoute(pathname: string, basePath: string) {
+  return new RegExp(`^${basePath}/\\d+$`).test(pathname)
+}
+
+function isNumericEditRoute(pathname: string, basePath: string) {
+  return new RegExp(`^${basePath}/\\d+/edit$`).test(pathname)
+}
+
+const ROUTE_ACCESS_RULES: RouteAccessRule[] = [
+  /**
+   * Overview
+   */
+  {
+    test: (path) => isExact(path, "/overview"),
+    rolesOnly: ["STORE_MANAGER"],
+  },
+  {
+    test: (path) => isExact(path, "/accountant/overview"),
+    permissions: [PERMISSIONS.REPORTS_VIEW],
+  },
+
+  /**
+   * POS
+   */
+  {
+    test: (path) => isExact(path, "/pos"),
+    permissions: [PERMISSIONS.SALES_CREATE],
+  },
+
+  /**
+   * Customers
+   */
+  {
+    test: (path) =>
+      isExact(path, "/customers") || isNumericDetailsRoute(path, "/customers"),
+    permissions: [PERMISSIONS.CUSTOMERS_VIEW],
+  },
+
+  /**
+   * Orders
+   */
+  {
+    test: (path) =>
+      isExact(path, "/orders") || isNumericDetailsRoute(path, "/orders"),
+    permissions: [PERMISSIONS.ORDERS_VIEW],
+  },
+
+  /**
+   * Sales invoices
+   */
+  {
+    test: (path) =>
+      isExact(path, "/sales-invoices") ||
+      isNumericDetailsRoute(path, "/sales-invoices"),
+    permissions: [PERMISSIONS.SALES_VIEW],
+  },
+
+  /**
+   * Purchase invoices
+   */
+  {
+    test: (path) =>
+      isExact(path, "/purchase-invoices") ||
+      isNumericDetailsRoute(path, "/purchase-invoices"),
+    permissions: [PERMISSIONS.PURCHASES_VIEW],
+  },
+
+  /**
+   * Notifications
+   *
+   * Everyone with NOTIFICATIONS_VIEW can access their inbox.
+   * Only STORE_MANAGER currently has NOTIFICATIONS_VIEW_HISTORY.
+   * Sending is guarded inside the page by NOTIFICATIONS_SEND.
+   */
+  {
+    test: (path) =>
+      isExact(path, "/notifications") ||
+      /^\/notifications\/details\/inbox\/\d+$/.test(path),
+    permissions: [PERMISSIONS.NOTIFICATIONS_VIEW],
+  },
+  {
+    test: (path) => /^\/notifications\/details\/history\/\d+$/.test(path),
+    permissions: [PERMISSIONS.NOTIFICATIONS_VIEW_HISTORY],
+  },
+
+  /**
+   * Ads
+   */
+  {
+    test: (path) =>
+      isExact(path, "/ads") ||
+      isExact(path, "/ads/create") ||
+      isNumericDetailsRoute(path, "/ads"),
+    permissions: [PERMISSIONS.ADS_MANAGE],
+  },
+
+  /**
+   * Audit logs
+   */
+  {
+    test: (path) =>
+      isExact(path, "/audit-logs") ||
+      isNumericDetailsRoute(path, "/audit-logs"),
+    permissions: [PERMISSIONS.AUDIT_LOGS_VIEW],
+  },
+
+  /**
+   * Inventory
+   */
+  {
+    test: (path) => isExact(path, "/inventory"),
+    permissions: [PERMISSIONS.PRODUCT_MANAGE],
+  },
+
+  /**
+   * Categories
+   */
+  {
+    test: (path) =>
+      isExact(path, "/categories") ||
+      isExact(path, "/categories/create") ||
+      isNumericDetailsRoute(path, "/categories") ||
+      isNumericEditRoute(path, "/categories"),
+    permissions: [PERMISSIONS.CATEGORY_MANAGE],
+  },
+
+  /**
+   * Suppliers
+   */
+  {
+    test: (path) =>
+      isExact(path, "/suppliers") ||
+      isExact(path, "/suppliers/create") ||
+      isNumericDetailsRoute(path, "/suppliers") ||
+      isNumericEditRoute(path, "/suppliers"),
+    permissions: [PERMISSIONS.SUPPLIER_MANAGE],
+  },
+
+  /**
+   * Products
+   */
+  {
+    test: (path) => isExact(path, "/products/create"),
+    permissions: [PERMISSIONS.PRODUCT_CREATE],
+  },
+  {
+    test: (path) =>
+      isExact(path, "/products") ||
+      isExact(path, "/products/import") ||
+      isNumericDetailsRoute(path, "/products") ||
+      isNumericEditRoute(path, "/products") ||
+      /^\/products\/\d+\/photos$/.test(path),
+    permissions: [PERMISSIONS.PRODUCT_MANAGE],
+  },
+
+  /**
+   * Discounts
+   */
+  {
+    test: (path) =>
+      isExact(path, "/discounts") ||
+      isExact(path, "/discounts/active") ||
+      isExact(path, "/discounts/best") ||
+      isExact(path, "/discounts/calculate") ||
+      isExact(path, "/discounts/create") ||
+      isNumericDetailsRoute(path, "/discounts") ||
+      isNumericEditRoute(path, "/discounts"),
+    permissions: [PERMISSIONS.DISCOUNT_MANAGE],
+  },
+
+  /**
+   * Expenses
+   */
+  {
+    test: (path) =>
+      isExact(path, "/expenses/create") || isNumericEditRoute(path, "/expenses"),
+    permissions: [PERMISSIONS.EXPENSES_MANAGE],
+  },
+  {
+    test: (path) =>
+      isExact(path, "/expenses") || isNumericDetailsRoute(path, "/expenses"),
+    permissions: [PERMISSIONS.EXPENSES_VIEW],
+  },
+
+  /**
+   * Reports
+   */
+  {
+    test: (path) => path === "/reports" || path.startsWith("/reports/"),
+    permissions: [PERMISSIONS.REPORTS_VIEW],
+  },
+
+  /**
+   * Financial
+   */
+  {
+    test: (path) => isExact(path, "/financial/recalculate"),
+    permissions: [PERMISSIONS.FINANCIALS_MANAGE],
+  },
+  {
+    test: (path) => path === "/financial" || path.startsWith("/financial/"),
+    permissions: [PERMISSIONS.FINANCIALS_VIEW],
+  },
+
+  /**
+   * Loyalty
+   */
+  {
+    test: (path) => isExact(path, "/loyalty-rewards"),
+    permissions: [PERMISSIONS.LOYALTY_REWARDS_MANAGE],
+  },
+]
+
 export const SIDEBAR_ACCESS: SidebarAccess[] = [
-  { to: "/overview", rolesOnly: ["STORE_MANAGER"] },
-  { to: "/accountant/overview", permissions: [PERMISSIONS.REPORTS_VIEW] },
-  { to: "/pos", permissions: [PERMISSIONS.SALES_CREATE] },
-  { to: "/customers", permissions: [PERMISSIONS.CUSTOMERS_VIEW] },
-  { to: "/orders", permissions: [PERMISSIONS.ORDERS_VIEW] },
-  { to: "/sales-invoices", permissions: [PERMISSIONS.SALES_VIEW] },
-  { to: "/purchase-invoices", permissions: [PERMISSIONS.PURCHASES_VIEW] },
-  { to: "/notifications" },
-  { to: "/ads" },
-  { to: "/audit-logs", permissions: [PERMISSIONS.AUDIT_LOGS_VIEW] },
-  { to: "/inventory", permissions: [PERMISSIONS.PRODUCT_MANAGE] },
-  { to: "/categories" },
-  { to: "/products" },
-  { to: "/suppliers" },
-  { to: "/discounts", permissions: [PERMISSIONS.DISCOUNT_MANAGE] },
-  { to: "/expenses", permissions: [PERMISSIONS.EXPENSES_VIEW] },
-  { to: "/reports", permissions: [PERMISSIONS.REPORTS_VIEW] },
-  { to: "/financial", permissions: [PERMISSIONS.FINANCIALS_VIEW] },
-  { to: "/loyalty-rewards", permissions: [PERMISSIONS.LOYALTY_REWARDS_MANAGE] },
+  {
+    to: "/overview",
+    rolesOnly: ["STORE_MANAGER"],
+  },
+  {
+    to: "/accountant/overview",
+    permissions: [PERMISSIONS.REPORTS_VIEW],
+  },
+  {
+    to: "/pos",
+    permissions: [PERMISSIONS.SALES_CREATE],
+  },
+  {
+    to: "/customers",
+    permissions: [PERMISSIONS.CUSTOMERS_VIEW],
+  },
+  {
+    to: "/orders",
+    permissions: [PERMISSIONS.ORDERS_VIEW],
+  },
+  {
+    to: "/sales-invoices",
+    permissions: [PERMISSIONS.SALES_VIEW],
+  },
+  {
+    to: "/purchase-invoices",
+    permissions: [PERMISSIONS.PURCHASES_VIEW],
+  },
+  {
+    to: "/notifications",
+    permissions: [PERMISSIONS.NOTIFICATIONS_VIEW],
+  },
+  {
+    to: "/ads",
+    permissions: [PERMISSIONS.ADS_MANAGE],
+  },
+  {
+    to: "/audit-logs",
+    permissions: [PERMISSIONS.AUDIT_LOGS_VIEW],
+  },
+  {
+    to: "/inventory",
+    permissions: [PERMISSIONS.PRODUCT_MANAGE],
+  },
+  {
+    to: "/categories",
+    permissions: [PERMISSIONS.CATEGORY_MANAGE],
+  },
+  {
+    to: "/products",
+    permissions: [PERMISSIONS.PRODUCT_MANAGE],
+  },
+  {
+    to: "/suppliers",
+    permissions: [PERMISSIONS.SUPPLIER_MANAGE],
+  },
+  {
+    to: "/discounts",
+    permissions: [PERMISSIONS.DISCOUNT_MANAGE],
+  },
+  {
+    to: "/expenses",
+    permissions: [PERMISSIONS.EXPENSES_VIEW],
+  },
+  {
+    to: "/reports",
+    permissions: [PERMISSIONS.REPORTS_VIEW],
+  },
+  {
+    to: "/financial",
+    permissions: [PERMISSIONS.FINANCIALS_VIEW],
+  },
+  {
+    to: "/loyalty-rewards",
+    permissions: [PERMISSIONS.LOYALTY_REWARDS_MANAGE],
+  },
 ]
 
 export function getRouteAccessRule(pathname: string): RouteAccessRule | null {
@@ -173,10 +320,23 @@ export function canAccessRoute(
   hasAll: (permissions: readonly Permission[]) => boolean
 ): boolean {
   const rule = getRouteAccessRule(pathname)
-  if (!rule) return true
 
-  if (rule.rolesOnly && role) {
-    if (!rule.rolesOnly.includes(role as Exclude<UserRole, "CUSTOMER">)) {
+  /**
+   * Fail closed:
+   * If a protected route has no access rule, block it.
+   * This prevents accidentally exposing new pages when someone forgets
+   * to add them to ROUTE_ACCESS_RULES.
+   */
+  if (!rule) {
+    return false
+  }
+
+  if (rule.rolesOnly) {
+    if (!role || role === "CUSTOMER") {
+      return false
+    }
+
+    if (!rule.rolesOnly.includes(role)) {
       return false
     }
   }
@@ -193,8 +353,12 @@ export function canAccessSidebarItem(
   role: UserRole | undefined,
   hasAll: (permissions: readonly Permission[]) => boolean
 ): boolean {
-  if (item.rolesOnly && role) {
-    if (!item.rolesOnly.includes(role as Exclude<UserRole, "CUSTOMER">)) {
+  if (item.rolesOnly) {
+    if (!role || role === "CUSTOMER") {
+      return false
+    }
+
+    if (!item.rolesOnly.includes(role)) {
       return false
     }
   }
