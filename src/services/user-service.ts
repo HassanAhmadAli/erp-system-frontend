@@ -14,6 +14,7 @@ export type UserProfile = {
   phoneNumber: string
   role: UserRole
   nationalId?: string
+  jobTitle?: string | null
   createdAt?: string
 }
 

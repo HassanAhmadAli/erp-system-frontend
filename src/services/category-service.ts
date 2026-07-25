@@ -1,4 +1,5 @@
-import { apiRequest } from "@/api/client"
+import { apiRequest, BASE_URL } from "@/api/client"
+import { getAccessToken } from "@/utils/auth-storage"
 import type { CategoryRequestPayload } from "@/validation/category-schema"
 import { isValidId, normalizeText, optionalText } from "@/validation/helpers"
 
@@ -6,6 +7,8 @@ export type Category = {
   id: number
   name: string
   description?: string | null
+  imageUrl?: string | null
+  storedFileId?: string | null
   _count?: { products: number }
 }
 
@@ -32,6 +35,8 @@ export type CategoryDetails = {
   id: number
   name: string
   description?: string | null
+  imageUrl?: string | null
+  storedFileId?: string | null
   products: {
     id: number
     name: string
@@ -168,6 +173,98 @@ export function deleteCategory(id: number) {
   }
 
   return apiRequest<{ message: string }>(`/category/${id}`, {
+    method: "DELETE",
+  })
+}
+
+function authorizedFetch(url: string, options: RequestInit = {}) {
+  const headers = new Headers(options.headers || {})
+  const token = getAccessToken()
+
+  if (token) {
+    headers.set("Authorization", `Bearer ${token}`)
+  }
+
+  return fetch(url, {
+    ...options,
+    headers,
+  })
+}
+
+/**
+ * Builds an absolute URL for a category image.
+ * Backend stores relative paths like `/category/image/download/{storedFileId}`.
+ */
+export function getCategoryImageSrc(
+  imageUrl?: string | null,
+  storedFileId?: string | null
+) {
+  if (imageUrl?.trim()) {
+    const trimmed = imageUrl.trim()
+    if (/^https?:\/\//i.test(trimmed)) return trimmed
+    if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`
+    return `${BASE_URL}/${trimmed}`
+  }
+
+  if (storedFileId?.trim()) {
+    return `${BASE_URL}/category/image/download/${storedFileId.trim()}`
+  }
+
+  return null
+}
+
+export async function uploadCategoryImage(categoryId: number, file: File) {
+  if (!isValidId(categoryId)) {
+    throw new Error("Invalid category id")
+  }
+
+  const formData = new FormData()
+  formData.append("file", file)
+
+  const response = await authorizedFetch(
+    `${BASE_URL}/category/${categoryId}/image`,
+    {
+      method: "POST",
+      body: formData,
+    }
+  )
+
+  const bodyText = await response.text()
+
+  if (!response.ok) {
+    let message = `Failed to upload category image (${response.status})`
+
+    try {
+      const parsed = JSON.parse(bodyText) as { message?: string | string[] }
+      if (Array.isArray(parsed.message)) message = parsed.message.join("\n")
+      else if (typeof parsed.message === "string") message = parsed.message
+      else if (bodyText.trim()) message = bodyText
+    } catch {
+      if (bodyText.trim()) message = bodyText
+    }
+
+    throw new Error(message)
+  }
+
+  if (!bodyText.trim()) {
+    return { id: categoryId } as Category
+  }
+
+  try {
+    return JSON.parse(bodyText) as Category
+  } catch {
+    return { id: categoryId, message: bodyText } as Category & {
+      message?: string
+    }
+  }
+}
+
+export function deleteCategoryImage(categoryId: number) {
+  if (!isValidId(categoryId)) {
+    throw new Error("Invalid category id")
+  }
+
+  return apiRequest<{ message: string }>(`/category/${categoryId}/image`, {
     method: "DELETE",
   })
 }

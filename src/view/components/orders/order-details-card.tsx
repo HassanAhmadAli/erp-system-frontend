@@ -299,8 +299,8 @@ export function OrderDetailsCard({
                 لا توجد منتجات ظاهرة في تفاصيل هذا الطلب.
               </div>
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)]">
-                <table className="w-full table-fixed text-right text-sm">
+              <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)]">
+                <table className="w-full min-w-[640px] table-fixed text-right text-sm">
                   <colgroup>
                     <col className="w-[16%]" />
                     <col className="w-[36%]" />

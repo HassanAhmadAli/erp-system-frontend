@@ -19,6 +19,7 @@ import {
   Tags,
   TrendingUp,
   Truck,
+  UserCog,
   Users,
 } from "lucide-react"
 import { NavLink, useNavigate } from "react-router-dom"
@@ -37,11 +38,15 @@ type NavItem = {
 
 type NavItemProps = NavItem & {
   collapsed: boolean
+  onNavigate?: () => void
 }
 
 type AppSidebarProps = {
   collapsed: boolean
-  onToggle: () => void
+  onToggle?: () => void
+  onNavigate?: () => void
+  className?: string
+  showCollapseToggle?: boolean
 }
 
 const sidebarItems: NavItem[] = [
@@ -64,6 +69,11 @@ const sidebarItems: NavItem[] = [
     icon: Users,
     label: "العملاء",
     to: "/customers",
+  },
+  {
+    icon: UserCog,
+    label: "الموظفون",
+    to: "/staff",
   },
   {
     icon: ShoppingCart,
@@ -148,12 +158,14 @@ function SidebarNavItem({
   to,
   showDot,
   collapsed,
+  onNavigate,
 }: NavItemProps) {
   return (
     <NavLink
       to={to}
       end={to === "/overview" || to === "/accountant/overview"}
       title={collapsed ? label : undefined}
+      onClick={onNavigate}
       className={({ isActive }) =>
         cn(
           "flex items-center rounded-2xl text-sm font-medium transition-colors",
@@ -176,26 +188,33 @@ function SidebarNavItem({
   )
 }
 
-export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
+export function AppSidebar({
+  collapsed,
+  onToggle,
+  onNavigate,
+  className,
+  showCollapseToggle = true,
+}: AppSidebarProps) {
   const navigate = useNavigate()
   const { canSeeSidebarItem } = usePermissions()
 
   const visibleItems = sidebarItems.filter((item) => {
-  const access = SIDEBAR_ACCESS.find((entry) => entry.to === item.to)
+    const access = SIDEBAR_ACCESS.find((entry) => entry.to === item.to)
 
-  /**
-   * Fail closed:
-   * if a sidebar item has no matching permission rule,
-   * hide it instead of accidentally showing it to everyone.
-   */
-  if (!access) {
-    return false
-  }
+    /**
+     * Fail closed:
+     * if a sidebar item has no matching permission rule,
+     * hide it instead of accidentally showing it to everyone.
+     */
+    if (!access) {
+      return false
+    }
 
-  return canSeeSidebarItem(access)
-})
+    return canSeeSidebarItem(access)
+  })
 
   function handleLogout() {
+    onNavigate?.()
     clearTokens()
     navigate("/login")
   }
@@ -204,36 +223,44 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
     <aside
       className={cn(
         "erp-scrollbar flex shrink-0 flex-col overflow-y-auto border-l border-[var(--erp-border)] bg-[var(--erp-sidebar)] py-6 transition-[width,padding] duration-200 ease-in-out",
-        collapsed ? "w-[76px] px-3" : "w-[280px] px-5"
+        collapsed ? "w-[76px] px-3" : "w-[280px] px-5",
+        className
       )}
     >
-      <div
-        className={cn(
-          "mb-4 flex items-center",
-          collapsed ? "justify-center" : "justify-start"
-        )}
-      >
-        <button
-          type="button"
-          onClick={onToggle}
-          aria-expanded={!collapsed}
-          aria-label={
-            collapsed ? "توسيع القائمة الجانبية" : "طي القائمة الجانبية"
-          }
-          title={collapsed ? "توسيع القائمة" : "طي القائمة"}
-          className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] text-[var(--erp-muted)] transition-colors hover:bg-[var(--erp-nav-active-bg)] hover:text-[var(--erp-brand-solid)]"
-        >
-          {collapsed ? (
-            <ChevronLeft className="size-4" />
-          ) : (
-            <ChevronRight className="size-4" />
+      {showCollapseToggle && onToggle && (
+        <div
+          className={cn(
+            "mb-4 flex items-center",
+            collapsed ? "justify-center" : "justify-start"
           )}
-        </button>
-      </div>
+        >
+          <button
+            type="button"
+            onClick={onToggle}
+            aria-expanded={!collapsed}
+            aria-label={
+              collapsed ? "توسيع القائمة الجانبية" : "طي القائمة الجانبية"
+            }
+            title={collapsed ? "توسيع القائمة" : "طي القائمة"}
+            className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] text-[var(--erp-muted)] transition-colors hover:bg-[var(--erp-nav-active-bg)] hover:text-[var(--erp-brand-solid)]"
+          >
+            {collapsed ? (
+              <ChevronLeft className="size-4" />
+            ) : (
+              <ChevronRight className="size-4" />
+            )}
+          </button>
+        </div>
+      )}
 
       <nav className="flex flex-1 flex-col gap-2">
         {visibleItems.map((item) => (
-          <SidebarNavItem key={item.to} {...item} collapsed={collapsed} />
+          <SidebarNavItem
+            key={item.to}
+            {...item}
+            collapsed={collapsed}
+            onNavigate={onNavigate}
+          />
         ))}
       </nav>
 

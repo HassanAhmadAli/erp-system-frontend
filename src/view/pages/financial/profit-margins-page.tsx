@@ -1,5 +1,8 @@
 import { useProfitMargins } from "@/hooks/Financial/useFinancial"
-import { extractProfitMarginSeries } from "@/lib/report-chart-data"
+import {
+  extractProfitMarginSeries,
+  profitMarginBarColor,
+} from "@/lib/report-chart-data"
 import { extractTableRows } from "@/lib/report-parsers"
 import { HorizontalBarChart } from "@/view/components/charts/horizontal-bar-chart"
 import { ReportLayout } from "@/view/components/reports/report-layout"
@@ -35,7 +38,9 @@ export function ProfitMarginsPage() {
         title="هامش الربح لكل منتج"
         data={margins}
         unit="%"
+        maxScale={100}
         maxItems={15}
+        getBarColor={profitMarginBarColor}
       />
 
       <ReportTable title="جدول المنتجات" rows={rows} />

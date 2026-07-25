@@ -18,6 +18,7 @@ function readSidebarCollapsed() {
 export function AppShell() {
   const { headerTitle } = usePermissions()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(readSidebarCollapsed)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   useEffect(() => {
     try {
@@ -27,8 +28,39 @@ export function AppShell() {
     }
   }, [sidebarCollapsed])
 
+  useEffect(() => {
+    if (!mobileNavOpen) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileNavOpen(false)
+      }
+    }
+
+    function handleResize() {
+      if (window.matchMedia("(min-width: 1024px)").matches) {
+        setMobileNavOpen(false)
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("resize", handleResize)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("resize", handleResize)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileNavOpen])
+
   function toggleSidebar() {
     setSidebarCollapsed((current) => !current)
+  }
+
+  function closeMobileNav() {
+    setMobileNavOpen(false)
   }
 
   return (
@@ -37,15 +69,36 @@ export function AppShell() {
       dir="rtl"
       lang="ar"
     >
-      <TopBar title={headerTitle} />
+      <TopBar title={headerTitle} onMenuClick={() => setMobileNavOpen(true)} />
 
       <div className="flex min-h-0 flex-1">
-        <AppSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+        <AppSidebar
+          collapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
+          className="hidden lg:flex"
+        />
 
         <main className="erp-scrollbar min-h-0 flex-1 overflow-y-auto bg-[var(--erp-bg)] px-5 py-8 sm:px-10 lg:py-10">
           <Outlet />
         </main>
       </div>
+
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal>
+          <button
+            type="button"
+            aria-label="إغلاق القائمة"
+            className="absolute inset-0 bg-black/50"
+            onClick={closeMobileNav}
+          />
+          <AppSidebar
+            collapsed={false}
+            showCollapseToggle={false}
+            onNavigate={closeMobileNav}
+            className="absolute inset-y-0 start-0 z-10 h-full shadow-[var(--erp-shadow)]"
+          />
+        </div>
+      )}
     </div>
   )
 }

@@ -63,8 +63,8 @@ export function SuppliersTable() {
       )}
 
       {!isLoading && !error && suppliers.length > 0 && (
-        <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
-          <table className="w-full table-fixed text-right text-sm">
+        <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
+          <table className="w-full min-w-[720px] table-fixed text-right text-sm">
             <colgroup>
               <col className="w-[22%]" />
               <col className="w-[17%]" />

@@ -92,8 +92,8 @@ export function ExpensesTable({
         />
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
-        <table className="w-full table-fixed text-right text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
+        <table className="w-full min-w-[800px] table-fixed text-right text-sm">
           <colgroup>
             <col className="w-[8%]" />
             <col className="w-[25%]" />

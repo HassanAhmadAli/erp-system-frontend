@@ -9,6 +9,7 @@ type BarChartProps = {
 }
 
 const COLORS = ["#4b22b5", "#7c5ce0", "#cdc9f7", "#f0ad34", "#9480f8"]
+const PLOT_HEIGHT = 180
 
 export function BarChart({
   title,
@@ -34,6 +35,8 @@ export function BarChart({
   const min = Math.min(...values, 0)
   const hasNegative = min < 0
   const range = Math.max(max - min, 1)
+  const positiveSpace = (max / range) * PLOT_HEIGHT
+  const negativeSpace = hasNegative ? (Math.abs(min) / range) * PLOT_HEIGHT : 0
 
   return (
     <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
@@ -48,23 +51,21 @@ export function BarChart({
         <span>{formatNumber(max, unit)}</span>
       </div>
 
-      <div
-        className="relative flex items-end justify-center gap-2 overflow-x-auto pb-2 sm:gap-4"
-        style={{ minHeight: 220 }}
-      >
-        {hasNegative && (
+      <div className="relative flex items-start justify-center gap-2 overflow-x-auto pb-2 sm:gap-4">
+        {hasNegative && positiveSpace > 0 && (
           <div
             className="pointer-events-none absolute right-0 left-0 border-t border-dashed border-[var(--erp-muted)]"
-            style={{ bottom: `${(Math.abs(min) / range) * 180 + 20}px` }}
+            style={{ top: `${positiveSpace}px` }}
           />
         )}
 
         {data.map((point, index) => {
-          const height = Math.max(
-            4,
-            Math.round((Math.abs(point.value) / range) * 180)
-          )
           const color = COLORS[index % COLORS.length]
+          const isNegative = point.value < 0
+          const barHeight = Math.max(
+            4,
+            Math.round((Math.abs(point.value) / range) * PLOT_HEIGHT)
+          )
 
           return (
             <div
@@ -74,14 +75,48 @@ export function BarChart({
               <span className="text-xs font-medium text-[var(--erp-text)]">
                 {formatNumber(point.value, unit)}
               </span>
+
               <div
-                className="w-full max-w-[48px] rounded-t-xl transition-all"
-                style={{
-                  height,
-                  backgroundColor: point.value < 0 ? "#d52b45" : color,
-                }}
-                title={`${point.label}: ${formatNumber(point.value, unit)}`}
-              />
+                className="flex w-full flex-col items-center"
+                style={{ height: positiveSpace + negativeSpace }}
+              >
+                <div
+                  className="flex w-full flex-col justify-end"
+                  style={{
+                    height: positiveSpace || (hasNegative ? 0 : PLOT_HEIGHT),
+                  }}
+                >
+                  {!isNegative && (
+                    <div
+                      className="mx-auto w-full max-w-[48px] rounded-t-xl transition-all"
+                      style={{
+                        height: barHeight,
+                        backgroundColor: color,
+                      }}
+                      title={`${point.label}: ${formatNumber(point.value, unit)}`}
+                    />
+                  )}
+                </div>
+
+                {hasNegative && (
+                  <div
+                    className="flex w-full flex-col justify-start"
+                    style={{ height: negativeSpace }}
+                  >
+                    {isNegative && (
+                      <div
+                        className="mx-auto w-full max-w-[48px] rounded-b-xl transition-all"
+                        style={{
+                          height: barHeight,
+                          backgroundColor: "#d52b45",
+                        }}
+                        title={`${point.label}: ${formatNumber(point.value, unit)}`}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+
               <span className="line-clamp-2 text-center text-[10px] leading-tight text-[var(--erp-muted)]">
                 {point.label}
               </span>

@@ -195,8 +195,8 @@ export function DiscountsPage() {
         )}
 
         {!isLoading && !error && discounts.length > 0 && (
-          <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
-            <table className="w-full table-fixed text-right text-sm">
+          <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
+            <table className="w-full min-w-[860px] table-fixed text-right text-sm">
               <colgroup>
                 <col className="w-[22%]" />
                 <col className="w-[15%]" />
@@ -269,7 +269,9 @@ export function DiscountsPage() {
                         </Link>
 
                         <Button
-                          variant={discount.isActive ? "destructive" : "success"}
+                          variant={
+                            discount.isActive ? "destructive" : "success"
+                          }
                           size="xs"
                           onClick={() =>
                             handleToggle(discount.id, discount.isActive)
