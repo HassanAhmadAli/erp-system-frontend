@@ -1,4 +1,8 @@
 import { apiRequest, buildQuery } from "@/api/client"
+import type {
+  PosCheckoutItemPayload,
+  PosCheckoutPayload,
+} from "@/validation/pos-schema"
 
 export type PosProduct = {
   id: number
@@ -18,22 +22,13 @@ export type ProductsResponse = {
   isFinalPage?: boolean
 }
 
-export type SaleInvoiceItem = {
-  productId: number
-  quantity: number
-}
+export type SaleInvoiceItem = PosCheckoutItemPayload
 
-export type CreateSaleInvoicePayload = {
-  customerId: number
-  discountId: number | null
-  amountPaid: number
-  items: SaleInvoiceItem[]
-  complete: boolean
-}
+export type CreateSaleInvoicePayload = PosCheckoutPayload
 
 export type SaleInvoice = {
   id: number
-  customerId: number
+  customerId?: number
   discountId: number | null
   amountPaid: number | string
   subtotal?: number | string

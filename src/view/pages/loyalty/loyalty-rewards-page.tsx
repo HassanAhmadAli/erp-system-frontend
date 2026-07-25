@@ -15,6 +15,17 @@ import {
   useUpdateLoyaltyPolicy,
   useUpdateLoyaltyReward,
 } from "@/hooks/Loyalty/useLoyaltyRewards"
+import {
+  loyaltyPolicySchema,
+  loyaltyPolicyValuesToPayload,
+  loyaltyPolicyZodErrorToFormErrors,
+  loyaltyRewardSchema,
+  loyaltyRewardValuesToPayload,
+  loyaltyRewardZodErrorToFormErrors,
+  type LoyaltyPolicyFormErrors,
+  type LoyaltyRewardFormErrors,
+} from "@/validation/loyalty-schema"
+import { isValidId, parsePositiveInteger } from "@/validation/helpers"
 import { formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
@@ -38,6 +49,8 @@ export function LoyaltyRewardsPage() {
 
   const [pointsPerCurrency, setPointsPerCurrency] = useState("")
   const [currencyPerPoint, setCurrencyPerPoint] = useState("")
+  const [policyFormErrors, setPolicyFormErrors] =
+    useState<LoyaltyPolicyFormErrors>({})
   const [policyMessage, setPolicyMessage] = useState("")
   const [policyError, setPolicyError] = useState("")
 
@@ -45,6 +58,8 @@ export function LoyaltyRewardsPage() {
   const [description, setDescription] = useState("")
   const [discountValue, setDiscountValue] = useState("")
   const [isActive, setIsActive] = useState(true)
+  const [rewardFormErrors, setRewardFormErrors] =
+    useState<LoyaltyRewardFormErrors>({})
   const [rewardError, setRewardError] = useState("")
 
   useEffect(() => {
@@ -63,7 +78,9 @@ export function LoyaltyRewardsPage() {
     if (rewards.length === 0) return 0
 
     return Math.max(
-      ...rewards.map((reward) => Number(reward.pointsThreshold) || 0)
+      ...rewards.map(
+        (reward) => parsePositiveInteger(reward.pointsThreshold) ?? 0
+      )
     )
   }, [rewards])
 
@@ -71,31 +88,22 @@ export function LoyaltyRewardsPage() {
     event.preventDefault()
     setPolicyMessage("")
     setPolicyError("")
+    setPolicyFormErrors({})
 
-    const parsedPointsPerCurrency = Number(pointsPerCurrency)
-    const parsedCurrencyPerPoint = Number(currencyPerPoint)
+    const validation = loyaltyPolicySchema.safeParse({
+      pointsPerCurrency,
+      currencyPerPoint,
+    })
 
-    if (
-      !Number.isFinite(parsedPointsPerCurrency) ||
-      parsedPointsPerCurrency <= 0
-    ) {
-      setPolicyError("نقاط كل عملة يجب أن تكون أكبر من صفر")
-      return
-    }
-
-    if (
-      !Number.isFinite(parsedCurrencyPerPoint) ||
-      parsedCurrencyPerPoint <= 0
-    ) {
-      setPolicyError("قيمة كل نقطة يجب أن تكون أكبر من صفر")
+    if (!validation.success) {
+      setPolicyFormErrors(loyaltyPolicyZodErrorToFormErrors(validation.error))
       return
     }
 
     try {
-      await updatePolicy.mutateAsync({
-        pointsPerCurrency: parsedPointsPerCurrency,
-        currencyPerPoint: parsedCurrencyPerPoint,
-      })
+      await updatePolicy.mutateAsync(
+        loyaltyPolicyValuesToPayload(validation.data)
+      )
 
       setPolicyMessage("تم حفظ سياسة النقاط بنجاح")
     } catch {
@@ -106,32 +114,24 @@ export function LoyaltyRewardsPage() {
   async function handleCreateReward(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setRewardError("")
+    setRewardFormErrors({})
 
-    const parsedThreshold = Number(threshold)
-    const parsedDiscountValue = Number(discountValue)
+    const validation = loyaltyRewardSchema.safeParse({
+      pointsThreshold: threshold,
+      rewardDescription: description,
+      discountValue,
+      isActive,
+    })
 
-    if (!Number.isFinite(parsedThreshold) || parsedThreshold <= 0) {
-      setRewardError("حد النقاط يجب أن يكون أكبر من صفر")
-      return
-    }
-
-    if (!description.trim()) {
-      setRewardError("وصف المكافأة مطلوب")
-      return
-    }
-
-    if (!Number.isFinite(parsedDiscountValue) || parsedDiscountValue <= 0) {
-      setRewardError("قيمة الخصم يجب أن تكون أكبر من صفر")
+    if (!validation.success) {
+      setRewardFormErrors(loyaltyRewardZodErrorToFormErrors(validation.error))
       return
     }
 
     try {
-      await createReward.mutateAsync({
-        pointsThreshold: parsedThreshold,
-        rewardDescription: description.trim(),
-        discountValue: parsedDiscountValue,
-        isActive,
-      })
+      await createReward.mutateAsync(
+        loyaltyRewardValuesToPayload(validation.data)
+      )
 
       setThreshold("")
       setDescription("")
@@ -143,6 +143,13 @@ export function LoyaltyRewardsPage() {
   }
 
   function handleToggleReward(id: string, currentStatus: boolean) {
+    setRewardError("")
+
+    if (!isValidId(id)) {
+      setRewardError("رقم المكافأة غير صالح.")
+      return
+    }
+
     updateReward.mutate({
       id,
       data: { isActive: !currentStatus },
@@ -150,7 +157,16 @@ export function LoyaltyRewardsPage() {
   }
 
   function handleDeleteReward(id: string) {
-    const shouldDelete = window.confirm("هل أنت متأكد من حذف هذه المكافأة؟")
+    setRewardError("")
+
+    if (!isValidId(id)) {
+      setRewardError("رقم المكافأة غير صالح.")
+      return
+    }
+
+    const shouldDelete = window.confirm(
+      "هل أنت متأكد من حذف هذه المكافأة؟"
+    )
 
     if (!shouldDelete) return
 
@@ -208,9 +224,11 @@ export function LoyaltyRewardsPage() {
           </div>
 
           {policyLoading ? (
-            <p className="text-sm text-[var(--erp-muted)]">جاري التحميل...</p>
+            <p className="text-sm text-[var(--erp-muted)]">
+              جاري التحميل...
+            </p>
           ) : (
-            <form onSubmit={handlePolicySave} className="space-y-4">
+            <form onSubmit={handlePolicySave} className="space-y-4" noValidate>
               <div>
                 <label htmlFor="points-per-currency" className={labelClass}>
                   نقاط لكل عملة
@@ -224,6 +242,12 @@ export function LoyaltyRewardsPage() {
                   placeholder="مثال: 1"
                   className={inputClass}
                 />
+
+                {policyFormErrors.pointsPerCurrency && (
+                  <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                    {policyFormErrors.pointsPerCurrency}
+                  </p>
+                )}
 
                 <p className="mt-1 text-xs text-[var(--erp-muted)]">
                   مثال: كل 1 SYP يعطي 1 نقطة.
@@ -244,6 +268,12 @@ export function LoyaltyRewardsPage() {
                   className={inputClass}
                 />
 
+                {policyFormErrors.currencyPerPoint && (
+                  <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                    {policyFormErrors.currencyPerPoint}
+                  </p>
+                )}
+
                 <p className="mt-1 text-xs text-[var(--erp-muted)]">
                   مثال: كل نقطة تساوي 10 SYP عند الاستبدال.
                 </p>
@@ -263,7 +293,9 @@ export function LoyaltyRewardsPage() {
 
               <div className="flex justify-end border-t border-[var(--erp-border)] pt-4">
                 <Button type="submit" disabled={updatePolicy.isPending}>
-                  {updatePolicy.isPending ? "جاري الحفظ..." : "حفظ السياسة"}
+                  {updatePolicy.isPending
+                    ? "جاري الحفظ..."
+                    : "حفظ السياسة"}
                 </Button>
               </div>
             </form>
@@ -282,7 +314,7 @@ export function LoyaltyRewardsPage() {
             </p>
           </div>
 
-          <form onSubmit={handleCreateReward} className="space-y-4">
+          <form onSubmit={handleCreateReward} className="space-y-4" noValidate>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label htmlFor="reward-threshold" className={labelClass}>
@@ -297,6 +329,12 @@ export function LoyaltyRewardsPage() {
                   value={threshold}
                   onChange={(event) => setThreshold(event.target.value)}
                 />
+
+                {rewardFormErrors.pointsThreshold && (
+                  <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                    {rewardFormErrors.pointsThreshold}
+                  </p>
+                )}
               </div>
 
               <div>
@@ -312,6 +350,12 @@ export function LoyaltyRewardsPage() {
                   value={discountValue}
                   onChange={(event) => setDiscountValue(event.target.value)}
                 />
+
+                {rewardFormErrors.discountValue && (
+                  <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                    {rewardFormErrors.discountValue}
+                  </p>
+                )}
               </div>
 
               <div className="md:col-span-2">
@@ -326,6 +370,12 @@ export function LoyaltyRewardsPage() {
                   value={description}
                   onChange={(event) => setDescription(event.target.value)}
                 />
+
+                {rewardFormErrors.rewardDescription && (
+                  <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                    {rewardFormErrors.rewardDescription}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -348,6 +398,12 @@ export function LoyaltyRewardsPage() {
               />
             </label>
 
+            {rewardFormErrors.isActive && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {rewardFormErrors.isActive}
+              </p>
+            )}
+
             {rewardError && (
               <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
                 {rewardError}
@@ -361,7 +417,9 @@ export function LoyaltyRewardsPage() {
                 className="gap-2"
               >
                 <Plus className="size-4" />
-                {createReward.isPending ? "جاري الإضافة..." : "إضافة مكافأة"}
+                {createReward.isPending
+                  ? "جاري الإضافة..."
+                  : "إضافة مكافأة"}
               </Button>
             </div>
           </form>

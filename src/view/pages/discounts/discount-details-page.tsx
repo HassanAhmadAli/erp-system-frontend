@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { ArrowRight, Percent } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
@@ -9,12 +10,14 @@ import {
   type DiscountScope,
   type DiscountType,
 } from "@/services/discount-service"
+import { isValidId } from "@/validation/helpers"
 import {
   formatId,
   formatNumber,
   toEnglishDigits,
 } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
+import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
 
 function getDiscountTypeLabel(type: DiscountType) {
   return type === "PERCENTAGE" ? "نسبة مئوية" : "مبلغ ثابت"
@@ -25,7 +28,6 @@ function getDiscountScopeLabel(scope: DiscountScope) {
     GLOBAL: "عام",
     CATEGORY: "تصنيف",
     PRODUCT: "منتج",
-    CUSTOMER: "عميل",
   }
 
   return labels[scope]
@@ -56,37 +58,43 @@ export function DiscountDetailsPage() {
 
   const id = Number(params.id)
 
+  const [actionError, setActionError] = useState("")
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   const { data, isLoading, error } = useDiscountById(id)
 
   async function handleToggle() {
     if (!data) return
 
     try {
+      setActionError("")
       await toggleDiscount(data.id, !data.isActive)
       queryClient.invalidateQueries({ queryKey: ["discount", data.id] })
       queryClient.invalidateQueries({ queryKey: ["discounts"] })
     } catch (err) {
       console.error(err)
-      alert("فشل تحديث حالة الخصم")
+      setActionError("فشل تحديث حالة الخصم")
     }
   }
 
   async function handleDelete() {
     if (!data) return
 
-    const shouldDelete = window.confirm("هل أنت متأكد من حذف هذا الخصم؟")
-    if (!shouldDelete) return
-
     try {
+      setIsDeleting(true)
+      setActionError("")
       await deleteDiscount(data.id)
       navigate("/discounts")
     } catch (err) {
       console.error(err)
-      alert("فشل حذف الخصم")
+      setActionError("فشل حذف الخصم")
+    } finally {
+      setIsDeleting(false)
     }
   }
 
-  if (!Number.isFinite(id)) {
+  if (!isValidId(id)) {
     return <ErrorMessage message="رقم الخصم غير صالح." />
   }
 
@@ -133,6 +141,12 @@ export function DiscountDetailsPage() {
         </div>
       </header>
 
+      {actionError && (
+        <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
+          {actionError}
+        </p>
+      )}
+
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard label="رقم الخصم" value={formatId(data.id)} />
         <SummaryCard label="النوع" value={getDiscountTypeLabel(data.type)} />
@@ -151,10 +165,12 @@ export function DiscountDetailsPage() {
         <div className="grid gap-4 sm:grid-cols-2">
           <InfoRow label="الحالة" value={data.isActive ? "مفعل" : "معطل"} />
           <InfoRow label="عدد الاستخدام" value={formatNumber(data.usedCount)} />
+
           <InfoRow
             label="الحد الأقصى للاستخدام"
             value={data.maxUses ? formatNumber(data.maxUses) : "غير محدود"}
           />
+
           <InfoRow
             label="أقصى قيمة للفاتورة"
             value={
@@ -163,10 +179,12 @@ export function DiscountDetailsPage() {
                 : "غير محدود"
             }
           />
+
           <InfoRow
             label="تاريخ البداية"
             value={formatLocalDate(data.startDate)}
           />
+
           <InfoRow
             label="تاريخ النهاية"
             value={formatLocalDate(data.endDate)}
@@ -181,11 +199,25 @@ export function DiscountDetailsPage() {
             {data.isActive ? "تعطيل الخصم" : "تفعيل الخصم"}
           </Button>
 
-          <Button variant="destructive" onClick={handleDelete}>
+          <Button
+            variant="destructive"
+            onClick={() => setShowDeleteDialog(true)}
+          >
             حذف الخصم
           </Button>
         </div>
       </section>
+
+      <ConfirmDialog
+        open={showDeleteDialog}
+        title="حذف الخصم"
+        description="هل أنت متأكد من حذف هذا الخصم؟ لا يمكن التراجع عن هذه العملية."
+        confirmLabel="حذف"
+        cancelLabel="إلغاء"
+        isLoading={isDeleting}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDelete}
+      />
     </div>
   )
 }

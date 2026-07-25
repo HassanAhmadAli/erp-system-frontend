@@ -12,6 +12,7 @@ import { Link, useParams } from "react-router-dom"
 
 import { useSupplierById } from "@/hooks/Suppliers/useSupplierById"
 import { formatId, formatNumber } from "@/utils/number-formatters"
+import { isValidId } from "@/validation/helpers"
 import { Button } from "@/view/components/ui/button"
 
 export function SupplierDetailsPage() {
@@ -22,9 +23,9 @@ export function SupplierDetailsPage() {
     data: supplier,
     isLoading,
     isError,
-  } = useSupplierById(Number.isFinite(supplierId) ? supplierId : null)
+  } = useSupplierById(isValidId(supplierId) ? supplierId : null)
 
-  if (!Number.isFinite(supplierId)) {
+  if (!isValidId(supplierId)) {
     return <ErrorMessage message="رقم المورد غير صالح." />
   }
 

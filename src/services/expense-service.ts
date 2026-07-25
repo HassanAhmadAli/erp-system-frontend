@@ -1,5 +1,10 @@
 import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
 import { toNumber } from "@/lib/report-parsers"
+import {
+  expensePayloadToApiPayload,
+  type ExpenseRequestPayload,
+} from "@/validation/expense-schema"
+import { isValidId } from "@/validation/helpers"
 
 export type Expense = {
   id: number
@@ -17,19 +22,14 @@ export type Expense = {
   updatedAt?: string
 }
 
-export type CreateExpenseInput = {
-  description: string
-  category: string
-  amount: number
-  expenseDate: string
-}
-
-export type UpdateExpenseInput = Partial<CreateExpenseInput>
+export type CreateExpenseInput = ExpenseRequestPayload
+export type UpdateExpenseInput = Partial<ExpenseRequestPayload>
 
 export function parseExpenseAmount(amount: unknown): number {
   if (amount != null && typeof amount === "object") {
     return toNumber(String(amount)) ?? 0
   }
+
   return toNumber(amount) ?? 0
 }
 
@@ -78,25 +78,29 @@ export function getExpenses() {
 }
 
 export function getExpenseById(id: number) {
+  if (!isValidId(id)) {
+    throw new Error("Invalid expense id")
+  }
+
   return apiRequest<Expense>(`/expenses/${id}`)
 }
 
 export function createExpense(data: CreateExpenseInput) {
   return apiRequest<Expense>("/expenses", {
     method: "POST",
-    body: JSON.stringify({
-      ...data,
-      expenseDate: new Date(data.expenseDate).toISOString(),
-    }),
+    body: JSON.stringify(expensePayloadToApiPayload(data)),
   })
 }
 
 export function updateExpense(id: number, data: UpdateExpenseInput) {
-  const payload: UpdateExpenseInput = { ...data }
-
-  if (data.expenseDate) {
-    payload.expenseDate = new Date(data.expenseDate).toISOString()
+  if (!isValidId(id)) {
+    throw new Error("Invalid expense id")
   }
+
+  const payload =
+    data.expenseDate != null
+      ? expensePayloadToApiPayload(data as ExpenseRequestPayload)
+      : data
 
   return apiRequest<Expense>(`/expenses/${id}`, {
     method: "PATCH",

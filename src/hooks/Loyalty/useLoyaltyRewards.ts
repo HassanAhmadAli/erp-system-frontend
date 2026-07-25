@@ -10,9 +10,10 @@ import {
   updateLoyaltyPolicy,
   updateLoyaltyReward,
   type CreateLoyaltyRewardInput,
-  type LoyaltyPolicy,
+  type UpdateLoyaltyPolicyInput,
   type UpdateLoyaltyRewardInput,
 } from "@/services/loyalty-rewards-service"
+import { isValidId } from "@/validation/helpers"
 
 export function useLoyaltyPolicy() {
   return useQuery({
@@ -25,7 +26,8 @@ export function useUpdateLoyaltyPolicy() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (data: LoyaltyPolicy) => updateLoyaltyPolicy(data),
+    mutationFn: (data: UpdateLoyaltyPolicyInput) =>
+      updateLoyaltyPolicy(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["loyalty-policy"] })
     },
@@ -43,7 +45,7 @@ export function useLoyaltyRewardById(id: string) {
   return useQuery({
     queryKey: ["loyalty-reward", id],
     queryFn: () => getLoyaltyRewardById(id),
-    enabled: !!id,
+    enabled: isValidId(id),
   })
 }
 
@@ -68,7 +70,10 @@ export function useUpdateLoyaltyReward() {
     }: {
       id: string
       data: UpdateLoyaltyRewardInput
-    }) => updateLoyaltyReward(id, data),
+    }) => {
+      if (!isValidId(id)) throw new Error("Invalid loyalty reward id")
+      return updateLoyaltyReward(id, data)
+    },
     onSuccess: (_, { id }) => {
       queryClient.invalidateQueries({ queryKey: ["loyalty-rewards"] })
       queryClient.invalidateQueries({ queryKey: ["loyalty-reward", id] })
@@ -80,7 +85,10 @@ export function useDeleteLoyaltyReward() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => deleteLoyaltyReward(id),
+    mutationFn: (id: string) => {
+      if (!isValidId(id)) throw new Error("Invalid loyalty reward id")
+      return deleteLoyaltyReward(id)
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["loyalty-rewards"] })
     },

@@ -3,6 +3,13 @@ import { ArrowRight, Receipt } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 
 import { useCreateExpense } from "@/hooks/Expenses/useExpenses"
+import {
+  expenseFormValuesToPayload,
+  expenseSchema,
+  expenseZodErrorToFormErrors,
+  type ExpenseFormErrors,
+  type ExpenseFormValues,
+} from "@/validation/expense-schema"
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
@@ -10,44 +17,55 @@ const inputClass =
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
+function getTodayDateInputValue() {
+  return new Date().toISOString().slice(0, 10)
+}
+
+const EMPTY_FORM: ExpenseFormValues = {
+  description: "",
+  category: "",
+  amount: "",
+  expenseDate: getTodayDateInputValue(),
+}
+
+function ErrorText({ message }: { message?: string }) {
+  if (!message) return null
+
+  return (
+    <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  )
+}
+
 export function CreateExpensePage() {
   const navigate = useNavigate()
   const createMutation = useCreateExpense()
 
-  const [description, setDescription] = useState("")
-  const [category, setCategory] = useState("")
-  const [amount, setAmount] = useState("")
-  const [expenseDate, setExpenseDate] = useState(
-    new Date().toISOString().slice(0, 10)
-  )
+  const [form, setForm] = useState<ExpenseFormValues>(EMPTY_FORM)
+  const [errors, setErrors] = useState<ExpenseFormErrors>({})
   const [errorMessage, setErrorMessage] = useState("")
+
+  function setField(key: keyof ExpenseFormValues, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setErrorMessage("")
 
-    if (!description.trim()) {
-      setErrorMessage("الوصف مطلوب")
+    const validationResult = expenseSchema.safeParse(form)
+
+    if (!validationResult.success) {
+      setErrors(expenseZodErrorToFormErrors(validationResult.error))
       return
     }
 
-    if (!category.trim()) {
-      setErrorMessage("الفئة مطلوبة")
-      return
-    }
-
-    if (!amount || Number(amount) <= 0) {
-      setErrorMessage("المبلغ يجب أن يكون أكبر من صفر")
-      return
-    }
+    setErrors({})
 
     try {
-      await createMutation.mutateAsync({
-        description: description.trim(),
-        category: category.trim(),
-        amount: Number(amount),
-        expenseDate,
-      })
+      await createMutation.mutateAsync(
+        expenseFormValuesToPayload(validationResult.data)
+      )
 
       navigate("/expenses")
     } catch {
@@ -98,9 +116,10 @@ export function CreateExpensePage() {
               id="expense-description"
               className={inputClass}
               placeholder="أدخل وصف المصروف"
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
+              value={form.description}
+              onChange={(event) => setField("description", event.target.value)}
             />
+            <ErrorText message={errors.description} />
           </div>
 
           <div>
@@ -112,9 +131,10 @@ export function CreateExpensePage() {
               id="expense-category"
               className={inputClass}
               placeholder="مثال: إيجار، رواتب، كهرباء"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
+              value={form.category}
+              onChange={(event) => setField("category", event.target.value)}
             />
+            <ErrorText message={errors.category} />
           </div>
 
           <div>
@@ -129,9 +149,10 @@ export function CreateExpensePage() {
               min="0"
               className={inputClass}
               placeholder="أدخل المبلغ"
-              value={amount}
-              onChange={(event) => setAmount(event.target.value)}
+              value={form.amount}
+              onChange={(event) => setField("amount", event.target.value)}
             />
+            <ErrorText message={errors.amount} />
           </div>
 
           <div className="md:col-span-2">
@@ -143,9 +164,10 @@ export function CreateExpensePage() {
               id="expense-date"
               type="date"
               className={`${inputClass} [direction:ltr]`}
-              value={expenseDate}
-              onChange={(event) => setExpenseDate(event.target.value)}
+              value={form.expenseDate}
+              onChange={(event) => setField("expenseDate", event.target.value)}
             />
+            <ErrorText message={errors.expenseDate} />
           </div>
         </div>
 

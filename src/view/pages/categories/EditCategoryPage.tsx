@@ -5,12 +5,34 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { getCategoryById, updateCategory } from "@/services/category-service"
 import { formatId } from "@/utils/number-formatters"
+import { isValidId } from "@/validation/helpers"
+import {
+  categoryFormValuesToPayload,
+  categorySchema,
+  categoryZodErrorToFormErrors,
+  type CategoryFormErrors,
+  type CategoryFormValues,
+  type CategoryRequestPayload,
+} from "@/validation/category-schema"
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
   "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
+
+const EMPTY_FORM: CategoryFormValues = {
+  name: "",
+  description: "",
+}
+
+function ErrorText({ message }: { message?: string }) {
+  if (!message) return null
+
+  return (
+    <p className="mt-1 text-xs text-red-500 dark:text-red-300">{message}</p>
+  )
+}
 
 export function EditCategoryPage() {
   const { id } = useParams()
@@ -21,26 +43,32 @@ export function EditCategoryPage() {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["category", id],
     queryFn: () => getCategoryById(categoryId),
-    enabled: Number.isFinite(categoryId),
+    enabled: isValidId(categoryId),
   })
 
-  const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
+  const [form, setForm] = useState<CategoryFormValues>(EMPTY_FORM)
+  const [errors, setErrors] = useState<CategoryFormErrors>({})
   const [errorMessage, setErrorMessage] = useState("")
 
   useEffect(() => {
     if (data) {
-      setName(data.name ?? "")
-      setDescription(data.description || "")
+      setForm({
+        name: data.name ?? "",
+        description: data.description ?? "",
+      })
+      setErrors({})
+      setErrorMessage("")
     }
   }, [data])
 
+  function setField(key: keyof CategoryFormValues, value: string) {
+    setForm((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }
+
   const mutation = useMutation({
-    mutationFn: () =>
-      updateCategory(categoryId, {
-        name: name.trim(),
-        description: description.trim(),
-      }),
+    mutationFn: (payload: CategoryRequestPayload) =>
+      updateCategory(categoryId, payload),
 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["categories"] })
@@ -58,15 +86,23 @@ export function EditCategoryPage() {
     event.preventDefault()
     setErrorMessage("")
 
-    if (!name.trim()) {
-      setErrorMessage("اسم التصنيف مطلوب")
+    if (!isValidId(categoryId)) {
+      setErrorMessage("رقم التصنيف غير صالح")
       return
     }
 
-    mutation.mutate()
+    const validationResult = categorySchema.safeParse(form)
+
+    if (!validationResult.success) {
+      setErrors(categoryZodErrorToFormErrors(validationResult.error))
+      return
+    }
+
+    setErrors({})
+    mutation.mutate(categoryFormValuesToPayload(validationResult.data))
   }
 
-  if (!Number.isFinite(categoryId)) {
+  if (!isValidId(categoryId)) {
     return <ErrorMessage message="رقم التصنيف غير صالح." />
   }
 
@@ -124,9 +160,10 @@ export function EditCategoryPage() {
             id="edit-category-name"
             className={inputClass}
             placeholder="أدخل اسم التصنيف"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
+            value={form.name}
+            onChange={(event) => setField("name", event.target.value)}
           />
+          <ErrorText message={errors.name} />
         </div>
 
         <div>
@@ -138,9 +175,10 @@ export function EditCategoryPage() {
             id="edit-category-description"
             className={`${inputClass} min-h-28 resize-none`}
             placeholder="أدخل وصف التصنيف (اختياري)"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
+            value={form.description}
+            onChange={(event) => setField("description", event.target.value)}
           />
+          <ErrorText message={errors.description} />
         </div>
 
         {errorMessage && (

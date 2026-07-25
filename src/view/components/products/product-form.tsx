@@ -1,14 +1,17 @@
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useState } from "react"
 
-import type {
-  CreateProductInput,
-  Product,
-  UpdateProductInput,
-} from "@/services/product-service"
+import type { Product, UpdateProductInput } from "@/services/product-service"
 import { useCreateProduct } from "@/hooks/Products/useCreateProduct"
 import { useUpdateProduct } from "@/hooks/Products/useUpdateProduct"
 import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
 import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
+import {
+  productFormValuesToPayload,
+  productSchema,
+  productZodErrorToFormErrors,
+  type ProductFormErrors,
+  type ProductFormValues,
+} from "@/validation/product-schema"
 
 import { Button } from "@/view/components/ui/button"
 
@@ -19,19 +22,7 @@ type Props = {
   onSuccess?: () => void
 }
 
-type FormState = {
-  name: string
-  description: string
-  barcode: string
-  purchasePrice: string
-  sellingPrice: string
-  quantityInStock: string
-  minQuantity: string
-  categoryId: string
-  supplierId: string
-}
-
-const EMPTY_FORM: FormState = {
+const EMPTY_FORM: ProductFormValues = {
   name: "",
   description: "",
   barcode: "",
@@ -43,7 +34,7 @@ const EMPTY_FORM: FormState = {
   supplierId: "",
 }
 
-function toFormState(product?: Product): FormState {
+function toFormState(product?: Product): ProductFormValues {
   if (!product) return EMPTY_FORM
 
   return {
@@ -75,16 +66,29 @@ function toFormState(product?: Product): FormState {
 const inputClass =
   "h-11 w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-3 text-right outline-none"
 
+const textareaClass =
+  "min-h-[88px] w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-3 py-2 text-right outline-none"
+
+function ErrorText({ message }: { message?: string }) {
+  if (!message) return null
+
+  return <p className="mt-1 text-sm text-red-500">{message}</p>
+}
+
+function isValidId(value: unknown): value is number {
+  return typeof value === "number" && Number.isSafeInteger(value) && value > 0
+}
+
 export function ProductForm({
   mode,
   productId,
   initialValues,
   onSuccess,
 }: Props) {
-  const [form, setForm] = useState<FormState>(() => toFormState(initialValues))
-  const [errors, setErrors] = useState<
-    Partial<Record<keyof FormState, string>>
-  >({})
+  const [form, setForm] = useState<ProductFormValues>(() =>
+    toFormState(initialValues)
+  )
+  const [errors, setErrors] = useState<ProductFormErrors>({})
   const [submitError, setSubmitError] = useState("")
 
   useEffect(() => {
@@ -109,70 +113,39 @@ export function ProductForm({
   const updateMutation = useUpdateProduct()
   const isSaving = createMutation.isPending || updateMutation.isPending
 
-  function setField(key: keyof FormState, value: string) {
+  function setField(key: keyof ProductFormValues, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }))
+    setErrors((prev) => ({ ...prev, [key]: undefined }))
   }
 
-  const validation = useMemo(() => {
-    const next: Partial<Record<keyof FormState, string>> = {}
-
-    if (!form.name.trim()) next.name = "اسم المنتج مطلوب"
-    if (!form.barcode.trim()) next.barcode = "الباركود مطلوب"
-
-    const numericFields: (keyof FormState)[] = [
-      "purchasePrice",
-      "sellingPrice",
-      "quantityInStock",
-      "minQuantity",
-    ]
-    for (const key of numericFields) {
-      const value = form[key]
-      if (value === "") {
-        next[key] = "هذا الحقل مطلوب"
-      } else if (Number.isNaN(Number(value)) || Number(value) < 0) {
-        next[key] = "أدخل رقمًا صحيحًا"
-      }
-    }
-
-    if (!form.categoryId) next.categoryId = "اختر التصنيف"
-    if (!form.supplierId) next.supplierId = "اختر المورد"
-
-    return next
-  }, [form])
-
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitError("")
 
-    if (Object.keys(validation).length > 0) {
-      setErrors(validation)
+    const validationResult = productSchema.safeParse(form)
+
+    if (!validationResult.success) {
+      setErrors(productZodErrorToFormErrors(validationResult.error))
       return
     }
+
     setErrors({})
 
-    const payload: CreateProductInput & { description?: string } = {
-      name: form.name.trim(),
-      barcode: form.barcode.trim(),
-      purchasePrice: Number(form.purchasePrice),
-      sellingPrice: Number(form.sellingPrice),
-      quantityInStock: Number(form.quantityInStock),
-      minQuantity: Number(form.minQuantity),
-      categoryId: Number(form.categoryId),
-      supplierId: Number(form.supplierId),
-    }
-
-    const description = form.description.trim()
-    if (description) payload.description = description
+    const payload = productFormValuesToPayload(validationResult.data)
 
     try {
       if (mode === "create") {
         await createMutation.mutateAsync(payload)
-      } else if (productId != null) {
+      } else if (isValidId(productId)) {
         await updateMutation.mutateAsync({
           id: productId,
           data: payload as UpdateProductInput,
         })
+      } else {
+        setSubmitError("معرف المنتج غير صالح")
+        return
       }
+
       onSuccess?.()
     } catch (err) {
       setSubmitError(
@@ -187,7 +160,6 @@ export function ProductForm({
       className="space-y-6 rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-6 text-right"
     >
       <div className="grid gap-5 md:grid-cols-2">
-        {/* NAME */}
         <div className="md:col-span-2">
           <label className="mb-2 block text-sm font-medium">اسم المنتج</label>
           <input
@@ -195,22 +167,19 @@ export function ProductForm({
             value={form.name}
             onChange={(e) => setField("name", e.target.value)}
           />
-          {errors.name && (
-            <p className="mt-1 text-sm text-red-500">{errors.name}</p>
-          )}
+          <ErrorText message={errors.name} />
         </div>
 
-        {/* DESCRIPTION */}
         <div className="md:col-span-2">
           <label className="mb-2 block text-sm font-medium">الوصف</label>
           <textarea
-            className="min-h-[88px] w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-3 py-2 text-right outline-none"
+            className={textareaClass}
             value={form.description}
             onChange={(e) => setField("description", e.target.value)}
           />
+          <ErrorText message={errors.description} />
         </div>
 
-        {/* BARCODE */}
         <div>
           <label className="mb-2 block text-sm font-medium">الباركود</label>
           <input
@@ -218,12 +187,9 @@ export function ProductForm({
             value={form.barcode}
             onChange={(e) => setField("barcode", e.target.value)}
           />
-          {errors.barcode && (
-            <p className="mt-1 text-sm text-red-500">{errors.barcode}</p>
-          )}
+          <ErrorText message={errors.barcode} />
         </div>
 
-        {/* CATEGORY */}
         <div>
           <label className="mb-2 block text-sm font-medium">التصنيف</label>
           <select
@@ -235,21 +201,18 @@ export function ProductForm({
             <option value="">
               {categoriesLoading ? "جاري التحميل..." : "اختر التصنيف"}
             </option>
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
+            {categories.map((category) => (
+              <option key={category.id} value={String(category.id)}>
+                {category.name}
               </option>
             ))}
           </select>
           {categoriesError && (
             <p className="mt-1 text-sm text-red-500">فشل تحميل التصنيفات</p>
           )}
-          {errors.categoryId && (
-            <p className="mt-1 text-sm text-red-500">{errors.categoryId}</p>
-          )}
+          <ErrorText message={errors.categoryId} />
         </div>
 
-        {/* SUPPLIER */}
         <div>
           <label className="mb-2 block text-sm font-medium">المورد</label>
           <select
@@ -261,21 +224,18 @@ export function ProductForm({
             <option value="">
               {suppliersLoading ? "جاري التحميل..." : "اختر المورد"}
             </option>
-            {suppliers.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.fullName}
+            {suppliers.map((supplier) => (
+              <option key={supplier.id} value={String(supplier.id)}>
+                {supplier.fullName}
               </option>
             ))}
           </select>
           {suppliersError && (
             <p className="mt-1 text-sm text-red-500">فشل تحميل الموردين</p>
           )}
-          {errors.supplierId && (
-            <p className="mt-1 text-sm text-red-500">{errors.supplierId}</p>
-          )}
+          <ErrorText message={errors.supplierId} />
         </div>
 
-        {/* PURCHASE PRICE */}
         <div>
           <label className="mb-2 block text-sm font-medium">سعر الشراء</label>
           <input
@@ -285,12 +245,9 @@ export function ProductForm({
             value={form.purchasePrice}
             onChange={(e) => setField("purchasePrice", e.target.value)}
           />
-          {errors.purchasePrice && (
-            <p className="mt-1 text-sm text-red-500">{errors.purchasePrice}</p>
-          )}
+          <ErrorText message={errors.purchasePrice} />
         </div>
 
-        {/* SELLING PRICE */}
         <div>
           <label className="mb-2 block text-sm font-medium">سعر البيع</label>
           <input
@@ -300,43 +257,35 @@ export function ProductForm({
             value={form.sellingPrice}
             onChange={(e) => setField("sellingPrice", e.target.value)}
           />
-          {errors.sellingPrice && (
-            <p className="mt-1 text-sm text-red-500">{errors.sellingPrice}</p>
-          )}
+          <ErrorText message={errors.sellingPrice} />
         </div>
 
-        {/* QUANTITY */}
         <div>
           <label className="mb-2 block text-sm font-medium">
             الكمية في المخزون
           </label>
           <input
             type="number"
+            step="1"
             className={inputClass}
             value={form.quantityInStock}
             onChange={(e) => setField("quantityInStock", e.target.value)}
           />
-          {errors.quantityInStock && (
-            <p className="mt-1 text-sm text-red-500">
-              {errors.quantityInStock}
-            </p>
-          )}
+          <ErrorText message={errors.quantityInStock} />
         </div>
 
-        {/* MIN QUANTITY */}
         <div>
           <label className="mb-2 block text-sm font-medium">
             الحد الأدنى للكمية
           </label>
           <input
             type="number"
+            step="1"
             className={inputClass}
             value={form.minQuantity}
             onChange={(e) => setField("minQuantity", e.target.value)}
           />
-          {errors.minQuantity && (
-            <p className="mt-1 text-sm text-red-500">{errors.minQuantity}</p>
-          )}
+          <ErrorText message={errors.minQuantity} />
         </div>
       </div>
 

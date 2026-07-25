@@ -14,7 +14,6 @@ function getDiscountScopeLabel(scope: DiscountScope) {
     GLOBAL: "عام",
     CATEGORY: "تصنيف",
     PRODUCT: "منتج",
-    CUSTOMER: "عميل",
   }
 
   return labels[scope]

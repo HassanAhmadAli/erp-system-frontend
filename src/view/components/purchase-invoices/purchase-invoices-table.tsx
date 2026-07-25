@@ -1,10 +1,11 @@
+import { useState } from "react"
 import { Ban, CheckCircle2, Eye, Loader2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
-import { PERMISSIONS } from "@/auth/permissions"
-import { usePermissions } from "@/hooks/usePermissions"
 import { useUpdatePurchaseInvoiceStatus } from "@/hooks/usePurchaseInvoices"
+import { isValidId } from "@/validation/helpers"
+import { isPurchaseInvoiceStatus } from "@/validation/purchase-invoice-schema"
 import type {
   PurchaseInvoice,
   PurchaseInvoiceStatus,
@@ -31,11 +32,22 @@ export function PurchaseInvoicesTable({
   isError,
 }: PurchaseInvoicesTableProps) {
   const navigate = useNavigate()
-  const { can } = usePermissions()
-  const canManage = can(PERMISSIONS.PURCHASES_CREATE)
   const updateStatusMutation = useUpdatePurchaseInvoiceStatus()
+  const [statusError, setStatusError] = useState("")
 
   function handleStatusUpdate(id: number, status: PurchaseInvoiceStatus) {
+    setStatusError("")
+
+    if (!isValidId(id)) {
+      setStatusError("رقم الفاتورة غير صالح.")
+      return
+    }
+
+    if (!isPurchaseInvoiceStatus(status)) {
+      setStatusError("حالة الفاتورة غير صالحة.")
+      return
+    }
+
     updateStatusMutation.mutate({ id, status })
   }
 
@@ -86,7 +98,7 @@ export function PurchaseInvoicesTable({
                 invoice.status ?? "PENDING"
               ).toUpperCase()
 
-              const statusEditable = currentStatus === "PENDING"
+              const canEditStatus = currentStatus === "PENDING"
 
               return (
                 <tr key={invoice.id}>
@@ -115,7 +127,7 @@ export function PurchaseInvoicesTable({
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    {canManage && statusEditable ? (
+                    {canEditStatus ? (
                       <div className="flex flex-wrap gap-2">
                         <button
                           type="button"
@@ -193,6 +205,12 @@ export function PurchaseInvoicesTable({
         <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
           فشل تحديث حالة الفاتورة. الحالة يمكن تغييرها فقط من Pending إلى
           Completed أو Cancelled.
+        </p>
+      )}
+
+      {statusError && (
+        <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+          {statusError}
         </p>
       )}
     </>

@@ -181,10 +181,19 @@ export function AppSidebar({ collapsed, onToggle }: AppSidebarProps) {
   const { canSeeSidebarItem } = usePermissions()
 
   const visibleItems = sidebarItems.filter((item) => {
-    const access = SIDEBAR_ACCESS.find((entry) => entry.to === item.to)
-    if (!access) return true
-    return canSeeSidebarItem(access)
-  })
+  const access = SIDEBAR_ACCESS.find((entry) => entry.to === item.to)
+
+  /**
+   * Fail closed:
+   * if a sidebar item has no matching permission rule,
+   * hide it instead of accidentally showing it to everyone.
+   */
+  if (!access) {
+    return false
+  }
+
+  return canSeeSidebarItem(access)
+})
 
   function handleLogout() {
     clearTokens()

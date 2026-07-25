@@ -10,6 +10,7 @@ import {
   type CreateAdInput,
   type UpdateAdInput,
 } from "@/services/ads-service"
+import { isValidId } from "@/validation/helpers"
 
 export function useAds(activeOnly = false) {
   return useQuery({
@@ -25,7 +26,7 @@ export function useAdById(id: number) {
   return useQuery({
     queryKey: ["ads", id],
     queryFn: () => getAdById(id),
-    enabled: Number.isFinite(id),
+    enabled: isValidId(id),
   })
 }
 

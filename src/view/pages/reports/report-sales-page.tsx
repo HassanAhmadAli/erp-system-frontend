@@ -1,9 +1,13 @@
 import { useMemo } from "react"
 
-import { useSalesInvoices } from "@/hooks/Sales/useSales"
+import { useSalesInvoices } from "@/hooks/useSalesInvoices"
 import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
 import { buildInvoiceCharts } from "@/lib/report-chart-data"
 import { toNumber } from "@/lib/report-parsers"
+import {
+  normalizeSalesInvoices,
+  type SalesInvoice,
+} from "@/services/sales-invoices-service"
 import { BarChart } from "@/view/components/charts/bar-chart"
 import { DonutChart } from "@/view/components/charts/donut-chart"
 import { LineChart } from "@/view/components/charts/line-chart"
@@ -13,30 +17,48 @@ import { ReportLayout } from "@/view/components/reports/report-layout"
 import { ReportMetrics } from "@/view/components/reports/report-metrics"
 import { ReportTable } from "@/view/components/reports/report-table"
 
+type NormalizedSalesInvoice = {
+  id: number
+  status: string
+  invoiceDate?: string
+  totalAmount?: string | number
+  customer: string
+}
+
 export function ReportSalesPage() {
   const { from, to, setFrom, setTo, range } = useReportDateRange()
-  const { data: invoices = [], isLoading, isError } = useSalesInvoices()
+  const { data, isLoading, isError } = useSalesInvoices()
 
-  const normalized = useMemo(
+  const invoices = useMemo<SalesInvoice[]>(
+    () => normalizeSalesInvoices(data),
+    [data]
+  )
+
+  const normalized = useMemo<NormalizedSalesInvoice[]>(
     () =>
       invoices.map((inv) => ({
         id: inv.id,
-        status: inv.status,
+        status: String(inv.status ?? "UNKNOWN"),
         invoiceDate: inv.createdAt,
-        totalAmount: inv.total,
+        totalAmount:
+          inv.finalAmount ?? inv.totalAmount ?? inv.subtotal ?? inv.amountPaid,
         customer: inv.customer?.user?.fullName ?? "زبون نقدي",
       })),
     [invoices]
   )
 
-  const filtered = useMemo(() => {
+  const filtered = useMemo<NormalizedSalesInvoice[]>(() => {
     if (!from && !to) return normalized
 
     return normalized.filter((inv) => {
       if (!inv.invoiceDate) return true
+
       const date = new Date(inv.invoiceDate).getTime()
+
+      if (Number.isNaN(date)) return true
       if (from && date < new Date(`${from}T00:00:00`).getTime()) return false
       if (to && date > new Date(`${to}T23:59:59`).getTime()) return false
+
       return true
     })
   }, [normalized, from, to])

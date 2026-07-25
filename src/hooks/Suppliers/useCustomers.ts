@@ -5,7 +5,9 @@ import {
   getCustomer,
   updateCustomerStatus,
   updateCustomerLoyalty,
+  type CustomerStatus,
 } from "@/services/customer-service"
+import { isValidId } from "@/validation/helpers"
 
 export function useCustomers() {
   return useQuery({
@@ -18,7 +20,7 @@ export function useCustomer(id: number) {
   return useQuery({
     queryKey: ["customers", id],
     queryFn: () => getCustomer(id),
-    enabled: Number.isFinite(id),
+    enabled: isValidId(id),
   })
 }
 
@@ -26,7 +28,7 @@ export function useUpdateCustomerStatus() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, status }: { id: number; status: string }) =>
+    mutationFn: ({ id, status }: { id: number; status: CustomerStatus }) =>
       updateCustomerStatus(id, status),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["customers"] })

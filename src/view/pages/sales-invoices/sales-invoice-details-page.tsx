@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { ArrowRight, Loader2, ReceiptText, Undo2 } from "lucide-react"
 import { useNavigate, useParams } from "react-router-dom"
 
@@ -6,6 +7,8 @@ import {
   useUpdateSalesInvoiceStatus,
 } from "@/hooks/useSalesInvoices"
 import { usePermissions } from "@/hooks/usePermissions"
+import { isValidId } from "@/validation/helpers"
+import { isSalesInvoiceStatus } from "@/validation/sales-invoice-schema"
 import {
   formatDate,
   formatMoney,
@@ -22,6 +25,7 @@ export function SalesInvoiceDetailsPage() {
   const { id } = useParams()
 
   const invoiceId = Number(id)
+  const [statusError, setStatusError] = useState("")
 
   const { data: invoice, isLoading, isError } = useSalesInvoice(invoiceId)
   const { canManageSalesInvoice } = usePermissions()
@@ -32,13 +36,25 @@ export function SalesInvoiceDetailsPage() {
     : false
 
   function handleRefund() {
+    setStatusError("")
+
+    if (!isValidId(invoiceId)) {
+      setStatusError("رقم الفاتورة غير صالح.")
+      return
+    }
+
+    if (!isSalesInvoiceStatus("REFUNDED")) {
+      setStatusError("حالة الفاتورة غير صالحة.")
+      return
+    }
+
     updateStatusMutation.mutate({
       id: invoiceId,
       status: "REFUNDED",
     })
   }
 
-  if (!Number.isFinite(invoiceId) || invoiceId <= 0) {
+  if (!isValidId(invoiceId)) {
     return (
       <main className="space-y-6" dir="rtl">
         <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
@@ -166,6 +182,12 @@ export function SalesInvoiceDetailsPage() {
               <p className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
                 فشل تحديث حالة الفاتورة. قد تكون الحالة غير مسموح بها من
                 الباكند.
+              </p>
+            )}
+
+            {statusError && (
+              <p className="mb-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
+                {statusError}
               </p>
             )}
 
