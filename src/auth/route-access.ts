@@ -193,7 +193,8 @@ const ROUTE_ACCESS_RULES: RouteAccessRule[] = [
    */
   {
     test: (path) =>
-      isExact(path, "/expenses/create") || isNumericEditRoute(path, "/expenses"),
+      isExact(path, "/expenses/create") ||
+      isNumericEditRoute(path, "/expenses"),
     permissions: [PERMISSIONS.EXPENSES_MANAGE],
   },
   {
@@ -228,6 +229,19 @@ const ROUTE_ACCESS_RULES: RouteAccessRule[] = [
   {
     test: (path) => isExact(path, "/loyalty-rewards"),
     permissions: [PERMISSIONS.LOYALTY_REWARDS_MANAGE],
+  },
+
+  /**
+   * Staff management — Store Manager only
+   */
+  {
+    test: (path) =>
+      isExact(path, "/staff") ||
+      isExact(path, "/staff/create") ||
+      isNumericDetailsRoute(path, "/staff") ||
+      isNumericEditRoute(path, "/staff"),
+    rolesOnly: ["STORE_MANAGER"],
+    permissions: [PERMISSIONS.EMPLOYEE_MANAGE],
   },
 ]
 
@@ -307,6 +321,11 @@ export const SIDEBAR_ACCESS: SidebarAccess[] = [
   {
     to: "/loyalty-rewards",
     permissions: [PERMISSIONS.LOYALTY_REWARDS_MANAGE],
+  },
+  {
+    to: "/staff",
+    rolesOnly: ["STORE_MANAGER"],
+    permissions: [PERMISSIONS.EMPLOYEE_MANAGE],
   },
 ]
 

@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { CheckCircle, Eye, Loader2, PackageCheck, XCircle } from "lucide-react"
 
@@ -5,6 +6,7 @@ import { useUpdateOrderStatus } from "@/hooks/useOrders"
 import { PERMISSIONS } from "@/auth/permissions"
 import { usePermissions } from "@/hooks/usePermissions"
 import type { Order, OrderStatus } from "@/services/orders-service"
+import { isValidId } from "@/validation/helpers"
 import { Button } from "@/view/components/ui/button"
 
 type OrdersTableProps = {
@@ -37,6 +39,14 @@ const proceedButtonLabels: Record<OrderStatus, string> = {
   CANCELLED: "متابعة",
 }
 
+const ORDER_STATUS_OPTIONS: OrderStatus[] = [
+  "PENDING",
+  "PREPARING",
+  "OUT_FOR_DELIVERY",
+  "DELIVERED",
+  "CANCELLED",
+]
+
 function formatStatus(status: OrderStatus) {
   return statusLabels[status] ?? status
 }
@@ -53,14 +63,31 @@ function getProceedButtonLabel(status: OrderStatus) {
   return proceedButtonLabels[status] ?? "متابعة"
 }
 
+function isOrderStatus(value: string): value is OrderStatus {
+  return ORDER_STATUS_OPTIONS.includes(value as OrderStatus)
+}
+
 export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
   const navigate = useNavigate()
   const { can } = usePermissions()
   const canManage = can(PERMISSIONS.ORDERS_MANAGE)
 
   const updateStatusMutation = useUpdateOrderStatus()
+  const [statusError, setStatusError] = useState("")
 
   function handleProceed(order: Order) {
+    setStatusError("")
+
+    if (!isValidId(order.id)) {
+      setStatusError("رقم الطلب غير صالح.")
+      return
+    }
+
+    if (!isOrderStatus(order.status)) {
+      setStatusError("حالة الطلب غير صالحة.")
+      return
+    }
+
     const nextStatus = getNextStatus(order.status)
 
     if (!nextStatus) {
@@ -74,6 +101,18 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
   }
 
   function handleCancel(order: Order) {
+    setStatusError("")
+
+    if (!isValidId(order.id)) {
+      setStatusError("رقم الطلب غير صالح.")
+      return
+    }
+
+    if (!isOrderStatus(order.status)) {
+      setStatusError("حالة الطلب غير صالحة.")
+      return
+    }
+
     if (!canCancelOrder(order.status)) {
       return
     }
@@ -226,6 +265,12 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
             </tbody>
           </table>
         </div>
+      )}
+
+      {statusError && (
+        <p className="mt-4 rounded-[16px] bg-red-50 px-4 py-3 text-sm text-red-600">
+          {statusError}
+        </p>
       )}
     </section>
   )

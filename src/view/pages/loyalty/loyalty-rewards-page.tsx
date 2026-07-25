@@ -164,9 +164,7 @@ export function LoyaltyRewardsPage() {
       return
     }
 
-    const shouldDelete = window.confirm(
-      "هل أنت متأكد من حذف هذه المكافأة؟"
-    )
+    const shouldDelete = window.confirm("هل أنت متأكد من حذف هذه المكافأة؟")
 
     if (!shouldDelete) return
 
@@ -224,9 +222,7 @@ export function LoyaltyRewardsPage() {
           </div>
 
           {policyLoading ? (
-            <p className="text-sm text-[var(--erp-muted)]">
-              جاري التحميل...
-            </p>
+            <p className="text-sm text-[var(--erp-muted)]">جاري التحميل...</p>
           ) : (
             <form onSubmit={handlePolicySave} className="space-y-4" noValidate>
               <div>
@@ -293,9 +289,7 @@ export function LoyaltyRewardsPage() {
 
               <div className="flex justify-end border-t border-[var(--erp-border)] pt-4">
                 <Button type="submit" disabled={updatePolicy.isPending}>
-                  {updatePolicy.isPending
-                    ? "جاري الحفظ..."
-                    : "حفظ السياسة"}
+                  {updatePolicy.isPending ? "جاري الحفظ..." : "حفظ السياسة"}
                 </Button>
               </div>
             </form>
@@ -417,9 +411,7 @@ export function LoyaltyRewardsPage() {
                 className="gap-2"
               >
                 <Plus className="size-4" />
-                {createReward.isPending
-                  ? "جاري الإضافة..."
-                  : "إضافة مكافأة"}
+                {createReward.isPending ? "جاري الإضافة..." : "إضافة مكافأة"}
               </Button>
             </div>
           </form>
@@ -490,8 +482,8 @@ function RewardsTable({
         </p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
-        <table className="w-full table-fixed text-right text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
+        <table className="w-full min-w-[720px] table-fixed text-right text-sm">
           <colgroup>
             <col className="w-[16%]" />
             <col className="w-[36%]" />

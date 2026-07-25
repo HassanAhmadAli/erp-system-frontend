@@ -25,14 +25,14 @@ export function CostTrendsPage() {
       loading={isLoading}
       error={isError}
       filters={
-        <div className="rounded-2xl border bg-[var(--erp-card)] p-4">
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-[var(--erp-muted)]">
+        <div className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-4 shadow-[var(--erp-shadow)]">
+          <label className="flex max-w-xs flex-col gap-1.5 text-sm">
+            <span className="font-medium text-[var(--erp-muted)]">
               معرف المنتج (اختياري)
             </span>
             <input
               type="number"
-              className="max-w-xs rounded-xl border px-3 py-2 text-right"
+              className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-3 py-2 text-right text-sm text-[var(--erp-text)] transition outline-none focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
               placeholder="مثال: 1"
               value={productId}
               onChange={(e) => setProductId(e.target.value)}

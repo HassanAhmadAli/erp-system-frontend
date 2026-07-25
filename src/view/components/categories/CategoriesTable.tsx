@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Eye, Pencil, Trash2 } from "lucide-react"
+import { Eye, ImageOff, Pencil, Trash2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import {
@@ -7,6 +7,7 @@ import {
   useDeleteCategory,
 } from "@/hooks/Categories/useCategories"
 import { PERMISSIONS } from "@/auth/permissions"
+import { getCategoryImageSrc } from "@/services/category-service"
 import { Can } from "@/view/components/auth/can"
 import { formatNumber } from "@/utils/number-formatters"
 import { CategoriesSkeleton } from "./categories-skeleton"
@@ -79,17 +80,19 @@ export function CategoriesTable() {
         />
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
-        <table className="w-full table-fixed text-right text-sm">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
+        <table className="w-full min-w-[720px] table-fixed text-right text-sm">
           <colgroup>
-            <col className="w-[24%]" />
-            <col className="w-[36%]" />
-            <col className="w-[16%]" />
+            <col className="w-[12%]" />
+            <col className="w-[22%]" />
+            <col className="w-[30%]" />
+            <col className="w-[12%]" />
             <col className="w-[24%]" />
           </colgroup>
 
           <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
             <tr>
+              <th className="px-3 py-3 font-medium">الصورة</th>
               <th className="px-3 py-3 font-medium">الاسم</th>
               <th className="px-3 py-3 font-medium">الوصف</th>
               <th className="px-3 py-3 font-medium">المنتجات</th>
@@ -98,69 +101,90 @@ export function CategoriesTable() {
           </thead>
 
           <tbody>
-            {categories.map((category) => (
-              <tr
-                key={category.id}
-                className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
-              >
-                <td className="px-3 py-4 font-medium text-[var(--erp-text)]">
-                  <span className="block truncate">{category.name}</span>
-                </td>
+            {categories.map((category) => {
+              const imageSrc = getCategoryImageSrc(
+                category.imageUrl,
+                category.storedFileId
+              )
 
-                <td className="px-3 py-4 text-[var(--erp-muted)]">
-                  <span className="block truncate">
-                    {category.description || "—"}
-                  </span>
-                </td>
+              return (
+                <tr
+                  key={category.id}
+                  className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
+                >
+                  <td className="px-3 py-3">
+                    <div className="flex size-12 items-center justify-center overflow-hidden rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
+                      {imageSrc ? (
+                        <img
+                          src={imageSrc}
+                          alt={category.name}
+                          className="size-full object-cover"
+                        />
+                      ) : (
+                        <ImageOff className="size-4 text-[var(--erp-muted)]" />
+                      )}
+                    </div>
+                  </td>
 
-                <td className="px-3 py-4 text-[var(--erp-text)]">
-                  {formatNumber(category._count?.products ?? 0)}
-                </td>
+                  <td className="px-3 py-4 font-medium text-[var(--erp-text)]">
+                    <span className="block truncate">{category.name}</span>
+                  </td>
 
-                <td className="px-3 py-4">
-                  <div className="flex flex-wrap justify-center gap-1.5">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="gap-1"
-                      onClick={() => navigate(`/categories/${category.id}`)}
-                    >
-                      <Eye className="size-3.5" />
-                      عرض
-                    </Button>
+                  <td className="px-3 py-4 text-[var(--erp-muted)]">
+                    <span className="block truncate">
+                      {category.description || "—"}
+                    </span>
+                  </td>
 
-                    <Can permission={PERMISSIONS.CATEGORY_MANAGE}>
+                  <td className="px-3 py-4 text-[var(--erp-text)]">
+                    {formatNumber(category._count?.products ?? 0)}
+                  </td>
+
+                  <td className="px-3 py-4">
+                    <div className="flex flex-wrap justify-center gap-1.5">
                       <Button
                         variant="outline"
                         size="sm"
                         className="gap-1"
-                        onClick={() =>
-                          navigate(`/categories/${category.id}/edit`)
-                        }
+                        onClick={() => navigate(`/categories/${category.id}`)}
                       >
-                        <Pencil className="size-3.5" />
-                        تعديل
+                        <Eye className="size-3.5" />
+                        عرض
                       </Button>
 
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="gap-1"
-                        onClick={() => setDeleteId(category.id)}
-                      >
-                        <Trash2 className="size-3.5" />
-                        حذف
-                      </Button>
-                    </Can>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                      <Can permission={PERMISSIONS.CATEGORY_MANAGE}>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() =>
+                            navigate(`/categories/${category.id}/edit`)
+                          }
+                        >
+                          <Pencil className="size-3.5" />
+                          تعديل
+                        </Button>
+
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="gap-1"
+                          onClick={() => setDeleteId(category.id)}
+                        >
+                          <Trash2 className="size-3.5" />
+                          حذف
+                        </Button>
+                      </Can>
+                    </div>
+                  </td>
+                </tr>
+              )
+            })}
 
             {categories.length === 0 && (
               <tr>
                 <td
-                  colSpan={4}
+                  colSpan={5}
                   className="px-4 py-8 text-center text-sm text-[var(--erp-muted)]"
                 >
                   لا توجد تصنيفات

@@ -10,6 +10,7 @@ import {
 } from "@/services/auth-service"
 import { getCurrentUser } from "@/services/user-service"
 import { saveTokens } from "@/utils/auth-storage"
+import { loginSchema } from "@/validation/auth-schema"
 
 const USER_TYPE_LABELS: Record<AuthUserType, string> = {
   "store-manager": "مدير متجر",
@@ -29,20 +30,30 @@ export function LoginCard() {
   const queryClient = useQueryClient()
 
   const handleLogin = async () => {
-    const trimmedEmail = email.trim()
-
-    if (!trimmedEmail || !password) {
-      setLoginMessage("يرجى إدخال البريد الإلكتروني وكلمة المرور")
-      return
-    }
-
     if (isSubmitting) return
 
     setIsSubmitting(true)
     setLoginMessage("")
 
     try {
-      const result = await loginUser(userType, trimmedEmail, password)
+      const validationResult = loginSchema.safeParse({
+        userType,
+        email,
+        password,
+      })
+
+      if (!validationResult.success) {
+        setLoginMessage(
+          validationResult.error.issues[0]?.message || "فشل التحقق"
+        )
+        return
+      }
+
+      const result = await loginUser(
+        userType,
+        validationResult.data.email,
+        validationResult.data.password
+      )
       saveTokens(result.access_token, result.refresh_token)
       const user = await getCurrentUser()
       await queryClient.invalidateQueries({ queryKey: ["currentUser"] })

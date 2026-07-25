@@ -49,7 +49,7 @@ export function PosCartPanel({
   onRemoveFromCart,
 }: PosCartPanelProps) {
   return (
-    <aside className="rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
+    <aside className="rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)] lg:sticky lg:top-4 lg:self-start">
       <div className="mb-5 flex items-center gap-2">
         <ShoppingCart className="h-5 w-5 text-[var(--erp-accent)]" />
         <h2 className="text-lg font-semibold text-[var(--erp-text)]">
@@ -165,10 +165,7 @@ export function PosCartPanel({
               تفريغ السلة
             </Button>
 
-            <Button
-              disabled={isCreatingInvoice}
-              onClick={onCreateInvoice}
-            >
+            <Button disabled={isCreatingInvoice} onClick={onCreateInvoice}>
               {isCreatingInvoice ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (

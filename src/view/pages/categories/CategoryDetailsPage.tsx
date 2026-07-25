@@ -21,6 +21,7 @@ import { isValidId } from "@/validation/helpers"
 import { CustomerInfoCard } from "@/view/components/customers/customer-info-card"
 import { CustomerInfoRow } from "@/view/components/customers/customer-info-row"
 import { Button } from "@/view/components/ui/button"
+import { CategoryImagePanel } from "@/view/components/categories/category-image-panel"
 
 export function CategoryDetailsPage() {
   const { id } = useParams()
@@ -147,6 +148,12 @@ export function CategoryDetailsPage() {
         </section>
       </section>
 
+      <CategoryImagePanel
+        categoryId={categoryId}
+        imageUrl={data.imageUrl}
+        storedFileId={data.storedFileId}
+      />
+
       <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <div className="mb-4 flex items-center justify-between gap-3">
           <span className="text-sm text-[var(--erp-muted)]">
@@ -163,8 +170,8 @@ export function CategoryDetailsPage() {
             لا توجد منتجات مرتبطة بهذا التصنيف حالياً.
           </div>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
-            <table className="w-full table-fixed text-right text-sm">
+          <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
+            <table className="w-full min-w-[800px] table-fixed text-right text-sm">
               <colgroup>
                 <col className="w-[10%]" />
                 <col className="w-[25%]" />

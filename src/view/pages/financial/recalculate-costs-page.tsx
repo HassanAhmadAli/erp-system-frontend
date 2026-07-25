@@ -2,11 +2,16 @@ import { useState } from "react"
 import { CheckCircle2 } from "lucide-react"
 
 import { useRecalculateCosts } from "@/hooks/Financial/useFinancial"
+import {
+  recalculateCostsSchema,
+  recalculateCostsValuesToPayload,
+} from "@/validation/recalculate-costs-schema"
 import { ReportLayout } from "@/view/components/reports/report-layout"
 import { Button } from "@/view/components/ui/button"
 
 export function RecalculateCostsPage() {
   const [productIds, setProductIds] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
   const [lastResult, setLastResult] = useState<Record<string, unknown> | null>(
     null
   )
@@ -14,22 +19,25 @@ export function RecalculateCostsPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setErrorMessage("")
 
-    const ids = productIds
-      .split(",")
-      .map((s) => Number(s.trim()))
-      .filter((n) => !Number.isNaN(n) && n > 0)
+    const validationResult = recalculateCostsSchema.safeParse({ productIds })
 
-    if (ids.length === 0) {
-      alert("أدخل معرفات منتجات صحيحة مفصولة بفواصل")
+    if (!validationResult.success) {
+      setErrorMessage(
+        validationResult.error.issues[0]?.message ||
+          "أدخل معرفات منتجات صحيحة مفصولة بفواصل"
+      )
       return
     }
 
     try {
-      const result = await recalculate.mutateAsync(ids)
+      const result = await recalculate.mutateAsync(
+        recalculateCostsValuesToPayload(validationResult.data)
+      )
       setLastResult(result as Record<string, unknown>)
     } catch {
-      alert("فشل إعادة حساب التكاليف")
+      setErrorMessage("فشل إعادة حساب التكاليف")
     }
   }
 
@@ -53,6 +61,12 @@ export function RecalculateCostsPage() {
             value={productIds}
             onChange={(e) => setProductIds(e.target.value)}
           />
+
+          {errorMessage && (
+            <p className="rounded-xl bg-red-50 p-3 text-right text-sm text-red-700">
+              {errorMessage}
+            </p>
+          )}
 
           <Button
             type="submit"

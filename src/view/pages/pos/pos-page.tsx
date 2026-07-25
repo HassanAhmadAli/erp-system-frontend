@@ -230,7 +230,7 @@ export function PosPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_420px]">
+      <div className="grid gap-6 lg:grid-cols-[1fr_380px] xl:grid-cols-[1fr_420px]">
         <PosProductsSection
           search={search}
           products={filteredProducts}

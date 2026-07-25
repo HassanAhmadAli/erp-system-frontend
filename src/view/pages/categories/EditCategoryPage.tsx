@@ -15,6 +15,7 @@ import {
   type CategoryRequestPayload,
 } from "@/validation/category-schema"
 import { Button } from "@/view/components/ui/button"
+import { CategoryImagePanel } from "@/view/components/categories/category-image-panel"
 
 const inputClass =
   "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
@@ -201,6 +202,12 @@ export function EditCategoryPage() {
           </Button>
         </div>
       </form>
+
+      <CategoryImagePanel
+        categoryId={categoryId}
+        imageUrl={data.imageUrl}
+        storedFileId={data.storedFileId}
+      />
     </div>
   )
 }

@@ -609,15 +609,36 @@ type InvoiceLike = {
 }
 
 export function buildInvoiceCharts(invoices: InvoiceLike[]) {
-  const timeSeries = [...invoices]
-    .filter((invoice) => invoice.invoiceDate)
-    .sort(
-      (a, b) =>
-        new Date(a.invoiceDate!).getTime() - new Date(b.invoiceDate!).getTime()
-    )
-    .map((invoice) => ({
-      label: formatShortDate(invoice.invoiceDate),
-      value: toNumber(invoice.totalAmount) ?? 0,
+  const dailyTotals = new Map<string, { sortKey: number; value: number }>()
+
+  for (const invoice of invoices) {
+    if (!invoice.invoiceDate) continue
+
+    const parsed = new Date(invoice.invoiceDate)
+
+    if (Number.isNaN(parsed.getTime())) continue
+
+    const isoPrefix = String(invoice.invoiceDate).match(/^(\d{4}-\d{2}-\d{2})/)
+    const dayKey =
+      isoPrefix?.[1] ??
+      `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`
+
+    const sortKey = new Date(`${dayKey}T12:00:00`).getTime()
+    const amount = toNumber(invoice.totalAmount) ?? 0
+    const existing = dailyTotals.get(dayKey)
+
+    if (existing) {
+      existing.value += amount
+    } else {
+      dailyTotals.set(dayKey, { sortKey, value: amount })
+    }
+  }
+
+  const timeSeries: ChartPoint[] = Array.from(dailyTotals.entries())
+    .sort((a, b) => a[1].sortKey - b[1].sortKey)
+    .map(([dayKey, entry]) => ({
+      label: formatShortDate(dayKey),
+      value: entry.value,
     }))
 
   const topByAmount = [...invoices]
@@ -652,20 +673,53 @@ export function buildInvoiceCharts(invoices: InvoiceLike[]) {
   return { timeSeries, topByAmount, statusByAmount, statusByCount }
 }
 
-export function extractDashboardKpis(payload: unknown): ChartPoint[] {
+/** Money-only dashboard KPIs (same unit — e.g. SP). */
+export function extractDashboardMoneyKpis(payload: unknown): ChartPoint[] {
   const root = unwrapData(payload)
 
   if (!root || typeof root !== "object") return []
 
   const obj = root as Record<string, unknown>
   const salesToday = (obj.salesToday ?? {}) as Record<string, unknown>
+  const revenue = toNumber(salesToday.revenue)
 
-  return [
-    { label: "المبيعات اليوم", value: toNumber(salesToday.revenue) ?? 0 },
-    { label: "طلبات معلقة", value: toNumber(obj.pendingOrders) ?? 0 },
-    { label: "منتجات منخفضة", value: toNumber(obj.lowStockProducts) ?? 0 },
-    { label: "عدد مبيعات اليوم", value: toNumber(salesToday.count) ?? 0 },
-  ]
+  if (revenue === null) return []
+
+  return [{ label: "المبيعات اليوم", value: revenue }]
+}
+
+/** Count-only dashboard KPIs (no currency unit). */
+export function extractDashboardCountKpis(payload: unknown): ChartPoint[] {
+  const root = unwrapData(payload)
+
+  if (!root || typeof root !== "object") return []
+
+  const obj = root as Record<string, unknown>
+  const salesToday = (obj.salesToday ?? {}) as Record<string, unknown>
+  const points: ChartPoint[] = []
+
+  const salesCount = toNumber(salesToday.count)
+  const pendingOrders = toNumber(obj.pendingOrders)
+  const lowStock = toNumber(obj.lowStockProducts)
+
+  if (salesCount !== null) {
+    points.push({ label: "عدد مبيعات اليوم", value: salesCount })
+  }
+
+  if (pendingOrders !== null) {
+    points.push({ label: "طلبات معلقة", value: pendingOrders })
+  }
+
+  if (lowStock !== null) {
+    points.push({ label: "منتجات منخفضة", value: lowStock })
+  }
+
+  return points
+}
+
+/** @deprecated Prefer extractDashboardMoneyKpis / extractDashboardCountKpis */
+export function extractDashboardKpis(payload: unknown): ChartPoint[] {
+  return extractDashboardMoneyKpis(payload)
 }
 
 export function extractDashboardMetrics(payload: unknown): MetricItem[] {

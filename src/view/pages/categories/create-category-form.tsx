@@ -1,9 +1,14 @@
 import { type FormEvent, useState } from "react"
-import { ArrowRight, FolderOpen } from "lucide-react"
+import { ArrowRight, FolderOpen, UploadCloud } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
 
-import { createCategory } from "@/services/category-service"
+import {
+  createCategory,
+  uploadCategoryImage,
+} from "@/services/category-service"
+import { toEnglishDigits } from "@/utils/number-formatters"
+import { isAllowedFileType, isWithinMaxFileSize } from "@/validation/helpers"
 import {
   categoryFormValuesToPayload,
   categorySchema,
@@ -17,6 +22,16 @@ const inputClass =
   "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
+
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+] as const
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 const EMPTY_FORM: CategoryFormValues = {
   name: "",
@@ -41,6 +56,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
 
   const [form, setForm] = useState<CategoryFormValues>(EMPTY_FORM)
   const [errors, setErrors] = useState<CategoryFormErrors>({})
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState<{
     type: "success" | "error" | ""
@@ -50,6 +66,31 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
   function setField(key: keyof CategoryFormValues, value: string) {
     setForm((prev) => ({ ...prev, [key]: value }))
     setErrors((prev) => ({ ...prev, [key]: undefined }))
+  }
+
+  function handleFileChange(file: File | null) {
+    setSelectedFile(null)
+    setMessage({ type: "", text: "" })
+
+    if (!file) return
+
+    if (!isAllowedFileType(file, ALLOWED_IMAGE_TYPES)) {
+      setMessage({
+        type: "error",
+        text: "يرجى اختيار ملف صورة صالح (JPG, PNG, WEBP, GIF)",
+      })
+      return
+    }
+
+    if (!isWithinMaxFileSize(file, MAX_IMAGE_BYTES)) {
+      setMessage({
+        type: "error",
+        text: "حجم الصورة يجب ألا يتجاوز 5 ميجابايت",
+      })
+      return
+    }
+
+    setSelectedFile(file)
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -68,9 +109,34 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
     try {
       setLoading(true)
 
-      await createCategory(categoryFormValuesToPayload(validationResult.data))
+      const created = await createCategory(
+        categoryFormValuesToPayload(validationResult.data)
+      )
+
+      if (selectedFile && created?.id) {
+        try {
+          await uploadCategoryImage(created.id, selectedFile)
+        } catch (error: unknown) {
+          setMessage({
+            type: "error",
+            text:
+              error instanceof Error
+                ? `تم إنشاء التصنيف لكن فشل رفع الصورة: ${error.message}`
+                : "تم إنشاء التصنيف لكن فشل رفع الصورة",
+          })
+
+          queryClient.invalidateQueries({
+            queryKey: ["categories"],
+          })
+
+          onSuccess?.()
+          navigate(`/categories/${created.id}/edit`)
+          return
+        }
+      }
 
       setForm(EMPTY_FORM)
+      setSelectedFile(null)
 
       queryClient.invalidateQueries({
         queryKey: ["categories"],
@@ -167,6 +233,44 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
             onChange={(event) => setField("description", event.target.value)}
           />
           <ErrorText message={errors.description} />
+        </div>
+
+        <div>
+          <label htmlFor="category-image" className={labelClass}>
+            صورة التصنيف (اختياري)
+          </label>
+
+          <label
+            htmlFor="category-image"
+            className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-6 text-center transition hover:border-[var(--erp-brand-solid)]/50 hover:bg-[var(--erp-nav-active-bg)]"
+          >
+            <UploadCloud className="mb-2 size-7 text-[var(--erp-brand-solid)]" />
+            <span className="text-sm font-medium text-[var(--erp-text)]">
+              انقر لاختيار صورة
+            </span>
+            <span className="mt-1 text-xs text-[var(--erp-muted)]">
+              JPG, PNG, WEBP, GIF — حتى 5MB
+            </span>
+            <span
+              dir="ltr"
+              className="mt-3 max-w-full truncate rounded-full bg-[var(--erp-card)] px-3 py-1 text-xs font-medium text-[var(--erp-text)]"
+            >
+              {selectedFile?.name
+                ? toEnglishDigits(selectedFile.name)
+                : "No file selected"}
+            </span>
+            <input
+              id="category-image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="sr-only"
+              disabled={loading}
+              onChange={(event) => {
+                handleFileChange(event.target.files?.[0] ?? null)
+                event.target.value = ""
+              }}
+            />
+          </label>
         </div>
 
         <div className="flex flex-col gap-2 border-t border-[var(--erp-border)] pt-4 sm:flex-row sm:justify-end">

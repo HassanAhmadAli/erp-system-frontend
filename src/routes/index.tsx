@@ -30,6 +30,11 @@ import { ProductPhotosPage } from "@/view/pages/products/product-photos-page"
 import { CustomersPage } from "@/view/pages/customers/customers-page"
 import { CustomerDetailsPage } from "@/view/pages/customers/customer-details-page"
 
+import { StaffPage } from "@/view/pages/staff/staff-page"
+import { CreateStaffPage } from "@/view/pages/staff/create-staff-page"
+import { StaffDetailsPage } from "@/view/pages/staff/staff-details-page"
+import { EditStaffPage } from "@/view/pages/staff/edit-staff-page"
+
 import { DiscountsPage } from "@/view/pages/discounts/discounts-page"
 import { ActiveDiscountsPage } from "@/view/pages/discounts/active-discounts-page"
 import { DiscountDetailsPage } from "@/view/pages/discounts/discount-details-page"
@@ -125,6 +130,12 @@ export function AppRoutes() {
           {/* Customers */}
           <Route path="customers" element={<CustomersPage />} />
           <Route path="customers/:id" element={<CustomerDetailsPage />} />
+
+          {/* Staff — Store Manager only */}
+          <Route path="staff" element={<StaffPage />} />
+          <Route path="staff/create" element={<CreateStaffPage />} />
+          <Route path="staff/:id" element={<StaffDetailsPage />} />
+          <Route path="staff/:id/edit" element={<EditStaffPage />} />
 
           {/* Orders */}
           <Route path="orders" element={<OrdersPage />} />

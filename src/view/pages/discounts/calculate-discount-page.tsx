@@ -6,6 +6,10 @@ import { useCalculateDiscount } from "@/hooks/use-discounts"
 import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
 import { useProducts } from "@/hooks/Products/useProducts"
 import { normalizeProducts } from "@/services/product-service"
+import {
+  calculateDiscountSchema,
+  calculateDiscountValuesToPayload,
+} from "@/validation/discount-helper-schema"
 import { formatCurrency } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
@@ -47,36 +51,22 @@ export function CalculateDiscountPage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage("")
-
-    const discountIdValue = Number(discountId)
-    const subtotalValue = Number(subtotal)
-
-    if (!Number.isFinite(discountIdValue) || discountIdValue <= 0) {
-      setMessage("يرجى إدخال رقم خصم صحيح")
-      return
-    }
-
-    if (!Number.isFinite(subtotalValue) || subtotalValue <= 0) {
-      setMessage("يرجى إدخال إجمالي فاتورة صحيح")
-      return
-    }
-
-    if (targetType === "CATEGORY" && !categoryId) {
-      setMessage("يرجى اختيار التصنيف")
-      return
-    }
-
-    if (targetType === "PRODUCT" && !productId) {
-      setMessage("يرجى اختيار المنتج")
-      return
-    }
-
-    calculate.mutate({
-      discountId: discountIdValue,
-      subtotal: subtotalValue,
-      categoryId: targetType === "CATEGORY" ? Number(categoryId) : undefined,
-      productId: targetType === "PRODUCT" ? Number(productId) : undefined,
+    const validationResult = calculateDiscountSchema.safeParse({
+      discountId,
+      subtotal,
+      targetType,
+      categoryId,
+      productId,
     })
+
+    if (!validationResult.success) {
+      setMessage(
+        validationResult.error.issues[0]?.message || "البيانات غير صالحة"
+      )
+      return
+    }
+
+    calculate.mutate(calculateDiscountValuesToPayload(validationResult.data))
   }
 
   return (

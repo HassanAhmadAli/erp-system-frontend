@@ -7,6 +7,10 @@ import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelec
 import { useProducts } from "@/hooks/Products/useProducts"
 import { normalizeProducts } from "@/services/product-service"
 import type { DiscountScope, DiscountType } from "@/services/discount-service"
+import {
+  bestDiscountSchema,
+  bestDiscountValuesToPayload,
+} from "@/validation/discount-helper-schema"
 import { formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
@@ -60,29 +64,21 @@ export function BestDiscountPage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setMessage("")
-
-    const subtotalValue = Number(subtotal)
-
-    if (!Number.isFinite(subtotalValue) || subtotalValue <= 0) {
-      setMessage("يرجى إدخال إجمالي فاتورة صحيح")
-      return
-    }
-
-    if (targetType === "CATEGORY" && !categoryId) {
-      setMessage("يرجى اختيار التصنيف")
-      return
-    }
-
-    if (targetType === "PRODUCT" && !productId) {
-      setMessage("يرجى اختيار المنتج")
-      return
-    }
-
-    bestDiscount.mutate({
-      subtotal: subtotalValue,
-      categoryId: targetType === "CATEGORY" ? Number(categoryId) : undefined,
-      productId: targetType === "PRODUCT" ? Number(productId) : undefined,
+    const validationResult = bestDiscountSchema.safeParse({
+      subtotal,
+      targetType,
+      categoryId,
+      productId,
     })
+
+    if (!validationResult.success) {
+      setMessage(
+        validationResult.error.issues[0]?.message || "البيانات غير صالحة"
+      )
+      return
+    }
+
+    bestDiscount.mutate(bestDiscountValuesToPayload(validationResult.data))
   }
 
   return (

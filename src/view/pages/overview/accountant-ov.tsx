@@ -3,7 +3,8 @@ import { FileText, TrendingUp } from "lucide-react"
 
 import { useReportDashboard } from "@/hooks/Reports/useReports"
 import {
-  extractDashboardKpis,
+  extractDashboardCountKpis,
+  extractDashboardMoneyKpis,
   extractSummaryMetrics,
   extractTimeSeries,
 } from "@/lib/report-chart-data"
@@ -18,7 +19,8 @@ export function AccountantOverviewPage() {
 
   const metrics = extractSummaryMetrics(data)
   const timeSeries = extractTimeSeries(data)
-  const kpiComparison = extractDashboardKpis(data)
+  const moneyKpis = extractDashboardMoneyKpis(data)
+  const countKpis = extractDashboardCountKpis(data)
 
   return (
     <div className="space-y-6" dir="rtl">
@@ -48,7 +50,19 @@ export function AccountantOverviewPage() {
           {timeSeries.length >= 2 ? (
             <LineChart title="اتجاه الأداء" data={timeSeries} unit="SP" />
           ) : (
-            <BarChart title="مؤشرات الفترة" data={kpiComparison} unit="SP" />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <BarChart
+                title="المؤشرات المالية"
+                data={moneyKpis}
+                unit="SP"
+                emptyMessage="لا توجد بيانات مالية للعرض"
+              />
+              <BarChart
+                title="المؤشرات العددية"
+                data={countKpis}
+                emptyMessage="لا توجد مؤشرات عددية للعرض"
+              />
+            </div>
           )}
         </>
       )}

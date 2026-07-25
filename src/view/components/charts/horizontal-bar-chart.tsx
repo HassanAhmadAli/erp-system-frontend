@@ -33,15 +33,19 @@ export function HorizontalBarChart({
   }
 
   const relativeMax = Math.max(...items.map((d) => Math.abs(d.value)), 1)
+  // Floor at maxScale (e.g. 100%) but expand when values exceed it so bars stay proportional.
+  const effectiveScale =
+    maxScale != null && maxScale > 0
+      ? Math.max(maxScale, relativeMax)
+      : relativeMax
 
   function barWidth(value: number): number {
     const absValue = Math.abs(value)
 
-    if (maxScale != null && maxScale > 0) {
-      return Math.max(2, Math.min(100, Math.round((absValue / maxScale) * 100)))
-    }
-
-    return Math.max(4, Math.round((absValue / relativeMax) * 100))
+    return Math.max(
+      2,
+      Math.min(100, Math.round((absValue / effectiveScale) * 100))
+    )
   }
 
   return (
@@ -52,10 +56,10 @@ export function HorizontalBarChart({
         </h3>
       )}
 
-      {maxScale != null && (
+      {(maxScale != null || unit === "%") && (
         <div className="mb-3 flex justify-between px-1 text-xs text-[var(--erp-muted)]">
           <span>٠{unit}</span>
-          <span>{formatNumber(maxScale, unit)}</span>
+          <span>{formatNumber(effectiveScale, unit)}</span>
         </div>
       )}
 
