@@ -1,13 +1,5 @@
 import { useMemo, useState } from "react"
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  PackageOpen,
-  Pencil,
-  Search,
-  Trash2,
-} from "lucide-react"
+import { Eye, PackageOpen, Pencil, Search, Trash2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
@@ -17,7 +9,7 @@ import { useProducts } from "@/hooks/Products/useProducts"
 import { useProductsByCategory } from "@/hooks/Products/useProductsByCategory"
 import { useProductsBySupplier } from "@/hooks/Products/useProductsBySupplier"
 import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
-import { normalizeProducts, type Product } from "@/services/product-service"
+import { type Product } from "@/services/product-service"
 import {
   formatCurrency,
   formatInteger,
@@ -26,6 +18,7 @@ import {
 import { StatusBadge } from "@/view/components/common/status-badge"
 import { Button } from "@/view/components/ui/button"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
 import { ProductsSkeleton } from "./products-skeleton"
 
 type ProductStatus = "متوفر" | "منخفض" | "نافد"
@@ -133,11 +126,14 @@ function ProductMobileCard({
     <article className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1 text-right">
-          <h3 className="line-clamp-2 font-semibold leading-6 text-[var(--erp-text)]">
+          <h3 className="line-clamp-2 leading-6 font-semibold text-[var(--erp-text)]">
             {product.name}
           </h3>
 
-          <p dir="ltr" className="mt-1 text-left text-xs text-[var(--erp-muted)]">
+          <p
+            dir="ltr"
+            className="mt-1 text-left text-xs text-[var(--erp-muted)]"
+          >
             {toEnglishDigits(product.barcode)}
           </p>
         </div>
@@ -197,47 +193,67 @@ export function ProductsTable() {
   const [supplierId, setSupplierId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
 
-  const { data, isLoading, error } = useProducts()
+  const listParams = {
+    page,
+    limit: PAGE_SIZE,
+    search: filterType === "all" ? searchQuery || undefined : undefined,
+  }
+
+  const { data, isLoading, error } = useProducts(
+    filterType === "all" ? listParams : { limit: 100 }
+  )
   const { data: lowStockData, isLoading: isLoadingLowStock } =
-    useLowStockProducts()
+    useLowStockProducts(
+      filterType === "low-stock" ? { page, limit: PAGE_SIZE } : { limit: 100 },
+      filterType === "low-stock"
+    )
   const { data: categoryData, isLoading: isLoadingCategory } =
-    useProductsByCategory(categoryId ?? 0)
+    useProductsByCategory(
+      categoryId ?? 0,
+      filterType === "category" ? { page, limit: PAGE_SIZE } : { limit: 100 }
+    )
   const { data: supplierData, isLoading: isLoadingSupplier } =
-    useProductsBySupplier(supplierId ?? 0)
+    useProductsBySupplier(
+      supplierId ?? 0,
+      filterType === "supplier" ? { page, limit: PAGE_SIZE } : { limit: 100 }
+    )
   const { data: categoriesData } = useCategoriesForSelect()
-  const { data: suppliersData } = useSuppliers()
+  const { data: suppliersData } = useSuppliers({ limit: 100 })
   const deleteMutation = useDeleteProduct()
 
   const categories = categoriesData?.data ?? []
   const suppliers = suppliersData?.data ?? []
 
-  const products = useMemo(() => {
-    let filteredProducts: Product[] = []
-
+  const activeList = useMemo(() => {
     switch (filterType) {
       case "low-stock":
-        filteredProducts = normalizeProducts(lowStockData)
-        break
-
+        return lowStockData
       case "category":
-        filteredProducts = categoryId ? normalizeProducts(categoryData) : []
-        break
-
+        return categoryId ? categoryData : undefined
       case "supplier":
-        filteredProducts = supplierId ? normalizeProducts(supplierData) : []
-        break
-
+        return supplierId ? supplierData : undefined
       default:
-        filteredProducts = normalizeProducts(data)
+        return data
     }
+  }, [
+    filterType,
+    data,
+    lowStockData,
+    categoryData,
+    supplierData,
+    categoryId,
+    supplierId,
+  ])
 
+  const products = useMemo(() => {
+    const list = activeList?.data ?? []
     const query = toEnglishDigits(searchQuery).trim().toLowerCase()
 
-    if (!query) {
-      return filteredProducts
+    if (!query || filterType === "all") {
+      return list
     }
 
-    return filteredProducts.filter((product) => {
+    return list.filter((product) => {
       const name = product.name.toLowerCase()
       const barcode = toEnglishDigits(product.barcode).toLowerCase()
       const productId = String(product.id)
@@ -248,28 +264,14 @@ export function ProductsTable() {
         productId.includes(query)
       )
     })
-  }, [
-    data,
-    lowStockData,
-    categoryData,
-    supplierData,
-    filterType,
-    categoryId,
-    supplierId,
-    searchQuery,
-  ])
+  }, [activeList, searchQuery, filterType])
 
-  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const paginatedProducts = products.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  )
-
+  const isFinalPage = activeList?.isFinalPage ?? products.length < PAGE_SIZE
+  const total = activeList?.total
   const selectedProduct = products.find((product) => product.id === deleteId)
 
   const isLoadingData =
-    isLoading ||
+    (filterType === "all" && isLoading) ||
     (filterType === "low-stock" && isLoadingLowStock) ||
     (filterType === "category" && categoryId !== null && isLoadingCategory) ||
     (filterType === "supplier" && supplierId !== null && isLoadingSupplier)
@@ -323,7 +325,7 @@ export function ProductsTable() {
             placeholder="بحث بالاسم أو الباركود أو رقم المنتج..."
             value={searchQuery}
             onChange={(event) => handleSearchChange(event.target.value)}
-            className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent py-2.5 ps-10 pe-4 text-right text-sm text-[var(--erp-text)] outline-none transition focus:border-[var(--erp-accent)]"
+            className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent py-2.5 ps-10 pe-4 text-right text-sm text-[var(--erp-text)] transition outline-none focus:border-[var(--erp-accent)]"
           />
         </label>
 
@@ -439,7 +441,7 @@ export function ProductsTable() {
       {!isLoadingData && !error && products.length > 0 && (
         <>
           <div className="space-y-3 lg:hidden">
-            {paginatedProducts.map((product) => (
+            {products.map((product) => (
               <ProductMobileCard
                 key={product.id}
                 product={product}
@@ -465,13 +467,13 @@ export function ProductsTable() {
               </thead>
 
               <tbody>
-                {paginatedProducts.map((product) => (
+                {products.map((product) => (
                   <tr
                     key={product.id}
                     className="border-b border-[var(--erp-border)] transition-colors last:border-0 hover:bg-[var(--erp-bg)]"
                   >
                     <td className="max-w-[280px] px-4 py-4">
-                      <p className="line-clamp-2 font-semibold leading-6 text-[var(--erp-text)]">
+                      <p className="line-clamp-2 leading-6 font-semibold text-[var(--erp-text)]">
                         {product.name}
                       </p>
 
@@ -493,14 +495,14 @@ export function ProductsTable() {
 
                     <td
                       dir="ltr"
-                      className="px-4 py-4 text-left tabular-nums text-[var(--erp-muted)]"
+                      className="px-4 py-4 text-left text-[var(--erp-muted)] tabular-nums"
                     >
                       {formatCurrency(product.sellingPrice ?? 0)}
                     </td>
 
                     <td
                       dir="ltr"
-                      className="px-4 py-4 text-left tabular-nums text-[var(--erp-muted)]"
+                      className="px-4 py-4 text-left text-[var(--erp-muted)] tabular-nums"
                     >
                       {getProductQuantity(product)}
                     </td>
@@ -523,44 +525,14 @@ export function ProductsTable() {
             </table>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-center text-sm text-[var(--erp-muted)] sm:text-right">
-              الصفحة{" "}
-              <span dir="ltr" className="font-semibold text-[var(--erp-text)]">
-                {formatInteger(currentPage)}
-              </span>{" "}
-              من{" "}
-              <span dir="ltr" className="font-semibold text-[var(--erp-text)]">
-                {formatInteger(totalPages)}
-              </span>
-            </p>
-
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setPage((previous) => Math.max(1, previous - 1))}
-              >
-                <ChevronRight className="size-4" />
-                السابق
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={currentPage >= totalPages}
-                onClick={() =>
-                  setPage((previous) => Math.min(totalPages, previous + 1))
-                }
-              >
-                التالي
-                <ChevronLeft className="size-4" />
-              </Button>
-            </div>
-          </div>
+          <PaginationControls
+            page={page}
+            isFinalPage={isFinalPage}
+            isLoading={isLoadingData}
+            total={total}
+            onPrevious={() => setPage((previous) => Math.max(1, previous - 1))}
+            onNext={() => setPage((previous) => previous + 1)}
+          />
         </>
       )}
 

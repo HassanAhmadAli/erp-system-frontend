@@ -4,10 +4,7 @@ import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices"
 import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
 import { buildInvoiceCharts } from "@/lib/report-chart-data"
 import { toNumber } from "@/lib/report-parsers"
-import {
-  normalizePurchaseInvoices,
-  type PurchaseInvoice,
-} from "@/services/purchase-invoices-service"
+import { type PurchaseInvoice } from "@/services/purchase-invoices-service"
 import { BarChart } from "@/view/components/charts/bar-chart"
 import { DonutChart } from "@/view/components/charts/donut-chart"
 import { LineChart } from "@/view/components/charts/line-chart"
@@ -27,12 +24,9 @@ type NormalizedPurchaseInvoice = {
 
 export function ReportPurchasesPage() {
   const { from, to, setFrom, setTo, range } = useReportDateRange()
-  const { data, isLoading, isError } = usePurchaseInvoices()
+  const { data, isLoading, isError } = usePurchaseInvoices({ limit: 100 })
 
-  const invoices = useMemo<PurchaseInvoice[]>(
-    () => normalizePurchaseInvoices(data),
-    [data]
-  )
+  const invoices = useMemo<PurchaseInvoice[]>(() => data?.data ?? [], [data])
 
   const normalized = useMemo<NormalizedPurchaseInvoice[]>(
     () =>

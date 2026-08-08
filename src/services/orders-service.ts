@@ -1,4 +1,9 @@
-import { apiRequest } from "@/api/client"
+import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import {
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
 
 export type OrderStatus =
   | "PENDING"
@@ -79,6 +84,8 @@ export type CreateOrderPayload = {
   items: CreateOrderItem[]
 }
 
+export type OrdersQuery = PaginationParams
+
 export function normalizeOrders(response?: OrdersResponse) {
   if (!response) return []
 
@@ -89,9 +96,17 @@ export function normalizeOrders(response?: OrdersResponse) {
   return response.data ?? []
 }
 
-export async function getOrders() {
-  const response = await apiRequest<OrdersResponse>("/orders/cashier/")
-  return normalizeOrders(response)
+export function normalizeOrdersList(
+  response?: OrdersResponse | null,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+): PaginatedResponse<Order> {
+  return normalizePaginatedResponse(response, fallbackLimit, fallbackOffset)
+}
+
+export async function getOrders(params?: OrdersQuery) {
+  const query = toPaginationQuery(params)
+  return apiRequest<OrdersResponse>(`/orders/cashier/${buildQuery(query)}`)
 }
 
 export async function createOrder(payload: CreateOrderPayload) {

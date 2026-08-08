@@ -31,9 +31,7 @@ export function SalesInvoiceDetailsPage() {
   const { canManageSalesInvoice } = usePermissions()
 
   const updateStatusMutation = useUpdateSalesInvoiceStatus()
-  const canUpdateStatus = invoice
-    ? canManageSalesInvoice(invoice.cashierId)
-    : false
+  const canUpdateStatus = invoice ? canManageSalesInvoice(invoice) : false
 
   function handleRefund() {
     setStatusError("")

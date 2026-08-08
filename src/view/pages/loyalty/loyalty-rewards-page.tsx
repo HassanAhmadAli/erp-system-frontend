@@ -1,125 +1,149 @@
-import {
-  type FormEvent,
-  type ReactNode,
-  useEffect,
-  useMemo,
-  useState,
-} from "react"
-import { Gift, Plus, Settings, Star, Trash2 } from "lucide-react"
+import { type FormEvent, type ReactNode, useMemo, useState } from "react"
+import { Gift, Pencil, Plus, Star, Trash2, X } from "lucide-react"
 
 import {
   useCreateLoyaltyReward,
   useDeleteLoyaltyReward,
-  useLoyaltyPolicy,
   useLoyaltyRewards,
-  useUpdateLoyaltyPolicy,
   useUpdateLoyaltyReward,
 } from "@/hooks/Loyalty/useLoyaltyRewards"
 import {
-  loyaltyPolicySchema,
-  loyaltyPolicyValuesToPayload,
-  loyaltyPolicyZodErrorToFormErrors,
+  LOYALTY_DISCOUNT_TYPE_LABELS,
+  LOYALTY_DISCOUNT_TYPES,
   loyaltyRewardSchema,
   loyaltyRewardValuesToPayload,
   loyaltyRewardZodErrorToFormErrors,
-  type LoyaltyPolicyFormErrors,
+  type LoyaltyDiscountType,
   type LoyaltyRewardFormErrors,
 } from "@/validation/loyalty-schema"
-import { isValidId, parsePositiveInteger } from "@/validation/helpers"
+import { isValidUuid, parsePositiveInteger } from "@/validation/helpers"
 import { formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
+import type { LoyaltyReward } from "@/services/loyalty-rewards-service"
+
+const PAGE_SIZE = 10
 
 const inputClass =
   "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
-function formatSyp(value: string | number) {
+function formatDiscountValue(
+  type: LoyaltyDiscountType | string,
+  value: string | number
+) {
+  if (type === "PERCENTAGE") {
+    return `${formatNumber(value)}%`
+  }
+
   return `${formatNumber(value)} SYP`
 }
 
-export function LoyaltyRewardsPage() {
-  const { data: policy, isLoading: policyLoading } = useLoyaltyPolicy()
-  const updatePolicy = useUpdateLoyaltyPolicy()
+function resolveDiscountType(value: string): LoyaltyDiscountType {
+  return value === "PERCENTAGE" ? "PERCENTAGE" : "FIXED_AMOUNT"
+}
 
-  const { data: rewards = [], isLoading, isError } = useLoyaltyRewards()
+export function LoyaltyRewardsPage() {
+  const [rewardsPage, setRewardsPage] = useState(1)
+  const {
+    data: rewardsData,
+    isLoading,
+    isError,
+    isFetching: rewardsFetching,
+  } = useLoyaltyRewards({
+    page: rewardsPage,
+    limit: PAGE_SIZE,
+  })
+  const rewards = rewardsData?.data ?? []
   const createReward = useCreateLoyaltyReward()
   const updateReward = useUpdateLoyaltyReward()
   const deleteReward = useDeleteLoyaltyReward()
 
-  const [pointsPerCurrency, setPointsPerCurrency] = useState("")
-  const [currencyPerPoint, setCurrencyPerPoint] = useState("")
-  const [policyFormErrors, setPolicyFormErrors] =
-    useState<LoyaltyPolicyFormErrors>({})
-  const [policyMessage, setPolicyMessage] = useState("")
-  const [policyError, setPolicyError] = useState("")
-
-  const [threshold, setThreshold] = useState("")
+  const [editingReward, setEditingReward] = useState<LoyaltyReward | null>(null)
+  const [name, setName] = useState("")
   const [description, setDescription] = useState("")
+  const [pointsCost, setPointsCost] = useState("")
+  const [discountType, setDiscountType] =
+    useState<LoyaltyDiscountType>("FIXED_AMOUNT")
   const [discountValue, setDiscountValue] = useState("")
+  const [maxUses, setMaxUses] = useState("1")
+  const [validityDays, setValidityDays] = useState("7")
   const [isActive, setIsActive] = useState(true)
   const [rewardFormErrors, setRewardFormErrors] =
     useState<LoyaltyRewardFormErrors>({})
   const [rewardError, setRewardError] = useState("")
+  const [rewardMessage, setRewardMessage] = useState("")
 
-  useEffect(() => {
-    if (!policy) return
-
-    setPointsPerCurrency(String(policy.pointsPerCurrency ?? ""))
-    setCurrencyPerPoint(String(policy.currencyPerPoint ?? ""))
-  }, [policy])
+  const isEditing = editingReward != null
+  const isSaving = createReward.isPending || updateReward.isPending
 
   const activeRewardsCount = useMemo(
     () => rewards.filter((reward) => reward.isActive).length,
     [rewards]
   )
 
-  const highestThreshold = useMemo(() => {
+  const highestPointsCost = useMemo(() => {
     if (rewards.length === 0) return 0
 
     return Math.max(
-      ...rewards.map(
-        (reward) => parsePositiveInteger(reward.pointsThreshold) ?? 0
-      )
+      ...rewards.map((reward) => parsePositiveInteger(reward.pointsCost) ?? 0)
     )
   }, [rewards])
 
-  async function handlePolicySave(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setPolicyMessage("")
-    setPolicyError("")
-    setPolicyFormErrors({})
-
-    const validation = loyaltyPolicySchema.safeParse({
-      pointsPerCurrency,
-      currencyPerPoint,
-    })
-
-    if (!validation.success) {
-      setPolicyFormErrors(loyaltyPolicyZodErrorToFormErrors(validation.error))
-      return
-    }
-
-    try {
-      await updatePolicy.mutateAsync(
-        loyaltyPolicyValuesToPayload(validation.data)
-      )
-
-      setPolicyMessage("تم حفظ سياسة النقاط بنجاح")
-    } catch {
-      setPolicyError("فشل تحديث السياسة")
-    }
+  function resetForm() {
+    setEditingReward(null)
+    setName("")
+    setDescription("")
+    setPointsCost("")
+    setDiscountType("FIXED_AMOUNT")
+    setDiscountValue("")
+    setMaxUses("1")
+    setValidityDays("7")
+    setIsActive(true)
+    setRewardFormErrors({})
   }
 
-  async function handleCreateReward(event: FormEvent<HTMLFormElement>) {
+  function fillFormFromReward(reward: LoyaltyReward) {
+    setEditingReward(reward)
+    setName(reward.name ?? "")
+    setDescription(reward.description ?? "")
+    setPointsCost(String(reward.pointsCost ?? ""))
+    setDiscountType(resolveDiscountType(reward.discountType))
+    setDiscountValue(String(reward.discountValue ?? ""))
+    setMaxUses(String(reward.maxUses ?? 1))
+    setValidityDays(String(reward.validityDays ?? 7))
+    setIsActive(Boolean(reward.isActive))
+    setRewardFormErrors({})
+    setRewardError("")
+    setRewardMessage("")
+  }
+
+  function handleStartEdit(reward: LoyaltyReward) {
+    fillFormFromReward(reward)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  function handleCancelEdit() {
+    resetForm()
+    setRewardError("")
+    setRewardMessage("")
+  }
+
+  async function handleSubmitReward(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setRewardError("")
+    setRewardMessage("")
     setRewardFormErrors({})
 
     const validation = loyaltyRewardSchema.safeParse({
-      pointsThreshold: threshold,
-      rewardDescription: description,
+      name,
+      description,
+      pointsCost,
+      discountType,
       discountValue,
+      maxUses,
+      validityDays,
       isActive,
     })
 
@@ -128,45 +152,68 @@ export function LoyaltyRewardsPage() {
       return
     }
 
-    try {
-      await createReward.mutateAsync(
-        loyaltyRewardValuesToPayload(validation.data)
-      )
+    const payload = loyaltyRewardValuesToPayload(validation.data)
 
-      setThreshold("")
-      setDescription("")
-      setDiscountValue("")
-      setIsActive(true)
+    try {
+      if (isEditing) {
+        if (!isValidUuid(editingReward.id)) {
+          setRewardError("معرّف المكافأة غير صالح.")
+          return
+        }
+
+        await updateReward.mutateAsync({
+          id: editingReward.id,
+          data: payload,
+        })
+
+        resetForm()
+        setRewardMessage("تم تحديث المكافأة بنجاح")
+      } else {
+        await createReward.mutateAsync(payload)
+        resetForm()
+        setRewardMessage("تم إنشاء المكافأة بنجاح")
+        setRewardsPage(1)
+      }
     } catch {
-      setRewardError("فشل إنشاء المكافأة")
+      setRewardError(isEditing ? "فشل تحديث المكافأة" : "فشل إنشاء المكافأة")
     }
   }
 
-  function handleToggleReward(id: string, currentStatus: boolean) {
+  function handleToggleReward(reward: LoyaltyReward) {
     setRewardError("")
+    setRewardMessage("")
 
-    if (!isValidId(id)) {
-      setRewardError("رقم المكافأة غير صالح.")
+    if (!isValidUuid(reward.id)) {
+      setRewardError("معرّف المكافأة غير صالح.")
       return
     }
 
+    // Backend update DTO currently requires pointsCost on every PATCH.
     updateReward.mutate({
-      id,
-      data: { isActive: !currentStatus },
+      id: reward.id,
+      data: {
+        pointsCost: reward.pointsCost,
+        isActive: !reward.isActive,
+      },
     })
   }
 
   function handleDeleteReward(id: string) {
     setRewardError("")
+    setRewardMessage("")
 
-    if (!isValidId(id)) {
-      setRewardError("رقم المكافأة غير صالح.")
+    if (!isValidUuid(id)) {
+      setRewardError("معرّف المكافأة غير صالح.")
       return
     }
 
     const shouldDelete = window.confirm("هل أنت متأكد من حذف هذه المكافأة؟")
 
     if (!shouldDelete) return
+
+    if (editingReward?.id === id) {
+      resetForm()
+    }
 
     deleteReward.mutate(id)
   }
@@ -183,7 +230,7 @@ export function LoyaltyRewardsPage() {
         </div>
 
         <p className="mt-1 text-sm text-[var(--erp-muted)]">
-          إدارة سياسة النقاط والمكافآت التي يحصل عليها العملاء.
+          إدارة عروض استبدال نقاط الولاء بخصومات للعملاء.
         </p>
       </header>
 
@@ -191,158 +238,161 @@ export function LoyaltyRewardsPage() {
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <SummaryCard
             label="عدد المكافآت"
-            value={formatNumber(rewards.length)}
+            value={formatNumber(rewardsData?.total ?? rewards.length)}
             icon={<Gift className="size-5" />}
           />
 
           <SummaryCard
-            label="المكافآت النشطة"
+            label="المكافآت النشطة (الصفحة)"
             value={formatNumber(activeRewardsCount)}
             icon={<Star className="size-5" />}
           />
 
           <SummaryCard
-            label="أعلى حد نقاط"
-            value={formatNumber(highestThreshold)}
-            icon={<Settings className="size-5" />}
+            label="أعلى تكلفة نقاط (الصفحة)"
+            value={formatNumber(highestPointsCost)}
+            icon={<Plus className="size-5" />}
           />
         </section>
       )}
 
-      <section className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+      <section className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
         <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
-          <div className="mb-5">
-            <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-              سياسة النقاط
-            </h2>
+          <div className="mb-5 flex items-start justify-between gap-3">
+            <div>
+              <h2 className="text-xl font-semibold text-[var(--erp-text)]">
+                {isEditing ? "تعديل مكافأة" : "إضافة مكافأة"}
+              </h2>
 
-            <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              حدد كيف يتم تحويل المشتريات إلى نقاط وكيف يتم حساب قيمة النقطة.
-            </p>
+              <p className="mt-1 text-sm text-[var(--erp-muted)]">
+                {isEditing
+                  ? "حدّث بيانات عرض الولاء ثم احفظ التعديلات."
+                  : "أنشئ عرض ولاء يحدد تكلفة النقاط ونوع الخصم ومدة صلاحيته."}
+              </p>
+            </div>
+
+            {isEditing && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1"
+                onClick={handleCancelEdit}
+              >
+                <X className="size-3.5" />
+                إلغاء
+              </Button>
+            )}
           </div>
 
-          {policyLoading ? (
-            <p className="text-sm text-[var(--erp-muted)]">جاري التحميل...</p>
-          ) : (
-            <form onSubmit={handlePolicySave} className="space-y-4" noValidate>
-              <div>
-                <label htmlFor="points-per-currency" className={labelClass}>
-                  نقاط لكل عملة
-                </label>
+          <form onSubmit={handleSubmitReward} className="space-y-4" noValidate>
+            <div>
+              <label htmlFor="loyalty-name" className={labelClass}>
+                اسم المكافأة
+              </label>
 
-                <input
-                  id="points-per-currency"
-                  type="number"
-                  value={pointsPerCurrency}
-                  onChange={(event) => setPointsPerCurrency(event.target.value)}
-                  placeholder="مثال: 1"
-                  className={inputClass}
-                />
+              <input
+                id="loyalty-name"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="مثال: خصم 10% مقابل 100 نقطة"
+                className={inputClass}
+              />
 
-                {policyFormErrors.pointsPerCurrency && (
-                  <p className="mt-1 text-sm text-red-500 dark:text-red-300">
-                    {policyFormErrors.pointsPerCurrency}
-                  </p>
-                )}
-
-                <p className="mt-1 text-xs text-[var(--erp-muted)]">
-                  مثال: كل 1 SYP يعطي 1 نقطة.
-                </p>
-              </div>
-
-              <div>
-                <label htmlFor="currency-per-point" className={labelClass}>
-                  قيمة كل نقطة
-                </label>
-
-                <input
-                  id="currency-per-point"
-                  type="number"
-                  value={currencyPerPoint}
-                  onChange={(event) => setCurrencyPerPoint(event.target.value)}
-                  placeholder="مثال: 10"
-                  className={inputClass}
-                />
-
-                {policyFormErrors.currencyPerPoint && (
-                  <p className="mt-1 text-sm text-red-500 dark:text-red-300">
-                    {policyFormErrors.currencyPerPoint}
-                  </p>
-                )}
-
-                <p className="mt-1 text-xs text-[var(--erp-muted)]">
-                  مثال: كل نقطة تساوي 10 SYP عند الاستبدال.
-                </p>
-              </div>
-
-              {policyError && (
-                <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
-                  {policyError}
+              {rewardFormErrors.name && (
+                <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                  {rewardFormErrors.name}
                 </p>
               )}
+            </div>
 
-              {policyMessage && (
-                <p className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
-                  {policyMessage}
+            <div>
+              <label htmlFor="loyalty-description" className={labelClass}>
+                الوصف (اختياري)
+              </label>
+
+              <textarea
+                id="loyalty-description"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={3}
+                placeholder="تفاصيل إضافية عن العرض"
+                className={inputClass}
+              />
+
+              {rewardFormErrors.description && (
+                <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                  {rewardFormErrors.description}
                 </p>
               )}
+            </div>
 
-              <div className="flex justify-end border-t border-[var(--erp-border)] pt-4">
-                <Button type="submit" disabled={updatePolicy.isPending}>
-                  {updatePolicy.isPending ? "جاري الحفظ..." : "حفظ السياسة"}
-                </Button>
-              </div>
-            </form>
-          )}
-        </section>
+            <div>
+              <label htmlFor="loyalty-points-cost" className={labelClass}>
+                تكلفة النقاط
+              </label>
 
-        <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
-          <div className="mb-5">
-            <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-              إضافة مكافأة
-            </h2>
+              <input
+                id="loyalty-points-cost"
+                type="number"
+                min={1}
+                value={pointsCost}
+                onChange={(event) => setPointsCost(event.target.value)}
+                placeholder="مثال: 100"
+                className={inputClass}
+              />
 
-            <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              أنشئ مكافأة جديدة يحصل عليها العميل عند الوصول إلى حد معين من
-              النقاط.
-            </p>
-          </div>
+              {rewardFormErrors.pointsCost && (
+                <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                  {rewardFormErrors.pointsCost}
+                </p>
+              )}
+            </div>
 
-          <form onSubmit={handleCreateReward} className="space-y-4" noValidate>
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <label htmlFor="reward-threshold" className={labelClass}>
-                  حد النقاط
+                <label htmlFor="loyalty-discount-type" className={labelClass}>
+                  نوع الخصم
                 </label>
 
-                <input
-                  id="reward-threshold"
-                  type="number"
-                  placeholder="مثال: 1000"
+                <select
+                  id="loyalty-discount-type"
+                  value={discountType}
+                  onChange={(event) =>
+                    setDiscountType(event.target.value as LoyaltyDiscountType)
+                  }
                   className={inputClass}
-                  value={threshold}
-                  onChange={(event) => setThreshold(event.target.value)}
-                />
+                >
+                  {LOYALTY_DISCOUNT_TYPES.map((type) => (
+                    <option key={type} value={type}>
+                      {LOYALTY_DISCOUNT_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
 
-                {rewardFormErrors.pointsThreshold && (
+                {rewardFormErrors.discountType && (
                   <p className="mt-1 text-sm text-red-500 dark:text-red-300">
-                    {rewardFormErrors.pointsThreshold}
+                    {rewardFormErrors.discountType}
                   </p>
                 )}
               </div>
 
               <div>
-                <label htmlFor="reward-discount" className={labelClass}>
+                <label htmlFor="loyalty-discount-value" className={labelClass}>
                   قيمة الخصم
                 </label>
 
                 <input
-                  id="reward-discount"
+                  id="loyalty-discount-value"
                   type="number"
-                  placeholder="مثال: 5000"
-                  className={inputClass}
+                  min={0}
+                  step="0.01"
                   value={discountValue}
                   onChange={(event) => setDiscountValue(event.target.value)}
+                  placeholder={
+                    discountType === "PERCENTAGE" ? "مثال: 10" : "مثال: 5000"
+                  }
+                  className={inputClass}
                 />
 
                 {rewardFormErrors.discountValue && (
@@ -351,82 +401,111 @@ export function LoyaltyRewardsPage() {
                   </p>
                 )}
               </div>
+            </div>
 
-              <div className="md:col-span-2">
-                <label htmlFor="reward-description" className={labelClass}>
-                  وصف المكافأة
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <label htmlFor="loyalty-max-uses" className={labelClass}>
+                  الحد الأقصى للاستخدام
                 </label>
 
                 <input
-                  id="reward-description"
-                  placeholder="مثال: خصم عند الوصول إلى 1000 نقطة"
+                  id="loyalty-max-uses"
+                  type="number"
+                  min={1}
+                  value={maxUses}
+                  onChange={(event) => setMaxUses(event.target.value)}
                   className={inputClass}
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
                 />
 
-                {rewardFormErrors.rewardDescription && (
+                {rewardFormErrors.maxUses && (
                   <p className="mt-1 text-sm text-red-500 dark:text-red-300">
-                    {rewardFormErrors.rewardDescription}
+                    {rewardFormErrors.maxUses}
+                  </p>
+                )}
+              </div>
+
+              <div>
+                <label htmlFor="loyalty-validity-days" className={labelClass}>
+                  مدة الصلاحية (أيام)
+                </label>
+
+                <input
+                  id="loyalty-validity-days"
+                  type="number"
+                  min={1}
+                  value={validityDays}
+                  onChange={(event) => setValidityDays(event.target.value)}
+                  className={inputClass}
+                />
+
+                {rewardFormErrors.validityDays && (
+                  <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                    {rewardFormErrors.validityDays}
                   </p>
                 )}
               </div>
             </div>
 
-            <label className="flex items-center justify-between gap-4 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4">
-              <div className="text-right">
-                <p className="text-sm font-semibold text-[var(--erp-text)]">
-                  تفعيل المكافأة
-                </p>
-
-                <p className="mt-1 text-xs text-[var(--erp-muted)]">
-                  المكافأة ستكون متاحة للعملاء فور إنشائها.
-                </p>
-              </div>
-
+            <label className="flex items-center justify-end gap-2 text-sm text-[var(--erp-text)]">
+              <span>المكافأة نشطة</span>
               <input
                 type="checkbox"
                 checked={isActive}
                 onChange={(event) => setIsActive(event.target.checked)}
-                className="size-5 accent-[var(--erp-brand-solid)]"
+                className="size-4 accent-[var(--erp-brand-solid)]"
               />
             </label>
 
-            {rewardFormErrors.isActive && (
-              <p className="text-sm text-red-500 dark:text-red-300">
-                {rewardFormErrors.isActive}
+            {rewardMessage && (
+              <p className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+                {rewardMessage}
               </p>
             )}
 
             {rewardError && (
-              <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
+              <p className="rounded-2xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
                 {rewardError}
               </p>
             )}
 
-            <div className="flex justify-end border-t border-[var(--erp-border)] pt-4">
-              <Button
-                type="submit"
-                disabled={createReward.isPending}
-                className="gap-2"
-              >
+            <Button type="submit" className="w-full gap-2" disabled={isSaving}>
+              {isEditing ? (
+                <Pencil className="size-4" />
+              ) : (
                 <Plus className="size-4" />
-                {createReward.isPending ? "جاري الإضافة..." : "إضافة مكافأة"}
-              </Button>
-            </div>
+              )}
+              {isSaving
+                ? isEditing
+                  ? "جاري الحفظ..."
+                  : "جاري الإنشاء..."
+                : isEditing
+                  ? "حفظ التعديلات"
+                  : "إنشاء المكافأة"}
+            </Button>
           </form>
         </section>
-      </section>
 
-      <RewardsTable
-        rewards={rewards}
-        isLoading={isLoading}
-        isError={isError}
-        isUpdating={updateReward.isPending}
-        isDeleting={deleteReward.isPending}
-        onToggleReward={handleToggleReward}
-        onDeleteReward={handleDeleteReward}
-      />
+        <RewardsTable
+          rewards={rewards}
+          isLoading={isLoading}
+          isError={isError}
+          isUpdating={updateReward.isPending}
+          isDeleting={deleteReward.isPending}
+          editingId={editingReward?.id}
+          page={rewardsPage}
+          isFinalPage={rewardsData?.isFinalPage ?? true}
+          isFetching={rewardsFetching}
+          total={rewardsData?.total}
+          onPrevious={() =>
+            setRewardsPage((current) => Math.max(1, current - 1))
+          }
+          onNext={() => setRewardsPage((current) => current + 1)}
+          onEditReward={handleStartEdit}
+          onToggleReward={handleToggleReward}
+          onDeleteReward={handleDeleteReward}
+        />
+      </section>
     </div>
   )
 }
@@ -437,21 +516,31 @@ function RewardsTable({
   isError,
   isUpdating,
   isDeleting,
+  editingId,
+  page,
+  isFinalPage,
+  isFetching,
+  total,
+  onPrevious,
+  onNext,
+  onEditReward,
   onToggleReward,
   onDeleteReward,
 }: {
-  rewards: Array<{
-    id: string
-    pointsThreshold: number | string
-    rewardDescription: string
-    discountValue: number | string
-    isActive: boolean
-  }>
+  rewards: LoyaltyReward[]
   isLoading: boolean
   isError: boolean
   isUpdating: boolean
   isDeleting: boolean
-  onToggleReward: (id: string, currentStatus: boolean) => void
+  editingId?: string
+  page: number
+  isFinalPage: boolean
+  isFetching: boolean
+  total?: number
+  onPrevious: () => void
+  onNext: () => void
+  onEditReward: (reward: LoyaltyReward) => void
+  onToggleReward: (reward: LoyaltyReward) => void
   onDeleteReward: (id: string) => void
 }) {
   if (isLoading) {
@@ -478,25 +567,30 @@ function RewardsTable({
         </h2>
 
         <p className="mt-1 text-sm text-[var(--erp-muted)]">
-          عدد المكافآت: {formatNumber(rewards.length)}
+          عدد النتائج: {formatNumber(rewards.length)}
+          {total != null ? ` · الإجمالي ${formatNumber(total)}` : ""}
         </p>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-        <table className="w-full min-w-[720px] table-fixed text-right text-sm">
+        <table className="w-full min-w-[920px] table-fixed text-right text-sm">
           <colgroup>
-            <col className="w-[16%]" />
-            <col className="w-[36%]" />
-            <col className="w-[16%]" />
+            <col className="w-[20%]" />
+            <col className="w-[10%]" />
             <col className="w-[14%]" />
-            <col className="w-[18%]" />
+            <col className="w-[10%]" />
+            <col className="w-[10%]" />
+            <col className="w-[10%]" />
+            <col className="w-[26%]" />
           </colgroup>
 
           <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
             <tr>
-              <th className="px-3 py-3 font-medium">حد النقاط</th>
-              <th className="px-3 py-3 font-medium">الوصف</th>
+              <th className="px-3 py-3 font-medium">الاسم</th>
+              <th className="px-3 py-3 font-medium">النقاط</th>
               <th className="px-3 py-3 font-medium">الخصم</th>
+              <th className="px-3 py-3 font-medium">الاستخدام</th>
+              <th className="px-3 py-3 font-medium">الصلاحية</th>
               <th className="px-3 py-3 text-center font-medium">الحالة</th>
               <th className="px-3 py-3 text-center font-medium">العمليات</th>
             </tr>
@@ -506,20 +600,47 @@ function RewardsTable({
             {rewards.map((reward) => (
               <tr
                 key={reward.id}
-                className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
+                className={`border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)] ${
+                  editingId === reward.id
+                    ? "bg-[color-mix(in_srgb,var(--erp-brand-solid)_8%,var(--erp-bg))]"
+                    : ""
+                }`}
               >
+                <td className="px-3 py-3">
+                  <p className="truncate font-medium text-[var(--erp-text)]">
+                    {reward.name}
+                  </p>
+                  {reward.description ? (
+                    <p className="mt-1 truncate text-xs text-[var(--erp-muted)]">
+                      {reward.description}
+                    </p>
+                  ) : null}
+                </td>
+
                 <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
-                  {formatNumber(reward.pointsThreshold)}
+                  {formatNumber(reward.pointsCost)}
                 </td>
 
                 <td className="px-3 py-3 text-[var(--erp-text)]">
                   <span className="block truncate">
-                    {reward.rewardDescription}
+                    {formatDiscountValue(
+                      reward.discountType,
+                      reward.discountValue
+                    )}
+                  </span>
+                  <span className="mt-1 block text-xs text-[var(--erp-muted)]">
+                    {LOYALTY_DISCOUNT_TYPE_LABELS[
+                      reward.discountType as LoyaltyDiscountType
+                    ] ?? reward.discountType}
                   </span>
                 </td>
 
-                <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
-                  {formatSyp(reward.discountValue)}
+                <td className="px-3 py-3 text-[var(--erp-muted)]">
+                  {formatNumber(reward.maxUses)}
+                </td>
+
+                <td className="px-3 py-3 text-[var(--erp-muted)]">
+                  {formatNumber(reward.validityDays)} يوم
                 </td>
 
                 <td className="px-3 py-3">
@@ -531,10 +652,20 @@ function RewardsTable({
                 <td className="px-3 py-3">
                   <div className="flex flex-wrap justify-center gap-1.5">
                     <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1"
+                      onClick={() => onEditReward(reward)}
+                    >
+                      <Pencil className="size-3.5" />
+                      تعديل
+                    </Button>
+
+                    <Button
                       variant={reward.isActive ? "destructive" : "success"}
                       size="sm"
                       disabled={isUpdating}
-                      onClick={() => onToggleReward(reward.id, reward.isActive)}
+                      onClick={() => onToggleReward(reward)}
                     >
                       {reward.isActive ? "تعطيل" : "تفعيل"}
                     </Button>
@@ -557,7 +688,7 @@ function RewardsTable({
             {rewards.length === 0 && (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={7}
                   className="px-4 py-8 text-center text-sm text-[var(--erp-muted)]"
                 >
                   لا توجد مكافآت
@@ -567,6 +698,15 @@ function RewardsTable({
           </tbody>
         </table>
       </div>
+
+      <PaginationControls
+        page={page}
+        isFinalPage={isFinalPage}
+        isLoading={isFetching}
+        total={total}
+        onPrevious={onPrevious}
+        onNext={onNext}
+      />
     </section>
   )
 }

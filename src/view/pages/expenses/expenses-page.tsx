@@ -1,6 +1,6 @@
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { FolderOpen, Plus, Receipt, Wallet } from "lucide-react"
 
 import { useExpenses } from "@/hooks/Expenses/useExpenses"
@@ -14,13 +14,25 @@ import { formatNumber, toEnglishDigits } from "@/utils/number-formatters"
 import { ExpensesTable } from "@/view/components/expenses/ExpensesTable"
 import { Button } from "@/view/components/ui/button"
 
+const PAGE_SIZE = 10
+
 function formatAmount(value: unknown) {
   return `${toEnglishDigits(formatExpenseAmount(value))} SYP`
 }
 
 export function ExpensesPage() {
-  const { data: expenses = [], isLoading, isError } = useExpenses()
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const { data, isLoading, isError, isFetching } = useExpenses({
+    page,
+    limit: PAGE_SIZE,
+  })
+
+  useEffect(() => {
+    setPage(1)
+  }, [search])
+
+  const expenses = data?.data ?? []
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -33,9 +45,8 @@ export function ExpensesPage() {
     )
   }, [expenses, search])
 
-  const totalAmount = sumExpenseAmounts(expenses)
-  const filteredTotal = sumExpenseAmounts(filtered)
-  const categoryCount = new Set(expenses.map((expense) => expense.category))
+  const pageTotal = sumExpenseAmounts(filtered)
+  const categoryCount = new Set(filtered.map((expense) => expense.category))
     .size
   const isFiltered = search.trim().length > 0
 
@@ -69,12 +80,14 @@ export function ExpensesPage() {
       {!isLoading && !isError && (
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <SummaryCard
-            label="إجمالي المصروفات"
-            value={formatAmount(totalAmount)}
+            label="إجمالي الصفحة"
+            value={formatAmount(pageTotal)}
             hint={
               isFiltered
-                ? `المعروض بعد البحث: ${formatAmount(filteredTotal)}`
-                : `مجموع ${formatNumber(expenses.length)} مصروف`
+                ? "بعد البحث في الصفحة الحالية"
+                : data?.total != null
+                  ? `من أصل ${formatNumber(data.total)} مصروف`
+                  : undefined
             }
             icon={<Wallet className="size-5" />}
           />
@@ -82,16 +95,20 @@ export function ExpensesPage() {
           <SummaryCard
             label="عدد المصروفات"
             value={
-              isFiltered
-                ? `${formatNumber(filtered.length)} / ${formatNumber(expenses.length)}`
-                : formatNumber(expenses.length)
+              data?.total != null
+                ? formatNumber(data.total)
+                : formatNumber(filtered.length)
             }
-            hint={isFiltered ? "معروض / الإجمالي" : undefined}
+            hint={
+              isFiltered
+                ? `معروض في الصفحة: ${formatNumber(filtered.length)}`
+                : undefined
+            }
             icon={<Receipt className="size-5" />}
           />
 
           <SummaryCard
-            label="عدد الفئات"
+            label="عدد الفئات (الصفحة)"
             value={formatNumber(categoryCount)}
             icon={<FolderOpen className="size-5" />}
           />
@@ -104,6 +121,12 @@ export function ExpensesPage() {
         onSearchChange={setSearch}
         isLoading={isLoading}
         isError={isError}
+        page={page}
+        isFinalPage={data?.isFinalPage ?? true}
+        isFetching={isFetching}
+        total={data?.total}
+        onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+        onNext={() => setPage((current) => current + 1)}
       />
     </div>
   )

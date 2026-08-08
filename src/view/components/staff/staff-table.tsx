@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
 import { PERMISSIONS } from "@/auth/permissions"
@@ -13,18 +13,28 @@ import {
 import { formatNumber } from "@/utils/number-formatters"
 import { Can } from "@/view/components/auth/can"
 import { Button } from "@/view/components/ui/button"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
+
+const PAGE_SIZE = 10
 
 const selectClass =
   "rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-3 py-2 text-sm text-[var(--erp-text)] outline-none transition focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 export function StaffTable() {
+  const [page, setPage] = useState(1)
   const [roleFilter, setRoleFilter] = useState<StaffRole | "ALL">("ALL")
-  const { data, isLoading, error } = useStaff(
-    roleFilter === "ALL" ? undefined : { role: roleFilter }
-  )
+  const { data, isLoading, error, isFetching } = useStaff({
+    page,
+    limit: PAGE_SIZE,
+    ...(roleFilter === "ALL" ? {} : { role: roleFilter }),
+  })
   const deleteMutation = useDeleteStaff()
 
-  const staff = data ?? []
+  useEffect(() => {
+    setPage(1)
+  }, [roleFilter])
+
+  const staff = data?.data ?? []
 
   function handleDeleteStaff(id: number, name: string) {
     const shouldDelete = window.confirm(
@@ -45,7 +55,10 @@ export function StaffTable() {
           </h2>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            عدد الموظفين: {formatNumber(staff.length)}
+            عدد النتائج: {formatNumber(staff.length)}
+            {data?.total != null
+              ? ` · الإجمالي ${formatNumber(data.total)}`
+              : ""}
           </p>
         </div>
 
@@ -96,93 +109,108 @@ export function StaffTable() {
       )}
 
       {!isLoading && !error && staff.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-          <table className="w-full min-w-[720px] table-fixed text-right text-sm">
-            <colgroup>
-              <col className="w-[20%]" />
-              <col className="w-[18%]" />
-              <col className="w-[16%]" />
-              <col className="w-[14%]" />
-              <col className="w-[14%]" />
-              <col className="w-[18%]" />
-            </colgroup>
+        <>
+          <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
+            <table className="w-full min-w-[720px] table-fixed text-right text-sm">
+              <colgroup>
+                <col className="w-[20%]" />
+                <col className="w-[18%]" />
+                <col className="w-[16%]" />
+                <col className="w-[14%]" />
+                <col className="w-[14%]" />
+                <col className="w-[18%]" />
+              </colgroup>
 
-            <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
-              <tr>
-                <th className="px-3 py-3 font-medium">الاسم</th>
-                <th className="px-3 py-3 font-medium">البريد الإلكتروني</th>
-                <th className="px-3 py-3 font-medium">الهاتف</th>
-                <th className="px-3 py-3 font-medium">الدور</th>
-                <th className="px-3 py-3 font-medium">المسمى الوظيفي</th>
-                <th className="px-3 py-3 text-center font-medium">إجراءات</th>
-              </tr>
-            </thead>
+              <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
+                <tr>
+                  <th className="px-3 py-3 font-medium">الاسم</th>
+                  <th className="px-3 py-3 font-medium">البريد الإلكتروني</th>
+                  <th className="px-3 py-3 font-medium">الهاتف</th>
+                  <th className="px-3 py-3 font-medium">الدور</th>
+                  <th className="px-3 py-3 font-medium">المسمى الوظيفي</th>
+                  <th className="px-3 py-3 text-center font-medium">إجراءات</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {staff.map((member) => (
-                <tr
-                  key={member.id}
-                  className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
-                >
-                  <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
-                    <span className="block truncate">{member.fullName}</span>
-                  </td>
+              <tbody>
+                {staff.map((member) => (
+                  <tr
+                    key={member.id}
+                    className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
+                  >
+                    <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
+                      <span className="block truncate">{member.fullName}</span>
+                    </td>
 
-                  <td className="px-3 py-3 text-[var(--erp-muted)]">
-                    <span className="block truncate">{member.email}</span>
-                  </td>
+                    <td className="px-3 py-3 text-[var(--erp-muted)]">
+                      <span className="block truncate">{member.email}</span>
+                    </td>
 
-                  <td className="px-3 py-3 text-[var(--erp-muted)]">
-                    <span className="block truncate">{member.phoneNumber}</span>
-                  </td>
+                    <td className="px-3 py-3 text-[var(--erp-muted)]">
+                      <span className="block truncate">
+                        {member.phoneNumber}
+                      </span>
+                    </td>
 
-                  <td className="px-3 py-3 text-[var(--erp-muted)]">
-                    <span className="block truncate">
-                      {formatStaffRole(member.role)}
-                    </span>
-                  </td>
+                    <td className="px-3 py-3 text-[var(--erp-muted)]">
+                      <span className="block truncate">
+                        {formatStaffRole(member.role)}
+                      </span>
+                    </td>
 
-                  <td className="px-3 py-3 text-[var(--erp-muted)]">
-                    <span className="block truncate">
-                      {member.jobTitle || "—"}
-                    </span>
-                  </td>
+                    <td className="px-3 py-3 text-[var(--erp-muted)]">
+                      <span className="block truncate">
+                        {member.jobTitle || "—"}
+                      </span>
+                    </td>
 
-                  <td className="px-3 py-3">
-                    <div className="flex flex-wrap justify-center gap-1.5">
-                      <Link to={`/staff/${member.id}`}>
-                        <Button variant="outline" size="xs">
-                          عرض
-                        </Button>
-                      </Link>
-
-                      <Can permission={PERMISSIONS.EMPLOYEE_MANAGE}>
-                        <Link to={`/staff/${member.id}/edit`}>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-wrap justify-center gap-1.5">
+                        <Link to={`/staff/${member.id}`}>
                           <Button variant="outline" size="xs">
-                            تعديل
+                            عرض
                           </Button>
                         </Link>
 
-                        <Can permission={PERMISSIONS.ACCOUNT_DELETE}>
-                          <Button
-                            variant="destructive"
-                            size="xs"
-                            onClick={() =>
-                              handleDeleteStaff(member.id, member.fullName)
-                            }
-                            disabled={deleteMutation.isPending}
-                          >
-                            حذف
-                          </Button>
+                        <Can permission={PERMISSIONS.EMPLOYEE_MANAGE}>
+                          <Link to={`/staff/${member.id}/edit`}>
+                            <Button variant="outline" size="xs">
+                              تعديل
+                            </Button>
+                          </Link>
+
+                          <Can permission={PERMISSIONS.ACCOUNT_DELETE}>
+                            <Button
+                              variant="destructive"
+                              size="xs"
+                              onClick={() =>
+                                handleDeleteStaff(member.id, member.fullName)
+                              }
+                              disabled={deleteMutation.isPending}
+                            >
+                              حذف
+                            </Button>
+                          </Can>
                         </Can>
-                      </Can>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4">
+            <PaginationControls
+              page={page}
+              isFinalPage={data?.isFinalPage ?? true}
+              isLoading={isFetching}
+              total={data?.total}
+              onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+              onNext={() => setPage((current) => current + 1)}
+            />
+          </div>
+        </>
       )}
     </section>
   )

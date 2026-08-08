@@ -3,16 +3,26 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   getCustomers,
   getCustomer,
+  normalizeCustomersList,
   updateCustomerStatus,
   updateCustomerLoyalty,
   type CustomerStatus,
+  type CustomersQuery,
 } from "@/services/customer-service"
+import { toPaginationQuery } from "@/lib/pagination"
 import { isValidId } from "@/validation/helpers"
 
-export function useCustomers() {
+export function useCustomers(params?: CustomersQuery) {
+  const query = toPaginationQuery(params ?? { limit: 100 })
+
   return useQuery({
-    queryKey: ["customers"],
-    queryFn: () => getCustomers(),
+    queryKey: ["customers", query],
+    queryFn: async () =>
+      normalizeCustomersList(
+        await getCustomers({ ...params, ...query }),
+        query.limit,
+        query.offset
+      ),
   })
 }
 

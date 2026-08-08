@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link } from "react-router-dom"
 
 import { useDeleteSupplier } from "@/hooks/Suppliers/useDeleteSupplier"
@@ -6,12 +7,20 @@ import { PERMISSIONS } from "@/auth/permissions"
 import { Can } from "@/view/components/auth/can"
 import { formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
+
+const PAGE_SIZE = 10
 
 export function SuppliersTable() {
-  const { data, isLoading, error } = useSuppliers()
+  const [page, setPage] = useState(1)
+  const { data, isLoading, error, isFetching } = useSuppliers({
+    page,
+    limit: PAGE_SIZE,
+  })
   const deleteMutation = useDeleteSupplier()
 
   const suppliers = data?.data ?? []
+  const isFinalPage = data?.isFinalPage ?? suppliers.length < PAGE_SIZE
 
   function handleDeleteSupplier(id: number) {
     const shouldDelete = window.confirm("هل أنت متأكد من حذف هذا المورد؟")
@@ -30,7 +39,10 @@ export function SuppliersTable() {
           </h2>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            عدد الموردين: {formatNumber(suppliers.length)}
+            عدد النتائج: {formatNumber(suppliers.length)}
+            {data?.total != null
+              ? ` · الإجمالي ${formatNumber(data.total)}`
+              : ""}
           </p>
         </div>
       </div>
@@ -63,81 +75,96 @@ export function SuppliersTable() {
       )}
 
       {!isLoading && !error && suppliers.length > 0 && (
-        <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-          <table className="w-full min-w-[720px] table-fixed text-right text-sm">
-            <colgroup>
-              <col className="w-[22%]" />
-              <col className="w-[17%]" />
-              <col className="w-[23%]" />
-              <col className="w-[20%]" />
-              <col className="w-[18%]" />
-            </colgroup>
+        <>
+          <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
+            <table className="w-full min-w-[720px] table-fixed text-right text-sm">
+              <colgroup>
+                <col className="w-[22%]" />
+                <col className="w-[17%]" />
+                <col className="w-[23%]" />
+                <col className="w-[20%]" />
+                <col className="w-[18%]" />
+              </colgroup>
 
-            <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
-              <tr>
-                <th className="px-3 py-3 font-medium">الاسم</th>
-                <th className="px-3 py-3 font-medium">الهاتف</th>
-                <th className="px-3 py-3 font-medium">الإيميل</th>
-                <th className="px-3 py-3 font-medium">العنوان</th>
-                <th className="px-3 py-3 text-center font-medium">إجراءات</th>
-              </tr>
-            </thead>
+              <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
+                <tr>
+                  <th className="px-3 py-3 font-medium">الاسم</th>
+                  <th className="px-3 py-3 font-medium">الهاتف</th>
+                  <th className="px-3 py-3 font-medium">الإيميل</th>
+                  <th className="px-3 py-3 font-medium">العنوان</th>
+                  <th className="px-3 py-3 text-center font-medium">إجراءات</th>
+                </tr>
+              </thead>
 
-            <tbody>
-              {suppliers.map((supplier) => (
-                <tr
-                  key={supplier.id}
-                  className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
-                >
-                  <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
-                    <span className="block truncate">{supplier.fullName}</span>
-                  </td>
+              <tbody>
+                {suppliers.map((supplier) => (
+                  <tr
+                    key={supplier.id}
+                    className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
+                  >
+                    <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
+                      <span className="block truncate">
+                        {supplier.fullName}
+                      </span>
+                    </td>
 
-                  <td className="px-3 py-3 text-[var(--erp-muted)]">
-                    <span className="block truncate">{supplier.phone}</span>
-                  </td>
+                    <td className="px-3 py-3 text-[var(--erp-muted)]">
+                      <span className="block truncate">{supplier.phone}</span>
+                    </td>
 
-                  <td className="px-3 py-3 text-[var(--erp-muted)]">
-                    <span className="block truncate">{supplier.email}</span>
-                  </td>
+                    <td className="px-3 py-3 text-[var(--erp-muted)]">
+                      <span className="block truncate">{supplier.email}</span>
+                    </td>
 
-                  <td className="px-3 py-3 text-[var(--erp-muted)]">
-                    <span className="block truncate">
-                      {supplier.address || "—"}
-                    </span>
-                  </td>
+                    <td className="px-3 py-3 text-[var(--erp-muted)]">
+                      <span className="block truncate">
+                        {supplier.address || "—"}
+                      </span>
+                    </td>
 
-                  <td className="px-3 py-3">
-                    <div className="flex flex-wrap justify-center gap-1.5">
-                      <Link to={`/suppliers/${supplier.id}`}>
-                        <Button variant="outline" size="xs">
-                          عرض
-                        </Button>
-                      </Link>
-
-                      <Can permission={PERMISSIONS.SUPPLIER_MANAGE}>
-                        <Link to={`/suppliers/${supplier.id}/edit`}>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-wrap justify-center gap-1.5">
+                        <Link to={`/suppliers/${supplier.id}`}>
                           <Button variant="outline" size="xs">
-                            تعديل
+                            عرض
                           </Button>
                         </Link>
 
-                        <Button
-                          variant="destructive"
-                          size="xs"
-                          onClick={() => handleDeleteSupplier(supplier.id)}
-                          disabled={deleteMutation.isPending}
-                        >
-                          حذف
-                        </Button>
-                      </Can>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                        <Can permission={PERMISSIONS.SUPPLIER_MANAGE}>
+                          <Link to={`/suppliers/${supplier.id}/edit`}>
+                            <Button variant="outline" size="xs">
+                              تعديل
+                            </Button>
+                          </Link>
+
+                          <Button
+                            variant="destructive"
+                            size="xs"
+                            onClick={() => handleDeleteSupplier(supplier.id)}
+                            disabled={deleteMutation.isPending}
+                          >
+                            حذف
+                          </Button>
+                        </Can>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="mt-4">
+            <PaginationControls
+              page={page}
+              isFinalPage={isFinalPage}
+              isLoading={isFetching}
+              total={data?.total}
+              onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+              onNext={() => setPage((current) => current + 1)}
+            />
+          </div>
+        </>
       )}
     </section>
   )

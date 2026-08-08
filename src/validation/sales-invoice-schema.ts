@@ -1,18 +1,15 @@
 import { z } from "zod"
 
-import {
-  parseFiniteNumber,
-  parsePositiveInteger,
-} from "./helpers"
+import { parseFiniteNumber, parsePositiveInteger } from "./helpers"
 
 export const SALES_INVOICE_STATUS_OPTIONS = [
   "PENDING",
   "COMPLETED",
   "REFUNDED",
+  "CANCELLED",
 ] as const
 
-export type SalesInvoiceStatus =
-  (typeof SALES_INVOICE_STATUS_OPTIONS)[number]
+export type SalesInvoiceStatus = (typeof SALES_INVOICE_STATUS_OPTIONS)[number]
 
 type SalesInvoiceItemValues = {
   productId?: string | number | null | undefined
@@ -127,7 +124,10 @@ export type SalesInvoicePayload = {
 }
 
 export type SalesInvoiceFormErrors = Partial<
-  Record<"customerId" | "discountId" | "amountPaid" | "items" | "status", string>
+  Record<
+    "customerId" | "discountId" | "amountPaid" | "items" | "status",
+    string
+  >
 >
 
 export function isSalesInvoiceStatus(

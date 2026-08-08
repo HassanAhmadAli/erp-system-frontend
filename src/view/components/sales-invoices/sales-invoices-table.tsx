@@ -1,9 +1,10 @@
 import { useState } from "react"
-import { CheckCircle2, Eye, Loader2, Undo2 } from "lucide-react"
+import { Ban, CheckCircle2, Eye, Loader2, Undo2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { cn } from "@/lib/utils"
 import { useUpdateSalesInvoiceStatus } from "@/hooks/useSalesInvoices"
+import { usePermissions } from "@/hooks/usePermissions"
 import { isValidId } from "@/validation/helpers"
 import { isSalesInvoiceStatus } from "@/validation/sales-invoice-schema"
 import type {
@@ -15,7 +16,10 @@ import {
   formatMoney,
   formatNumber,
   getInvoiceTotal,
+  getNextSalesInvoiceStatusOptions,
+  normalizeSalesInvoiceStatus,
   NumberText,
+  salesInvoiceStatusLabels,
   SalesInvoiceStatusBadge,
 } from "./sales-invoice-format"
 
@@ -41,14 +45,40 @@ function getSalesInvoiceCustomerName(invoice: SalesInvoice) {
   return `عميل #${formatNumber(customerId)}`
 }
 
+function getStatusActionLabel(status: SalesInvoiceStatus) {
+  return salesInvoiceStatusLabels[status] ?? status
+}
+
+function getStatusActionIcon(status: SalesInvoiceStatus) {
+  if (status === "COMPLETED") return CheckCircle2
+  if (status === "REFUNDED") return Undo2
+  return Ban
+}
+
+function getStatusActionClass(status: SalesInvoiceStatus) {
+  if (status === "COMPLETED") {
+    return "bg-emerald-600 text-white hover:bg-emerald-700"
+  }
+
+  if (status === "REFUNDED") {
+    return "bg-rose-600 text-white hover:bg-rose-700"
+  }
+
+  return "bg-red-600 text-white hover:bg-red-700"
+}
+
 export function SalesInvoicesTable({
   invoices,
   isLoading,
   isError,
 }: SalesInvoicesTableProps) {
   const navigate = useNavigate()
+  const { canManageSalesInvoice } = usePermissions()
   const updateStatusMutation = useUpdateSalesInvoiceStatus()
   const [statusError, setStatusError] = useState("")
+  const [updatingInvoiceId, setUpdatingInvoiceId] = useState<number | null>(
+    null
+  )
 
   function handleStatusUpdate(id: number, status: SalesInvoiceStatus) {
     setStatusError("")
@@ -63,7 +93,20 @@ export function SalesInvoicesTable({
       return
     }
 
-    updateStatusMutation.mutate({ id, status })
+    setUpdatingInvoiceId(id)
+    updateStatusMutation.mutate(
+      { id, status },
+      {
+        onSettled: () => {
+          setUpdatingInvoiceId(null)
+        },
+        onError: () => {
+          setStatusError(
+            "فشل تحديث حالة الفاتورة. تأكد أن الانتقال مسموح (قيد الانتظار → مكتملة/ملغاة، مكتملة → مستردة)."
+          )
+        },
+      }
+    )
   }
 
   if (isLoading) {
@@ -95,14 +138,13 @@ export function SalesInvoicesTable({
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[900px] border-separate border-spacing-y-2 text-right text-sm">
+        <table className="w-full min-w-[980px] border-separate border-spacing-y-2 text-right text-sm">
           <thead>
             <tr className="text-xs text-[var(--erp-muted)]">
               <th className="px-4 py-2 font-semibold">رقم الفاتورة</th>
               <th className="px-4 py-2 font-semibold">العميل</th>
-              <th className="px-4 py-2 font-semibold">الحالة</th>
+              <th className="px-4 py-2 font-semibold">الحالة الحالية</th>
               <th className="px-4 py-2 font-semibold">الإجمالي</th>
-              <th className="px-4 py-2 font-semibold">المدفوع</th>
               <th className="px-4 py-2 font-semibold">التاريخ</th>
               <th className="px-4 py-2 font-semibold">تحديث الحالة</th>
               <th className="px-4 py-2 font-semibold">الإجراءات</th>
@@ -111,12 +153,13 @@ export function SalesInvoicesTable({
 
           <tbody>
             {invoices.map((invoice) => {
-              const currentStatus = String(
-                invoice.status ?? "PENDING"
-              ).toUpperCase()
-
-              const canComplete = currentStatus === "PENDING"
-              const canReturn = currentStatus === "COMPLETED"
+              const currentStatus = normalizeSalesInvoiceStatus(invoice.status)
+              const nextStatuses =
+                getNextSalesInvoiceStatusOptions(currentStatus)
+              const canUpdate = canManageSalesInvoice(invoice)
+              const isRowUpdating =
+                updateStatusMutation.isPending &&
+                updatingInvoiceId === invoice.id
 
               return (
                 <tr key={invoice.id}>
@@ -137,62 +180,47 @@ export function SalesInvoicesTable({
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    <NumberText value={formatMoney(invoice.amountPaid)} />
-                  </td>
-
-                  <td className="bg-[var(--erp-bg)] px-4 py-3">
                     <NumberText value={formatDate(invoice.createdAt)} />
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    {canComplete && (
-                      <button
-                        type="button"
-                        disabled={updateStatusMutation.isPending}
-                        onClick={() =>
-                          handleStatusUpdate(invoice.id, "COMPLETED")
-                        }
-                        className={cn(
-                          "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition",
-                          "bg-emerald-600 text-white hover:bg-emerald-700",
-                          "disabled:cursor-not-allowed disabled:opacity-60"
-                        )}
-                      >
-                        {updateStatusMutation.isPending ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="size-4" />
-                        )}
-                        Complete
-                      </button>
-                    )}
-
-                    {canReturn && (
-                      <button
-                        type="button"
-                        disabled={updateStatusMutation.isPending}
-                        onClick={() =>
-                          handleStatusUpdate(invoice.id, "REFUNDED")
-                        }
-                        className={cn(
-                          "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition",
-                          "bg-red-600 text-white hover:bg-red-700",
-                          "disabled:cursor-not-allowed disabled:opacity-60"
-                        )}
-                      >
-                        {updateStatusMutation.isPending ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : (
-                          <Undo2 className="size-4" />
-                        )}
-                        Returned
-                      </button>
-                    )}
-
-                    {!canComplete && !canReturn && (
+                    {!canUpdate ? (
+                      <span className="text-xs text-[var(--erp-muted)]">
+                        لا تملك صلاحية التحديث
+                      </span>
+                    ) : nextStatuses.length === 0 ? (
                       <span className="text-xs text-[var(--erp-muted)]">
                         لا يوجد انتقال متاح
                       </span>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {nextStatuses.map((nextStatus) => {
+                          const Icon = getStatusActionIcon(nextStatus)
+
+                          return (
+                            <button
+                              key={nextStatus}
+                              type="button"
+                              disabled={updateStatusMutation.isPending}
+                              onClick={() =>
+                                handleStatusUpdate(invoice.id, nextStatus)
+                              }
+                              className={cn(
+                                "inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold transition",
+                                getStatusActionClass(nextStatus),
+                                "disabled:cursor-not-allowed disabled:opacity-60"
+                              )}
+                            >
+                              {isRowUpdating ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <Icon className="size-4" />
+                              )}
+                              {getStatusActionLabel(nextStatus)}
+                            </button>
+                          )
+                        })}
+                      </div>
                     )}
                   </td>
 
@@ -213,16 +241,10 @@ export function SalesInvoicesTable({
         </table>
       </div>
 
-      {updateStatusMutation.isError && (
+      {(updateStatusMutation.isError || statusError) && (
         <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
-          فشل تحديث حالة الفاتورة. الحالة يجب أن تنتقل من Pending إلى Completed
-          ثم إلى Returned.
-        </p>
-      )}
-
-      {statusError && (
-        <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
-          {statusError}
+          {statusError ||
+            "فشل تحديث حالة الفاتورة. الحالة تنتقل من قيد الانتظار إلى مكتملة أو ملغاة، ومن مكتملة إلى مستردة."}
         </p>
       )}
     </>

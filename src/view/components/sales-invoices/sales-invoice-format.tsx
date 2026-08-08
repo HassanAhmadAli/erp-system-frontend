@@ -63,6 +63,7 @@ export function getInvoiceTotal(invoice: SalesInvoice) {
   return (
     invoice.finalAmount ??
     invoice.totalAmount ??
+    invoice.total ??
     invoice.subtotal ??
     invoice.amountPaid ??
     null
@@ -89,12 +90,18 @@ export function getItemTotal(item: SalesInvoiceItem) {
 export function getNextSalesInvoiceStatusOptions(
   status?: string
 ): SalesInvoiceStatus[] {
-  const currentStatus = String(status ?? "PENDING").toUpperCase()
+  const currentStatus = normalizeSalesInvoiceStatus(status)
 
-  if (currentStatus === "PENDING") return ["COMPLETED"]
+  if (currentStatus === "PENDING") return ["COMPLETED", "CANCELLED"]
   if (currentStatus === "COMPLETED") return ["REFUNDED"]
 
   return []
+}
+
+export function normalizeSalesInvoiceStatus(status?: string | null) {
+  return String(status ?? "PENDING")
+    .trim()
+    .toUpperCase()
 }
 
 export function NumberText({ value }: { value: string | number }) {
@@ -106,7 +113,7 @@ export function NumberText({ value }: { value: string | number }) {
 }
 
 export function SalesInvoiceStatusBadge({ status }: { status?: string }) {
-  const safeStatus = String(status ?? "PENDING").toUpperCase()
+  const safeStatus = normalizeSalesInvoiceStatus(status)
 
   return (
     <span

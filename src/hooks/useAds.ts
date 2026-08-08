@@ -5,20 +5,29 @@ import {
   deleteAd,
   getAdById,
   getAds,
-  normalizeAds,
+  normalizeAdsList,
   updateAd,
+  type AdsQuery,
   type CreateAdInput,
   type UpdateAdInput,
 } from "@/services/ads-service"
+import { toPaginationQuery } from "@/lib/pagination"
 import { isValidId } from "@/validation/helpers"
 
-export function useAds(activeOnly = false) {
+export function useAds(params: AdsQuery | boolean = false) {
+  const normalized =
+    typeof params === "boolean" ? { activeOnly: params } : (params ?? {})
+  const { activeOnly = false, ...pagination } = normalized
+  const query = toPaginationQuery(pagination)
+
   return useQuery({
-    queryKey: ["ads", activeOnly],
-    queryFn: async () => {
-      const response = await getAds(activeOnly)
-      return normalizeAds(response)
-    },
+    queryKey: ["ads", activeOnly, query],
+    queryFn: async () =>
+      normalizeAdsList(
+        await getAds({ ...pagination, activeOnly, ...query }),
+        query.limit,
+        query.offset
+      ),
   })
 }
 

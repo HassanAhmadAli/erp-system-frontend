@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { Link, useNavigate } from "react-router-dom"
 
 import { formatExpenseAmount, type Expense } from "@/services/expense-service"
@@ -10,8 +9,7 @@ import {
   toEnglishDigits,
 } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
-
-const PAGE_SIZE = 15
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
 
 function formatDate(date: string) {
   return toEnglishDigits(
@@ -33,6 +31,12 @@ type ExpensesTableProps = {
   onSearchChange: (value: string) => void
   isLoading: boolean
   isError: boolean
+  page: number
+  isFinalPage: boolean
+  isFetching?: boolean
+  total?: number
+  onPrevious: () => void
+  onNext: () => void
 }
 
 export function ExpensesTable({
@@ -41,16 +45,14 @@ export function ExpensesTable({
   onSearchChange,
   isLoading,
   isError,
+  page,
+  isFinalPage,
+  isFetching = false,
+  total,
+  onPrevious,
+  onNext,
 }: ExpensesTableProps) {
   const navigate = useNavigate()
-  const [page, setPage] = useState(1)
-
-  const totalPages = Math.max(1, Math.ceil(expenses.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const paginated = expenses.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  )
 
   if (isLoading) {
     return (
@@ -78,16 +80,14 @@ export function ExpensesTable({
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
             عدد النتائج: {formatNumber(expenses.length)}
+            {total != null ? ` · الإجمالي ${formatNumber(total)}` : ""}
           </p>
         </div>
 
         <input
-          placeholder="بحث بالوصف أو الفئة..."
+          placeholder="بحث بالوصف أو الفئة في الصفحة الحالية..."
           value={search}
-          onChange={(event) => {
-            onSearchChange(event.target.value)
-            setPage(1)
-          }}
+          onChange={(event) => onSearchChange(event.target.value)}
           className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 md:max-w-sm"
         />
       </div>
@@ -115,7 +115,7 @@ export function ExpensesTable({
           </thead>
 
           <tbody>
-            {paginated.map((expense) => (
+            {expenses.map((expense) => (
               <tr
                 key={expense.id}
                 className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
@@ -164,7 +164,7 @@ export function ExpensesTable({
               </tr>
             ))}
 
-            {paginated.length === 0 && (
+            {expenses.length === 0 && (
               <tr>
                 <td
                   colSpan={6}
@@ -178,29 +178,14 @@ export function ExpensesTable({
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={currentPage === 1}
-          onClick={() => setPage((currentValue) => currentValue - 1)}
-        >
-          السابق
-        </Button>
-
-        <span className="text-center text-sm text-[var(--erp-muted)]">
-          صفحة {formatNumber(currentPage)} من {formatNumber(totalPages)}
-        </span>
-
-        <Button
-          type="button"
-          variant="outline"
-          disabled={currentPage >= totalPages}
-          onClick={() => setPage((currentValue) => currentValue + 1)}
-        >
-          التالي
-        </Button>
-      </div>
+      <PaginationControls
+        page={page}
+        isFinalPage={isFinalPage}
+        isLoading={isFetching}
+        total={total}
+        onPrevious={onPrevious}
+        onNext={onNext}
+      />
     </section>
   )
 }

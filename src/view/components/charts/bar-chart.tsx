@@ -35,8 +35,16 @@ export function BarChart({
   const min = Math.min(...values, 0)
   const hasNegative = min < 0
   const range = Math.max(max - min, 1)
-  const positiveSpace = (max / range) * PLOT_HEIGHT
-  const negativeSpace = hasNegative ? (Math.abs(min) / range) * PLOT_HEIGHT : 0
+
+  // Keep a full plot height even when max is 0 so bars stay on the baseline.
+  const positiveSpace = hasNegative
+    ? (Math.max(max, 0) / range) * PLOT_HEIGHT
+    : PLOT_HEIGHT
+  const negativeSpace = hasNegative
+    ? (Math.abs(Math.min(min, 0)) / range) * PLOT_HEIGHT
+    : 0
+  const plotHeight = positiveSpace + negativeSpace
+  const zeroOffset = negativeSpace
 
   return (
     <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
@@ -51,21 +59,24 @@ export function BarChart({
         <span>{formatNumber(max, unit)}</span>
       </div>
 
-      <div className="relative flex items-start justify-center gap-2 overflow-x-auto pb-2 sm:gap-4">
-        {hasNegative && positiveSpace > 0 && (
+      <div className="relative flex items-end justify-center gap-2 overflow-x-auto pb-2 sm:gap-4">
+        {hasNegative && (
           <div
             className="pointer-events-none absolute right-0 left-0 border-t border-dashed border-[var(--erp-muted)]"
-            style={{ top: `${positiveSpace}px` }}
+            style={{ bottom: `${zeroOffset}px` }}
           />
         )}
 
         {data.map((point, index) => {
           const color = COLORS[index % COLORS.length]
           const isNegative = point.value < 0
-          const barHeight = Math.max(
-            4,
-            Math.round((Math.abs(point.value) / range) * PLOT_HEIGHT)
-          )
+          const barHeight =
+            point.value === 0
+              ? 0
+              : Math.max(
+                  4,
+                  Math.round((Math.abs(point.value) / range) * PLOT_HEIGHT)
+                )
 
           return (
             <div
@@ -76,44 +87,29 @@ export function BarChart({
                 {formatNumber(point.value, unit)}
               </span>
 
-              <div
-                className="flex w-full flex-col items-center"
-                style={{ height: positiveSpace + negativeSpace }}
-              >
-                <div
-                  className="flex w-full flex-col justify-end"
-                  style={{
-                    height: positiveSpace || (hasNegative ? 0 : PLOT_HEIGHT),
-                  }}
-                >
-                  {!isNegative && (
-                    <div
-                      className="mx-auto w-full max-w-[48px] rounded-t-xl transition-all"
-                      style={{
-                        height: barHeight,
-                        backgroundColor: color,
-                      }}
-                      title={`${point.label}: ${formatNumber(point.value, unit)}`}
-                    />
-                  )}
-                </div>
-
-                {hasNegative && (
+              <div className="relative w-full" style={{ height: plotHeight }}>
+                {!isNegative && barHeight > 0 && (
                   <div
-                    className="flex w-full flex-col justify-start"
-                    style={{ height: negativeSpace }}
-                  >
-                    {isNegative && (
-                      <div
-                        className="mx-auto w-full max-w-[48px] rounded-b-xl transition-all"
-                        style={{
-                          height: barHeight,
-                          backgroundColor: "#d52b45",
-                        }}
-                        title={`${point.label}: ${formatNumber(point.value, unit)}`}
-                      />
-                    )}
-                  </div>
+                    className="absolute left-1/2 w-full max-w-[48px] -translate-x-1/2 rounded-t-xl transition-all"
+                    style={{
+                      height: barHeight,
+                      bottom: zeroOffset,
+                      backgroundColor: color,
+                    }}
+                    title={`${point.label}: ${formatNumber(point.value, unit)}`}
+                  />
+                )}
+
+                {isNegative && barHeight > 0 && (
+                  <div
+                    className="absolute left-1/2 w-full max-w-[48px] -translate-x-1/2 rounded-b-xl transition-all"
+                    style={{
+                      height: barHeight,
+                      top: positiveSpace,
+                      backgroundColor: "#d52b45",
+                    }}
+                    title={`${point.label}: ${formatNumber(point.value, unit)}`}
+                  />
                 )}
               </div>
 

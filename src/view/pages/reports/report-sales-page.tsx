@@ -4,10 +4,7 @@ import { useSalesInvoices } from "@/hooks/useSalesInvoices"
 import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
 import { buildInvoiceCharts } from "@/lib/report-chart-data"
 import { toNumber } from "@/lib/report-parsers"
-import {
-  normalizeSalesInvoices,
-  type SalesInvoice,
-} from "@/services/sales-invoices-service"
+import { type SalesInvoice } from "@/services/sales-invoices-service"
 import { BarChart } from "@/view/components/charts/bar-chart"
 import { DonutChart } from "@/view/components/charts/donut-chart"
 import { LineChart } from "@/view/components/charts/line-chart"
@@ -27,12 +24,9 @@ type NormalizedSalesInvoice = {
 
 export function ReportSalesPage() {
   const { from, to, setFrom, setTo, range } = useReportDateRange()
-  const { data, isLoading, isError } = useSalesInvoices()
+  const { data, isLoading, isError } = useSalesInvoices({ limit: 100 })
 
-  const invoices = useMemo<SalesInvoice[]>(
-    () => normalizeSalesInvoices(data),
-    [data]
-  )
+  const invoices = useMemo<SalesInvoice[]>(() => data?.data ?? [], [data])
 
   const normalized = useMemo<NormalizedSalesInvoice[]>(
     () =>

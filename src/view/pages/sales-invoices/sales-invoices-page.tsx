@@ -1,26 +1,32 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Plus, ReceiptText, RefreshCw, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { PERMISSIONS } from "@/auth/permissions"
 import { usePermissions } from "@/hooks/usePermissions"
 import { useSalesInvoices } from "@/hooks/useSalesInvoices"
-import { normalizeSalesInvoices } from "@/services/sales-invoices-service"
 import { CreateSalesInvoiceForm } from "@/view/components/sales-invoices/create-sales-invoice-form"
 import { SalesInvoicesTable } from "@/view/components/sales-invoices/sales-invoices-table"
 import {
   formatNumber,
   NumberText,
 } from "@/view/components/sales-invoices/sales-invoice-format"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
+
+const PAGE_SIZE = 10
 
 export function SalesInvoicesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [page, setPage] = useState(1)
   const { can } = usePermissions()
   const canCreate = can(PERMISSIONS.SALES_CREATE)
 
-  const { data, isLoading, isError, refetch, isFetching } = useSalesInvoices()
+  const { data, isLoading, isError, refetch, isFetching } = useSalesInvoices({
+    page,
+    limit: PAGE_SIZE,
+  })
 
-  const invoices = useMemo(() => normalizeSalesInvoices(data), [data])
+  const invoices = data?.data ?? []
 
   return (
     <main className="space-y-6" dir="rtl">
@@ -79,6 +85,12 @@ export function SalesInvoicesPage() {
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
               عدد الفواتير المعروضة:{" "}
               <NumberText value={formatNumber(invoices.length)} />
+              {data?.total != null ? (
+                <>
+                  {" "}
+                  · الإجمالي <NumberText value={formatNumber(data.total)} />
+                </>
+              ) : null}
             </p>
           </div>
         </div>
@@ -88,6 +100,19 @@ export function SalesInvoicesPage() {
           isLoading={isLoading}
           isError={isError}
         />
+
+        {!isLoading && !isError && (
+          <div className="mt-4">
+            <PaginationControls
+              page={page}
+              isFinalPage={data?.isFinalPage ?? true}
+              isLoading={isFetching}
+              total={data?.total}
+              onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+              onNext={() => setPage((current) => current + 1)}
+            />
+          </div>
+        )}
       </section>
     </main>
   )

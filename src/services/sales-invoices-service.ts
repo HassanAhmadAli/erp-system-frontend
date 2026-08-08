@@ -1,4 +1,9 @@
-import { apiRequest } from "@/api/client"
+import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import {
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
 import {
   SALES_INVOICE_STATUS_OPTIONS,
   isSalesInvoiceStatus,
@@ -32,11 +37,13 @@ export type SalesInvoice = {
   id: number
   customerId?: number
   discountId?: number | null
+  appliedDiscountId?: number | null
   cashierId?: number
   status: SalesInvoiceStatus | string
   amountPaid?: string | number
   totalAmount?: string | number
   finalAmount?: string | number
+  total?: string | number
   subtotal?: string | number
   discountAmount?: string | number
   remainingAmount?: string | number
@@ -45,9 +52,18 @@ export type SalesInvoice = {
   customer?: {
     id: number
     user?: {
+      id?: number
       fullName?: string
       email?: string
       phoneNumber?: string
+    }
+  }
+  cashier?: {
+    id?: number
+    user?: {
+      id?: number
+      fullName?: string
+      email?: string
     }
   }
   discount?: {
@@ -56,6 +72,10 @@ export type SalesInvoice = {
     title?: string
     value?: string | number
     type?: string
+  } | null
+  appliedDiscount?: {
+    id: number
+    name?: string
   } | null
   items?: SalesInvoiceItem[]
 }
@@ -73,6 +93,8 @@ export type SalesInvoicesResponse =
 export type CreateSalesInvoiceItem = SalesInvoiceItemPayload
 
 export type CreateSalesInvoicePayload = SalesInvoicePayload
+
+export type SalesInvoicesQuery = PaginationParams
 
 export function normalizeSalesInvoices(response?: unknown): SalesInvoice[] {
   if (!response) return []
@@ -102,8 +124,31 @@ export function normalizeSalesInvoices(response?: unknown): SalesInvoice[] {
   return []
 }
 
-export async function getSalesInvoices(): Promise<SalesInvoicesResponse> {
-  return apiRequest<SalesInvoicesResponse>(SALES_INVOICES_ENDPOINT)
+export function normalizeSalesInvoicesList(
+  response?: unknown,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+): PaginatedResponse<SalesInvoice> {
+  return normalizePaginatedResponse(
+    {
+      data: normalizeSalesInvoices(response),
+      total: (response as { total?: number } | null)?.total,
+      limit: (response as { limit?: number } | null)?.limit,
+      offset: (response as { offset?: number } | null)?.offset,
+      isFinalPage: (response as { isFinalPage?: boolean } | null)?.isFinalPage,
+    } as PaginatedResponse<SalesInvoice>,
+    fallbackLimit,
+    fallbackOffset
+  )
+}
+
+export async function getSalesInvoices(
+  params?: SalesInvoicesQuery
+): Promise<SalesInvoicesResponse> {
+  const query = toPaginationQuery(params)
+  return apiRequest<SalesInvoicesResponse>(
+    `${SALES_INVOICES_ENDPOINT}${buildQuery(query)}`
+  )
 }
 
 export async function getSalesInvoice(id: number): Promise<SalesInvoice> {

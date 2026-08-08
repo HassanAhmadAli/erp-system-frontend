@@ -35,8 +35,12 @@ export function usePermissions() {
     return canAccessSidebarItem(item, role, canAll)
   }
 
-  function canManageSalesInvoice(cashierId: number | undefined): boolean {
-    return canManageSalesInvoiceStatus(role, user?.id, cashierId)
+  function canManageSalesInvoice(invoice: {
+    cashierId?: number
+    cashier?: { user?: { id?: number } | null } | null
+  }): boolean {
+    const cashierUserId = invoice.cashier?.user?.id
+    return canManageSalesInvoiceStatus(role, user?.id, cashierUserId)
   }
 
   return {

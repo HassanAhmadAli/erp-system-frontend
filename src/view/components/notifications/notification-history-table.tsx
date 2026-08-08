@@ -1,15 +1,23 @@
+import { useState } from "react"
 import { Eye, History, Loader2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { useNotificationHistory } from "@/hooks/Notifications/useNotifications"
+import { toPaginationQuery } from "@/lib/pagination"
 import { formatShortDateTime } from "@/utils/date-formatters"
 import { toEnglishDigits } from "@/utils/number-formatters"
 import { formatTargetLabel } from "@/view/components/notifications/notification-target-labels"
 import { Button } from "@/view/components/ui/button"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
+
+const PAGE_SIZE = 10
 
 export function NotificationHistoryTable() {
   const navigate = useNavigate()
-  const { data, isLoading, isError, error } = useNotificationHistory()
+  const [page, setPage] = useState(1)
+  const query = toPaginationQuery({ page, limit: PAGE_SIZE })
+  const { data, isLoading, isError, error, isFetching } =
+    useNotificationHistory(query)
 
   const history = data?.items ?? []
 
@@ -48,7 +56,7 @@ export function NotificationHistoryTable() {
     )
   }
 
-  if (history.length === 0) {
+  if (history.length === 0 && page === 1) {
     return (
       <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 text-center">
         <History className="h-12 w-12 text-[var(--erp-muted)]" />
@@ -67,69 +75,80 @@ export function NotificationHistoryTable() {
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[1000px] text-right">
-        <thead>
-          <tr className="border-b border-[var(--erp-border)] text-sm text-[var(--erp-muted)]">
-            <th className="px-4 py-3 font-medium">العنوان</th>
-            <th className="px-4 py-3 font-medium">النص</th>
-            <th className="px-4 py-3 font-medium">المستهدف</th>
-            <th className="px-4 py-3 font-medium">المرسل</th>
-            <th className="px-4 py-3 font-medium">عدد المستلمين</th>
-            <th className="px-4 py-3 font-medium">تاريخ الإرسال</th>
-            <th className="px-4 py-3 font-medium">الإجراءات</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {history.map((item) => (
-            <tr
-              key={item.id}
-              className="border-b border-[var(--erp-border)] last:border-0"
-            >
-              <td className="px-4 py-4 text-sm font-semibold text-[var(--erp-text)]">
-                {toEnglishDigits(item.title)}
-              </td>
-
-              <td className="max-w-[280px] truncate px-4 py-4 text-sm text-[var(--erp-muted)]">
-                {toEnglishDigits(item.body)}
-              </td>
-
-              <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
-                {formatTargetLabel(item.targetType, item.targetRole)}
-              </td>
-
-              <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
-                {item.sender?.fullName ?? "-"}
-              </td>
-
-              <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
-                <span dir="ltr" className="inline-block text-left">
-                  {toEnglishDigits(String(item.recipientCount))}
-                </span>
-              </td>
-
-              <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
-                <span dir="ltr" className="inline-block text-left">
-                  {formatShortDateTime(item.sentAt)}
-                </span>
-              </td>
-
-              <td className="px-4 py-4">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => openDetails(item)}
-                >
-                  <Eye className="size-4" />
-                  عرض التفاصيل
-                </Button>
-              </td>
+    <div className="space-y-4">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[1000px] text-right">
+          <thead>
+            <tr className="border-b border-[var(--erp-border)] text-sm text-[var(--erp-muted)]">
+              <th className="px-4 py-3 font-medium">العنوان</th>
+              <th className="px-4 py-3 font-medium">النص</th>
+              <th className="px-4 py-3 font-medium">المستهدف</th>
+              <th className="px-4 py-3 font-medium">المرسل</th>
+              <th className="px-4 py-3 font-medium">عدد المستلمين</th>
+              <th className="px-4 py-3 font-medium">تاريخ الإرسال</th>
+              <th className="px-4 py-3 font-medium">الإجراءات</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {history.map((item) => (
+              <tr
+                key={item.id}
+                className="border-b border-[var(--erp-border)] last:border-0"
+              >
+                <td className="px-4 py-4 text-sm font-semibold text-[var(--erp-text)]">
+                  {toEnglishDigits(item.title)}
+                </td>
+
+                <td className="max-w-[280px] truncate px-4 py-4 text-sm text-[var(--erp-muted)]">
+                  {toEnglishDigits(item.body)}
+                </td>
+
+                <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
+                  {formatTargetLabel(item.targetType, item.targetRole)}
+                </td>
+
+                <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
+                  {item.sender?.fullName ?? "-"}
+                </td>
+
+                <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
+                  <span dir="ltr" className="inline-block text-left">
+                    {toEnglishDigits(String(item.recipientCount))}
+                  </span>
+                </td>
+
+                <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
+                  <span dir="ltr" className="inline-block text-left">
+                    {formatShortDateTime(item.sentAt)}
+                  </span>
+                </td>
+
+                <td className="px-4 py-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openDetails(item)}
+                  >
+                    <Eye className="size-4" />
+                    عرض التفاصيل
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <PaginationControls
+        page={page}
+        isFinalPage={data?.isFinalPage ?? true}
+        isLoading={isFetching}
+        total={data?.total}
+        onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+        onNext={() => setPage((current) => current + 1)}
+      />
     </div>
   )
 }

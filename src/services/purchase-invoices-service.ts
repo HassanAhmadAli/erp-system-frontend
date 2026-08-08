@@ -1,4 +1,9 @@
-import { apiRequest } from "@/api/client"
+import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import {
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
 import { isValidId } from "@/validation/helpers"
 import {
   PURCHASE_INVOICE_STATUS_OPTIONS,
@@ -58,15 +63,17 @@ export type PurchaseInvoice = {
 export type PurchaseInvoicesResponse =
   | PurchaseInvoice[]
   | {
-    data: PurchaseInvoice[]
-    total?: number
-    limit?: number
-    offset?: number
-    isFinalPage?: boolean
-  }
+      data: PurchaseInvoice[]
+      total?: number
+      limit?: number
+      offset?: number
+      isFinalPage?: boolean
+    }
 
 export type CreatePurchaseInvoiceItem = PurchaseInvoiceItemPayload
 export type CreatePurchaseInvoicePayload = PurchaseInvoicePayload
+
+export type PurchaseInvoicesQuery = PaginationParams
 
 export function normalizePurchaseInvoices(response?: PurchaseInvoicesResponse) {
   if (!response) return []
@@ -78,8 +85,19 @@ export function normalizePurchaseInvoices(response?: PurchaseInvoicesResponse) {
   return response.data ?? []
 }
 
-export async function getPurchaseInvoices() {
-  return apiRequest<PurchaseInvoicesResponse>(PURCHASE_INVOICES_ENDPOINT)
+export function normalizePurchaseInvoicesList(
+  response?: PurchaseInvoicesResponse | null,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+): PaginatedResponse<PurchaseInvoice> {
+  return normalizePaginatedResponse(response, fallbackLimit, fallbackOffset)
+}
+
+export async function getPurchaseInvoices(params?: PurchaseInvoicesQuery) {
+  const query = toPaginationQuery(params)
+  return apiRequest<PurchaseInvoicesResponse>(
+    `${PURCHASE_INVOICES_ENDPOINT}${buildQuery(query)}`
+  )
 }
 
 export async function getPurchaseInvoice(id: number) {

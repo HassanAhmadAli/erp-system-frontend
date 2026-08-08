@@ -1,3 +1,4 @@
+﻿import { useEffect, useState } from "react"
 import { Bell, Loader2 } from "lucide-react"
 
 import {
@@ -5,22 +6,33 @@ import {
   useMarkNotificationUnread,
   useMyNotifications,
 } from "@/hooks/Notifications/useNotifications"
+import { toPaginationQuery } from "@/lib/pagination"
 import { formatShortDateTime } from "@/utils/date-formatters"
 import { formatInboxTargetLabel } from "@/view/components/notifications/notification-target-labels"
 import { Button } from "@/view/components/ui/button"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
 
 type NotificationsInboxProps = {
   unreadOnly?: boolean
 }
 
-
+const PAGE_SIZE = 10
 
 export function NotificationsInbox({
   unreadOnly = false,
 }: NotificationsInboxProps) {
-  const { data, isLoading, isError } = useMyNotifications({ unreadOnly })
+  const [page, setPage] = useState(1)
+  const query = toPaginationQuery({ page, limit: PAGE_SIZE })
+  const { data, isLoading, isError, isFetching } = useMyNotifications({
+    unreadOnly,
+    ...query,
+  })
   const markRead = useMarkNotificationRead()
   const markUnread = useMarkNotificationUnread()
+
+  useEffect(() => {
+    setPage(1)
+  }, [unreadOnly])
 
   const notifications = data?.items ?? []
 
@@ -38,7 +50,7 @@ export function NotificationsInbox({
     )
   }
 
-  if (notifications.length === 0) {
+  if (notifications.length === 0 && page === 1) {
     return (
       <div className="flex min-h-[220px] flex-col items-center justify-center gap-3 text-center">
         <Bell className="h-12 w-12 text-[var(--erp-muted)]" />
@@ -121,6 +133,17 @@ export function NotificationsInbox({
           </div>
         </article>
       ))}
+
+      <div className="pt-2">
+        <PaginationControls
+          page={page}
+          isFinalPage={data?.isFinalPage ?? true}
+          isLoading={isFetching}
+          total={data?.total}
+          onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+          onNext={() => setPage((current) => current + 1)}
+        />
+      </div>
     </div>
   )
 }

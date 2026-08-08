@@ -11,9 +11,10 @@ import {
   type DiscountType,
 } from "@/services/discount-service"
 import { cn } from "@/lib/utils"
-import { formatId, formatNumber } from "@/utils/number-formatters"
+import { formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
 
 function getDiscountTypeLabel(type: DiscountType) {
   return type === "PERCENTAGE" ? "نسبة مئوية" : "مبلغ ثابت"
@@ -53,14 +54,12 @@ export function DiscountsPage() {
   const limit = 10
 
   const { data, isLoading, error, refetch, isFetching } = useQuery({
-    queryKey: ["discounts", page, search, typeFilter, scopeFilter],
+    queryKey: ["discounts", page, search],
     queryFn: () =>
       getDiscounts({
         page,
         limit,
         search: search || undefined,
-        type: (typeFilter || undefined) as DiscountType | undefined,
-        scope: (scopeFilter || undefined) as DiscountScope | undefined,
       }),
   })
 
@@ -68,7 +67,11 @@ export function DiscountsPage() {
     setPage(1)
   }, [search, typeFilter, scopeFilter])
 
-  const discounts = data?.data ?? []
+  const discounts = (data?.data ?? []).filter((discount) => {
+    if (typeFilter && discount.type !== typeFilter) return false
+    if (scopeFilter && discount.scope !== scopeFilter) return false
+    return true
+  })
 
   async function handleDelete() {
     if (!deleteId) return
@@ -296,26 +299,15 @@ export function DiscountsPage() {
           </div>
         )}
 
-        <div className="mt-5 flex items-center justify-center gap-3">
-          <Button
-            variant="outline"
-            disabled={page === 1 || isFetching}
-            onClick={() => setPage((currentPage) => currentPage - 1)}
-          >
-            السابق
-          </Button>
-
-          <span className="text-sm text-[var(--erp-muted)]">
-            الصفحة {formatId(page)}
-          </span>
-
-          <Button
-            variant="outline"
-            disabled={data?.isFinalPage || isFetching}
-            onClick={() => setPage((currentPage) => currentPage + 1)}
-          >
-            التالي
-          </Button>
+        <div className="mt-5">
+          <PaginationControls
+            page={page}
+            isFinalPage={data?.isFinalPage ?? true}
+            isLoading={isFetching}
+            total={data?.total}
+            onPrevious={() => setPage((currentPage) => currentPage - 1)}
+            onNext={() => setPage((currentPage) => currentPage + 1)}
+          />
         </div>
       </section>
 

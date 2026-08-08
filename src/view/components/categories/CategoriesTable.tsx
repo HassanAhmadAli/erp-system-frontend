@@ -13,6 +13,7 @@ import { formatNumber } from "@/utils/number-formatters"
 import { CategoriesSkeleton } from "./categories-skeleton"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
 import { Button } from "@/view/components/ui/button"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
 
 const PAGE_SIZE = 15
 
@@ -195,29 +196,16 @@ export function CategoriesTable() {
         </table>
       </div>
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <Button
-          type="button"
-          variant="outline"
-          disabled={page === 1}
-          onClick={() => setPage((currentPage) => currentPage - 1)}
-        >
-          السابق
-        </Button>
-
-        <span className="text-center text-sm text-[var(--erp-muted)]">
-          صفحة {formatNumber(page)}
-        </span>
-
-        <Button
-          type="button"
-          variant="outline"
-          disabled={isFinalPage}
-          onClick={() => setPage((currentPage) => currentPage + 1)}
-        >
-          التالي
-        </Button>
-      </div>
+      <PaginationControls
+        page={page}
+        isFinalPage={isFinalPage}
+        isLoading={false}
+        total={data?.total}
+        onPrevious={() =>
+          setPage((currentPage) => Math.max(1, currentPage - 1))
+        }
+        onNext={() => setPage((currentPage) => currentPage + 1)}
+      />
 
       <ConfirmDialog
         open={deleteId !== null}

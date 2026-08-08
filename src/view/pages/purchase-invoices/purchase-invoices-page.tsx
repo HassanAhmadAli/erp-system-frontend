@@ -1,27 +1,34 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Plus, ReceiptText, RefreshCw, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { PERMISSIONS } from "@/auth/permissions"
 import { usePermissions } from "@/hooks/usePermissions"
 import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices"
-import { normalizePurchaseInvoices } from "@/services/purchase-invoices-service"
 import { CreatePurchaseInvoiceForm } from "@/view/components/purchase-invoices/create-purchase-invoice-form"
 import { PurchaseInvoicesTable } from "@/view/components/purchase-invoices/purchase-invoices-table"
 import {
   formatNumber,
   NumberText,
 } from "@/view/components/purchase-invoices/purchase-invoice-format"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
+
+const PAGE_SIZE = 10
 
 export function PurchaseInvoicesPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false)
+  const [page, setPage] = useState(1)
   const { can } = usePermissions()
   const canCreate = can(PERMISSIONS.PURCHASES_CREATE)
 
-  const { data, isLoading, isError, refetch, isFetching } =
-    usePurchaseInvoices()
+  const { data, isLoading, isError, refetch, isFetching } = usePurchaseInvoices(
+    {
+      page,
+      limit: PAGE_SIZE,
+    }
+  )
 
-  const invoices = useMemo(() => normalizePurchaseInvoices(data), [data])
+  const invoices = data?.data ?? []
 
   return (
     <main className="space-y-6" dir="rtl">
@@ -80,6 +87,12 @@ export function PurchaseInvoicesPage() {
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
               عدد الفواتير المعروضة:{" "}
               <NumberText value={formatNumber(invoices.length)} />
+              {data?.total != null ? (
+                <>
+                  {" "}
+                  · الإجمالي <NumberText value={formatNumber(data.total)} />
+                </>
+              ) : null}
             </p>
           </div>
         </div>
@@ -89,6 +102,19 @@ export function PurchaseInvoicesPage() {
           isLoading={isLoading}
           isError={isError}
         />
+
+        {!isLoading && !isError && (
+          <div className="mt-4">
+            <PaginationControls
+              page={page}
+              isFinalPage={data?.isFinalPage ?? true}
+              isLoading={isFetching}
+              total={data?.total}
+              onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+              onNext={() => setPage((current) => current + 1)}
+            />
+          </div>
+        )}
       </section>
     </main>
   )

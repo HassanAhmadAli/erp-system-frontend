@@ -1,4 +1,9 @@
-import { apiRequest } from "@/api/client"
+import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import {
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
 import type { SupplierRequestPayload } from "@/validation/supplier-schema"
 import { isValidId } from "@/validation/helpers"
 
@@ -18,19 +23,23 @@ export type Supplier = {
   }
 }
 
-export type SupplierListResponse = {
-  data: Supplier[]
-  total: number
-  limit: number
-  offset: number
-  isFinalPage: boolean
-}
+export type SupplierListResponse = PaginatedResponse<Supplier> | Supplier[]
 
 export type CreateSupplierInput = SupplierRequestPayload
 export type UpdateSupplierInput = SupplierRequestPayload
+export type SuppliersQuery = PaginationParams
 
-export function getSuppliers() {
-  return apiRequest<SupplierListResponse>("/supplier")
+export function getSuppliers(params?: SuppliersQuery) {
+  const query = toPaginationQuery(params ?? { limit: 100 })
+  return apiRequest<SupplierListResponse>(`/supplier${buildQuery(query)}`)
+}
+
+export function normalizeSuppliers(
+  response: SupplierListResponse | null | undefined,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+) {
+  return normalizePaginatedResponse(response, fallbackLimit, fallbackOffset)
 }
 
 export function createSupplier(data: CreateSupplierInput) {

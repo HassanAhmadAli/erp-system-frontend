@@ -1,4 +1,9 @@
-import { apiRequest, BASE_URL } from "@/api/client"
+import { apiRequest, BASE_URL, buildQuery } from "@/api/client"
+import {
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
 import { getAccessToken } from "@/utils/auth-storage"
 
 export type Product = {
@@ -29,10 +34,15 @@ export type Product = {
 
 export type ProductListResponse =
   | {
-    data: Product[]
-    total?: number
-  }
+      data: Product[]
+      total?: number
+      limit?: number
+      offset?: number
+      isFinalPage?: boolean
+    }
   | Product[]
+
+export type ProductsQuery = PaginationParams
 
 export type ProductPhoto = {
   id: number | string
@@ -43,9 +53,9 @@ export type ProductPhoto = {
 
 export type ProductPhotoListResponse =
   | {
-    data: ProductPhoto[]
-    total?: number
-  }
+      data: ProductPhoto[]
+      total?: number
+    }
   | ProductPhoto[]
 
 export type ImportJob = {
@@ -60,9 +70,9 @@ export type ImportJob = {
 
 export type ImportJobListResponse =
   | {
-    data: ImportJob[]
-    total?: number
-  }
+      data: ImportJob[]
+      total?: number
+    }
   | ImportJob[]
 
 export type CreateProductInput = {
@@ -98,6 +108,18 @@ export function normalizeProducts(response: unknown): Product[] {
   return asArray<Product>(response)
 }
 
+export function normalizeProductList(
+  response: unknown,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+) {
+  return normalizePaginatedResponse(
+    response as ProductListResponse,
+    fallbackLimit,
+    fallbackOffset
+  )
+}
+
 export function normalizeProductPhotos(response: unknown): ProductPhoto[] {
   return asArray<ProductPhoto>(response)
 }
@@ -106,20 +128,36 @@ export function normalizeImportJobs(response: unknown): ImportJob[] {
   return asArray<ImportJob>(response)
 }
 
-export function getProducts() {
-  return apiRequest<ProductListResponse>("/product")
+export function getProducts(params?: ProductsQuery) {
+  const query = toPaginationQuery(params)
+  return apiRequest<ProductListResponse>(`/product${buildQuery(query)}`)
 }
 
-export function getProductsByCategory(categoryId: number) {
-  return apiRequest<ProductListResponse>(`/product/category/${categoryId}`)
+export function getProductsByCategory(
+  categoryId: number,
+  params?: ProductsQuery
+) {
+  const query = toPaginationQuery(params)
+  return apiRequest<ProductListResponse>(
+    `/product/category/${categoryId}${buildQuery(query)}`
+  )
 }
 
-export function getProductsBySupplier(supplierId: number) {
-  return apiRequest<ProductListResponse>(`/product/supplier/${supplierId}`)
+export function getProductsBySupplier(
+  supplierId: number,
+  params?: ProductsQuery
+) {
+  const query = toPaginationQuery(params)
+  return apiRequest<ProductListResponse>(
+    `/product/supplier/${supplierId}${buildQuery(query)}`
+  )
 }
 
-export function getLowStockProducts() {
-  return apiRequest<ProductListResponse>("/product/low-stock")
+export function getLowStockProducts(params?: ProductsQuery) {
+  const query = toPaginationQuery(params)
+  return apiRequest<ProductListResponse>(
+    `/product/low-stock${buildQuery(query)}`
+  )
 }
 
 export function getProductById(id: number) {

@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Link } from "react-router-dom"
 
 import { useAuditLogs } from "@/hooks/AuditLogs/useAuditLogs"
@@ -8,8 +9,15 @@ import {
   formatAuditEntity,
   formatAuditRole,
 } from "@/services/audit-log-service"
-import { formatId, toEnglishDigits } from "@/utils/number-formatters"
+import {
+  formatId,
+  formatNumber,
+  toEnglishDigits,
+} from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
+
+const PAGE_SIZE = 10
 
 function actionBadgeClass(action: string): string {
   const normalized = action.toUpperCase()
@@ -42,7 +50,13 @@ function formatAuditDate(value: string) {
 }
 
 export function AuditLogsPage() {
-  const { data: logs = [], isLoading, isError } = useAuditLogs()
+  const [page, setPage] = useState(1)
+  const { data, isLoading, isError, isFetching } = useAuditLogs({
+    page,
+    limit: PAGE_SIZE,
+  })
+
+  const logs = data?.data ?? []
 
   return (
     <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
@@ -65,94 +79,116 @@ export function AuditLogsPage() {
             حدث خطأ أثناء تحميل السجل
           </p>
         ) : (
-          <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[1000px] text-right text-sm">
-                <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
-                  <tr>
-                    <th className="p-3 font-medium">#</th>
-                    <th className="p-3 font-medium">الإجراء</th>
-                    <th className="p-3 font-medium">الكيان</th>
-                    <th className="p-3 font-medium">معرّف الكيان</th>
-                    <th className="p-3 font-medium">المستخدم</th>
-                    <th className="p-3 font-medium">الدور</th>
-                    <th className="p-3 font-medium">التغييرات</th>
-                    <th className="p-3 font-medium">تاريخ التنفيذ</th>
-                    <th className="p-3 font-medium">العمليات</th>
-                  </tr>
-                </thead>
+          <>
+            <p className="mb-4 text-sm text-[var(--erp-muted)]">
+              عدد النتائج: {formatNumber(logs.length)}
+              {data?.total != null
+                ? ` · الإجمالي ${formatNumber(data.total)}`
+                : ""}
+            </p>
 
-                <tbody>
-                  {logs.map((log) => (
-                    <tr
-                      key={log.id}
-                      className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
-                    >
-                      <td className="p-3 font-medium text-[var(--erp-text)]">
-                        {formatId(log.id)}
-                      </td>
-
-                      <td className="p-3">
-                        <span
-                          className={cn(
-                            "inline-flex rounded-full border px-3 py-1 text-xs font-medium",
-                            actionBadgeClass(log.action)
-                          )}
-                        >
-                          {formatAuditAction(log.action)}
-                        </span>
-                      </td>
-
-                      <td className="p-3 text-[var(--erp-text)]">
-                        {formatAuditEntity(log.entity)}
-                      </td>
-
-                      <td className="p-3 text-[var(--erp-text)]">
-                        {formatId(log.entityId)}
-                      </td>
-
-                      <td className="p-3 text-[var(--erp-text)]">
-                        {log.user.fullName}
-                      </td>
-
-                      <td className="p-3 text-[var(--erp-muted)]">
-                        {formatAuditRole(log.user.role)}
-                      </td>
-
-                      <td className="max-w-[240px] p-3">
-                        <p className="truncate text-sm text-[var(--erp-muted)]">
-                          {auditChangePreview(log)}
-                        </p>
-                      </td>
-
-                      <td className="p-3 whitespace-nowrap text-[var(--erp-muted)]">
-                        {formatAuditDate(log.performedAt)}
-                      </td>
-
-                      <td className="p-3">
-                        <Link to={`/audit-logs/${log.id}`}>
-                          <Button variant="outline" size="sm">
-                            عرض التفاصيل
-                          </Button>
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
-
-                  {logs.length === 0 && (
+            <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[1000px] text-right text-sm">
+                  <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
                     <tr>
-                      <td
-                        colSpan={9}
-                        className="p-6 text-center text-[var(--erp-muted)]"
-                      >
-                        لا توجد سجلات
-                      </td>
+                      <th className="p-3 font-medium">#</th>
+                      <th className="p-3 font-medium">الإجراء</th>
+                      <th className="p-3 font-medium">الكيان</th>
+                      <th className="p-3 font-medium">معرّف الكيان</th>
+                      <th className="p-3 font-medium">المستخدم</th>
+                      <th className="p-3 font-medium">الدور</th>
+                      <th className="p-3 font-medium">التغييرات</th>
+                      <th className="p-3 font-medium">تاريخ التنفيذ</th>
+                      <th className="p-3 font-medium">العمليات</th>
                     </tr>
-                  )}
-                </tbody>
-              </table>
+                  </thead>
+
+                  <tbody>
+                    {logs.map((log) => (
+                      <tr
+                        key={log.id}
+                        className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
+                      >
+                        <td className="p-3 font-medium text-[var(--erp-text)]">
+                          {formatId(log.id)}
+                        </td>
+
+                        <td className="p-3">
+                          <span
+                            className={cn(
+                              "inline-flex rounded-full border px-3 py-1 text-xs font-medium",
+                              actionBadgeClass(log.action)
+                            )}
+                          >
+                            {formatAuditAction(log.action)}
+                          </span>
+                        </td>
+
+                        <td className="p-3 text-[var(--erp-text)]">
+                          {formatAuditEntity(log.entity)}
+                        </td>
+
+                        <td className="p-3 text-[var(--erp-text)]">
+                          {formatId(log.entityId)}
+                        </td>
+
+                        <td className="p-3 text-[var(--erp-text)]">
+                          {log.user.fullName}
+                        </td>
+
+                        <td className="p-3 text-[var(--erp-muted)]">
+                          {formatAuditRole(log.user.role)}
+                        </td>
+
+                        <td className="max-w-[240px] p-3">
+                          <p className="truncate text-sm text-[var(--erp-muted)]">
+                            {auditChangePreview(log)}
+                          </p>
+                        </td>
+
+                        <td className="p-3 whitespace-nowrap text-[var(--erp-muted)]">
+                          {formatAuditDate(log.performedAt)}
+                        </td>
+
+                        <td className="p-3">
+                          <Link to={`/audit-logs/${log.id}`}>
+                            <Button variant="outline" size="sm">
+                              عرض التفاصيل
+                            </Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+
+                    {logs.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={9}
+                          className="p-6 text-center text-[var(--erp-muted)]"
+                        >
+                          لا توجد سجلات
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+
+            <div className="mt-4">
+              <PaginationControls
+                page={page}
+                isFinalPage={data?.isFinalPage ?? true}
+                isLoading={isFetching}
+                total={data?.total}
+                onPrevious={() =>
+                  setPage((current) => Math.max(1, current - 1))
+                }
+                onNext={() => setPage((current) => current + 1)}
+              />
+            </div>
+          </>
         )}
       </section>
     </div>

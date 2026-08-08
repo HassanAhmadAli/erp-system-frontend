@@ -1,4 +1,9 @@
-import { apiRequest } from "@/api/client"
+import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import {
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
 import type { AdPlacement, AdRequestPayload } from "@/validation/ad-schema"
 import { isValidId } from "@/validation/helpers"
 
@@ -20,12 +25,12 @@ export type Ad = {
 
 export type AdsListResponse =
   | {
-    data: Ad[]
-    total?: number
-    limit?: number
-    offset?: number
-    isFinalPage?: boolean
-  }
+      data: Ad[]
+      total?: number
+      limit?: number
+      offset?: number
+      isFinalPage?: boolean
+    }
   | Ad[]
 
 export type CreateAdInput = AdRequestPayload
@@ -48,12 +53,35 @@ function asArray<T>(response: unknown): T[] {
   return []
 }
 
+export type AdsQuery = PaginationParams & {
+  activeOnly?: boolean
+}
+
 export function normalizeAds(response: unknown): Ad[] {
   return asArray<Ad>(response)
 }
 
-export function getAds(activeOnly = false) {
-  return apiRequest<AdsListResponse>(`/ads?activeOnly=${activeOnly}`)
+export function normalizeAdsList(
+  response: unknown,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+): PaginatedResponse<Ad> {
+  return normalizePaginatedResponse(
+    response as AdsListResponse,
+    fallbackLimit,
+    fallbackOffset
+  )
+}
+
+export function getAds(params: AdsQuery | boolean = false) {
+  const normalized =
+    typeof params === "boolean" ? { activeOnly: params } : (params ?? {})
+  const { activeOnly = false, ...pagination } = normalized
+  const query = toPaginationQuery(pagination)
+
+  return apiRequest<AdsListResponse>(
+    `/ads${buildQuery({ ...query, activeOnly })}`
+  )
 }
 
 export function getAdById(id: number) {

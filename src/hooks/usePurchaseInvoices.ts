@@ -4,16 +4,26 @@ import {
   createPurchaseInvoice,
   getPurchaseInvoice,
   getPurchaseInvoices,
+  normalizePurchaseInvoicesList,
   updatePurchaseInvoiceStatus,
   type CreatePurchaseInvoicePayload,
   type PurchaseInvoiceStatus,
+  type PurchaseInvoicesQuery,
 } from "@/services/purchase-invoices-service"
+import { toPaginationQuery } from "@/lib/pagination"
 import { isValidId } from "@/validation/helpers"
 
-export function usePurchaseInvoices() {
+export function usePurchaseInvoices(params?: PurchaseInvoicesQuery) {
+  const query = toPaginationQuery(params ?? { limit: 100 })
+
   return useQuery({
-    queryKey: ["purchase-invoices"],
-    queryFn: getPurchaseInvoices,
+    queryKey: ["purchase-invoices", query],
+    queryFn: async () =>
+      normalizePurchaseInvoicesList(
+        await getPurchaseInvoices({ ...params, ...query }),
+        query.limit,
+        query.offset
+      ),
   })
 }
 

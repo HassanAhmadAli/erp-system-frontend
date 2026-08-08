@@ -1,11 +1,15 @@
+import { useState } from "react"
 import { Eye, Megaphone, Plus, Trash2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 
 import { useAds, useDeleteAd } from "@/hooks/useAds"
 import { PERMISSIONS } from "@/auth/permissions"
 import { usePermissions } from "@/hooks/usePermissions"
-import { formatDateTime } from "@/utils/number-formatters"
+import { formatDateTime, formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
+
+const PAGE_SIZE = 10
 
 function formatAdDate(date?: string | null) {
   return formatDateTime(date)
@@ -15,8 +19,15 @@ export function AdsPage() {
   const navigate = useNavigate()
   const { can } = usePermissions()
   const canManage = can(PERMISSIONS.ADS_MANAGE)
-  const { data: ads = [], isLoading, isError } = useAds(false)
+  const [page, setPage] = useState(1)
+  const { data, isLoading, isError, isFetching } = useAds({
+    activeOnly: false,
+    page,
+    limit: PAGE_SIZE,
+  })
   const deleteAdMutation = useDeleteAd()
+
+  const ads = data?.data ?? []
 
   function handleDelete(id: number) {
     const confirmed = window.confirm("هل أنت متأكد من حذف هذا الإعلان؟")
@@ -69,105 +80,129 @@ export function AdsPage() {
             </p>
           </div>
         ) : (
-          <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-            <table className="w-full min-w-[860px] table-fixed text-right text-sm">
-              <colgroup>
-                <col className="w-[28%]" />
-                <col className="w-[14%]" />
-                <col className="w-[12%]" />
-                <col className="w-[18%]" />
-                <col className="w-[18%]" />
-                <col className="w-[10%]" />
-              </colgroup>
+          <>
+            <p className="mb-4 text-sm text-[var(--erp-muted)]">
+              عدد النتائج: {formatNumber(ads.length)}
+              {data?.total != null
+                ? ` · الإجمالي ${formatNumber(data.total)}`
+                : ""}
+            </p>
 
-              <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
-                <tr>
-                  <th className="px-3 py-3 font-medium">العنوان</th>
-                  <th className="px-3 py-3 font-medium">المكان</th>
-                  <th className="px-3 py-3 text-center font-medium">الحالة</th>
-                  <th className="px-3 py-3 font-medium">تاريخ البداية</th>
-                  <th className="px-3 py-3 font-medium">تاريخ النهاية</th>
-                  <th className="px-3 py-3 text-center font-medium">
-                    الإجراءات
-                  </th>
-                </tr>
-              </thead>
+            <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
+              <table className="w-full min-w-[860px] table-fixed text-right text-sm">
+                <colgroup>
+                  <col className="w-[28%]" />
+                  <col className="w-[14%]" />
+                  <col className="w-[12%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[18%]" />
+                  <col className="w-[10%]" />
+                </colgroup>
 
-              <tbody>
-                {ads.map((ad) => (
-                  <tr
-                    key={ad.id}
-                    className="border-b border-[var(--erp-border)] transition-colors last:border-0 hover:bg-[var(--erp-bg)]"
-                  >
-                    <td className="px-3 py-4 leading-6 font-medium text-[var(--erp-text)]">
-                      {ad.title}
-                    </td>
-
-                    <td className="px-3 py-4 text-sm text-[var(--erp-text)]">
-                      {ad.placement === "HOME"
-                        ? "الصفحة الرئيسية"
-                        : ad.placement}
-                    </td>
-
-                    <td className="px-3 py-4">
-                      <div className="flex justify-center">
-                        <span
-                          className={
-                            ad.isActive
-                              ? "rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-                              : "rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-300"
-                          }
-                        >
-                          {ad.isActive ? "نشط" : "غير نشط"}
-                        </span>
-                      </div>
-                    </td>
-
-                    <td
-                      dir="ltr"
-                      className="px-3 py-4 text-right text-sm text-[var(--erp-muted)] tabular-nums"
-                    >
-                      {formatAdDate(ad.startDate)}
-                    </td>
-
-                    <td
-                      dir="ltr"
-                      className="px-3 py-4 text-right text-sm text-[var(--erp-muted)] tabular-nums"
-                    >
-                      {formatAdDate(ad.endDate)}
-                    </td>
-
-                    <td className="px-3 py-4">
-                      <div className="flex flex-wrap justify-center gap-1.5">
-                        {canManage && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1"
-                            onClick={() => navigate(`/ads/${ad.id}`)}
-                          >
-                            <Eye className="size-3.5" />
-                            عرض
-                          </Button>
-                        )}
-
-                        {canManage && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(ad.id)}
-                            disabled={deleteAdMutation.isPending}
-                          >
-                            <Trash2 className="size-4 text-red-500" />
-                          </Button>
-                        )}
-                      </div>
-                    </td>
+                <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
+                  <tr>
+                    <th className="px-3 py-3 font-medium">العنوان</th>
+                    <th className="px-3 py-3 font-medium">المكان</th>
+                    <th className="px-3 py-3 text-center font-medium">
+                      الحالة
+                    </th>
+                    <th className="px-3 py-3 font-medium">تاريخ البداية</th>
+                    <th className="px-3 py-3 font-medium">تاريخ النهاية</th>
+                    <th className="px-3 py-3 text-center font-medium">
+                      الإجراءات
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody>
+                  {ads.map((ad) => (
+                    <tr
+                      key={ad.id}
+                      className="border-b border-[var(--erp-border)] transition-colors last:border-0 hover:bg-[var(--erp-bg)]"
+                    >
+                      <td className="px-3 py-4 leading-6 font-medium text-[var(--erp-text)]">
+                        {ad.title}
+                      </td>
+
+                      <td className="px-3 py-4 text-sm text-[var(--erp-text)]">
+                        {ad.placement === "HOME"
+                          ? "الصفحة الرئيسية"
+                          : ad.placement}
+                      </td>
+
+                      <td className="px-3 py-4">
+                        <div className="flex justify-center">
+                          <span
+                            className={
+                              ad.isActive
+                                ? "rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                                : "rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-300"
+                            }
+                          >
+                            {ad.isActive ? "نشط" : "غير نشط"}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td
+                        dir="ltr"
+                        className="px-3 py-4 text-right text-sm text-[var(--erp-muted)] tabular-nums"
+                      >
+                        {formatAdDate(ad.startDate)}
+                      </td>
+
+                      <td
+                        dir="ltr"
+                        className="px-3 py-4 text-right text-sm text-[var(--erp-muted)] tabular-nums"
+                      >
+                        {formatAdDate(ad.endDate)}
+                      </td>
+
+                      <td className="px-3 py-4">
+                        <div className="flex flex-wrap justify-center gap-1.5">
+                          {canManage && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1"
+                              onClick={() => navigate(`/ads/${ad.id}`)}
+                            >
+                              <Eye className="size-3.5" />
+                              عرض
+                            </Button>
+                          )}
+
+                          {canManage && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(ad.id)}
+                              disabled={deleteAdMutation.isPending}
+                            >
+                              <Trash2 className="size-4 text-red-500" />
+                            </Button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-4">
+              <PaginationControls
+                page={page}
+                isFinalPage={data?.isFinalPage ?? true}
+                isLoading={isFetching}
+                total={data?.total}
+                onPrevious={() =>
+                  setPage((current) => Math.max(1, current - 1))
+                }
+                onNext={() => setPage((current) => current + 1)}
+              />
+            </div>
+          </>
         )}
       </section>
     </main>
