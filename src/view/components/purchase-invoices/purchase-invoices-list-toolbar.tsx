@@ -1,4 +1,5 @@
 import { Search, X } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { toEnglishDigits } from "@/utils/number-formatters"
 import {
@@ -19,23 +20,21 @@ export function PurchaseInvoicesListToolbar({
   filteredCount,
   onSearchChange,
 }: PurchaseInvoicesListToolbarProps) {
+  const { t } = useTranslation(["common", "pages"])
   const hasSearch = search.trim().length > 0
 
   return (
     <div className="mb-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-      <div className="text-right">
+      <div className="text-start">
         <h2 className="text-lg font-bold text-[var(--erp-text)]">
-          قائمة فواتير الشراء
+          {t("pages:purchaseInvoices.list")}
         </h2>
 
         <p className="mt-1 text-sm text-[var(--erp-muted)]">
-          عدد الفواتير المعروضة:{" "}
+          {t("common:shownInvoices")}:{" "}
           <NumberText value={formatNumber(filteredCount)} />
           {hasSearch && (
-            <>
-              {" "}
-              من أصل <NumberText value={formatNumber(totalCount)} />
-            </>
+            <> {t("common:ofTotal", { count: formatNumber(totalCount) })}</>
           )}
         </p>
       </div>
@@ -49,9 +48,8 @@ export function PurchaseInvoicesListToolbar({
             onSearchChange(toEnglishDigits(event.target.value))
           }
           type="search"
-          dir="rtl"
-          placeholder="ابحث برقم الفاتورة أو اسم المورد..."
-          className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent py-3 ps-11 pe-4 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)]"
+          placeholder={t("pages:purchaseInvoices.searchPlaceholder")}
+          className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent py-3 ps-11 pe-4 text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)]"
         />
 
         {hasSearch && (
@@ -59,7 +57,7 @@ export function PurchaseInvoicesListToolbar({
             type="button"
             onClick={() => onSearchChange("")}
             className="absolute end-4 top-1/2 -translate-y-1/2 text-[var(--erp-muted)] transition hover:text-[var(--erp-text)]"
-            aria-label="Clear search"
+            aria-label={t("common:clearSearch")}
           >
             <X className="size-4" />
           </button>

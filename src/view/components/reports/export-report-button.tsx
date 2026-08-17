@@ -1,4 +1,5 @@
 import { Download } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { useExportReport } from "@/hooks/Reports/useReports"
 import type {
@@ -18,6 +19,7 @@ export function ExportReportButton({
   label,
   params,
 }: ExportReportButtonProps) {
+  const { t } = useTranslation("common")
   const exportMutation = useExportReport()
 
   async function handleExport() {
@@ -30,7 +32,7 @@ export function ExportReportButton({
       a.click()
       URL.revokeObjectURL(url)
     } catch {
-      alert("فشل تصدير التقرير")
+      alert(t("exportFailed"))
     }
   }
 

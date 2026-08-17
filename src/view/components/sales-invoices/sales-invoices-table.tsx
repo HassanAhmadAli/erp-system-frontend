@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Ban, CheckCircle2, Eye, Loader2, Undo2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
 import { useUpdateSalesInvoiceStatus } from "@/hooks/useSalesInvoices"
@@ -17,9 +18,9 @@ import {
   formatNumber,
   getInvoiceTotal,
   getNextSalesInvoiceStatusOptions,
+  getSalesInvoiceStatusLabel,
   normalizeSalesInvoiceStatus,
   NumberText,
-  salesInvoiceStatusLabels,
   SalesInvoiceStatusBadge,
 } from "./sales-invoice-format"
 
@@ -29,7 +30,10 @@ type SalesInvoicesTableProps = {
   isError: boolean
 }
 
-function getSalesInvoiceCustomerName(invoice: SalesInvoice) {
+function getSalesInvoiceCustomerName(
+  invoice: SalesInvoice,
+  t: ReturnType<typeof useTranslation>["t"]
+) {
   const fullName = invoice.customer?.user?.fullName?.trim()
 
   if (fullName) {
@@ -39,14 +43,10 @@ function getSalesInvoiceCustomerName(invoice: SalesInvoice) {
   const customerId = invoice.customerId ?? invoice.customer?.id
 
   if (!customerId) {
-    return "عميل نقدي"
+    return t("common:cashCustomerLabel")
   }
 
-  return `عميل #${formatNumber(customerId)}`
-}
-
-function getStatusActionLabel(status: SalesInvoiceStatus) {
-  return salesInvoiceStatusLabels[status] ?? status
+  return t("common:customerFallback", { id: formatNumber(customerId) })
 }
 
 function getStatusActionIcon(status: SalesInvoiceStatus) {
@@ -72,6 +72,7 @@ export function SalesInvoicesTable({
   isLoading,
   isError,
 }: SalesInvoicesTableProps) {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const { canManageSalesInvoice } = usePermissions()
   const updateStatusMutation = useUpdateSalesInvoiceStatus()
@@ -84,12 +85,12 @@ export function SalesInvoicesTable({
     setStatusError("")
 
     if (!isValidId(id)) {
-      setStatusError("رقم الفاتورة غير صالح.")
+      setStatusError(t("pages:salesInvoices.invalidInvoiceId"))
       return
     }
 
     if (!isSalesInvoiceStatus(status)) {
-      setStatusError("حالة الفاتورة غير صالحة.")
+      setStatusError(t("pages:salesInvoices.invalidInvoiceStatus"))
       return
     }
 
@@ -101,9 +102,7 @@ export function SalesInvoicesTable({
           setUpdatingInvoiceId(null)
         },
         onError: () => {
-          setStatusError(
-            "فشل تحديث حالة الفاتورة. تأكد أن الانتقال مسموح (قيد الانتظار → مكتملة/ملغاة، مكتملة → مستردة)."
-          )
+          setStatusError(t("pages:salesInvoices.statusUpdateFailedTransition"))
         },
       }
     )
@@ -113,7 +112,7 @@ export function SalesInvoicesTable({
     return (
       <div className="flex items-center justify-center gap-2 py-10 text-[var(--erp-muted)]">
         <Loader2 className="size-5 animate-spin" />
-        جاري تحميل الفواتير...
+        {t("pages:salesInvoices.loadingList")}
       </div>
     )
   }
@@ -121,8 +120,7 @@ export function SalesInvoicesTable({
   if (isError) {
     return (
       <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-600">
-        لم يتم تحميل فواتير المبيعات. غالباً الحساب الحالي لا يملك صلاحية
-        الكاشير أو المحاسب، أو أن السيرفر غير مشغل.
+        {t("pages:salesInvoices.loadListFailed")}
       </div>
     )
   }
@@ -130,7 +128,7 @@ export function SalesInvoicesTable({
   if (invoices.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-[var(--erp-muted)]">
-        لا توجد فواتير مبيعات حالياً.
+        {t("pages:salesInvoices.noInvoices")}
       </div>
     )
   }
@@ -138,16 +136,24 @@ export function SalesInvoicesTable({
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[980px] border-separate border-spacing-y-2 text-right text-sm">
+        <table className="w-full min-w-[980px] border-separate border-spacing-y-2 text-start text-sm">
           <thead>
             <tr className="text-xs text-[var(--erp-muted)]">
-              <th className="px-4 py-2 font-semibold">رقم الفاتورة</th>
-              <th className="px-4 py-2 font-semibold">العميل</th>
-              <th className="px-4 py-2 font-semibold">الحالة الحالية</th>
-              <th className="px-4 py-2 font-semibold">الإجمالي</th>
-              <th className="px-4 py-2 font-semibold">التاريخ</th>
-              <th className="px-4 py-2 font-semibold">تحديث الحالة</th>
-              <th className="px-4 py-2 font-semibold">الإجراءات</th>
+              <th className="px-4 py-2 font-semibold">
+                {t("common:invoiceNumber")}
+              </th>
+              <th className="px-4 py-2 font-semibold">
+                {t("common:customer")}
+              </th>
+              <th className="px-4 py-2 font-semibold">
+                {t("common:currentStatus")}
+              </th>
+              <th className="px-4 py-2 font-semibold">{t("common:total")}</th>
+              <th className="px-4 py-2 font-semibold">{t("common:date")}</th>
+              <th className="px-4 py-2 font-semibold">
+                {t("common:updateStatus")}
+              </th>
+              <th className="px-4 py-2 font-semibold">{t("common:actions")}</th>
             </tr>
           </thead>
 
@@ -163,12 +169,12 @@ export function SalesInvoicesTable({
 
               return (
                 <tr key={invoice.id}>
-                  <td className="rounded-r-2xl bg-[var(--erp-bg)] px-4 py-3 font-semibold">
+                  <td className="rounded-s-2xl bg-[var(--erp-bg)] px-4 py-3 font-semibold">
                     <NumberText value={`#${formatNumber(invoice.id)}`} />
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    {getSalesInvoiceCustomerName(invoice)}
+                    {getSalesInvoiceCustomerName(invoice, t)}
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
@@ -186,11 +192,11 @@ export function SalesInvoicesTable({
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
                     {!canUpdate ? (
                       <span className="text-xs text-[var(--erp-muted)]">
-                        لا تملك صلاحية التحديث
+                        {t("common:noPermission")}
                       </span>
                     ) : nextStatuses.length === 0 ? (
                       <span className="text-xs text-[var(--erp-muted)]">
-                        لا يوجد انتقال متاح
+                        {t("pages:salesInvoices.noStatusTransition")}
                       </span>
                     ) : (
                       <div className="flex flex-wrap gap-2">
@@ -216,7 +222,7 @@ export function SalesInvoicesTable({
                               ) : (
                                 <Icon className="size-4" />
                               )}
-                              {getStatusActionLabel(nextStatus)}
+                              {getSalesInvoiceStatusLabel(nextStatus, t)}
                             </button>
                           )
                         })}
@@ -224,14 +230,14 @@ export function SalesInvoicesTable({
                     )}
                   </td>
 
-                  <td className="rounded-l-2xl bg-[var(--erp-bg)] px-4 py-3">
+                  <td className="rounded-e-2xl bg-[var(--erp-bg)] px-4 py-3">
                     <button
                       type="button"
                       onClick={() => navigate(`/sales-invoices/${invoice.id}`)}
                       className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-[var(--erp-nav-active-bg)]"
                     >
                       <Eye className="size-4" />
-                      عرض
+                      {t("common:view")}
                     </button>
                   </td>
                 </tr>
@@ -243,8 +249,7 @@ export function SalesInvoicesTable({
 
       {(updateStatusMutation.isError || statusError) && (
         <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
-          {statusError ||
-            "فشل تحديث حالة الفاتورة. الحالة تنتقل من قيد الانتظار إلى مكتملة أو ملغاة، ومن مكتملة إلى مستردة."}
+          {statusError || t("pages:salesInvoices.statusUpdateFailedRules")}
         </p>
       )}
     </>

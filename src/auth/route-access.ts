@@ -243,6 +243,13 @@ const ROUTE_ACCESS_RULES: RouteAccessRule[] = [
     rolesOnly: ["STORE_MANAGER"],
     permissions: [PERMISSIONS.EMPLOYEE_MANAGE],
   },
+
+  /**
+   * Settings — any authenticated staff user
+   */
+  {
+    test: (path) => isExact(path, "/settings"),
+  },
 ]
 
 export const SIDEBAR_ACCESS: SidebarAccess[] = [
@@ -326,6 +333,9 @@ export const SIDEBAR_ACCESS: SidebarAccess[] = [
     to: "/staff",
     rolesOnly: ["STORE_MANAGER"],
     permissions: [PERMISSIONS.EMPLOYEE_MANAGE],
+  },
+  {
+    to: "/settings",
   },
 ]
 

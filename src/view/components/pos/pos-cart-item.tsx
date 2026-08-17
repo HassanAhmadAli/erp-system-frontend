@@ -1,4 +1,5 @@
 import { Minus, Plus, Trash2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/view/components/ui/button"
 import {
@@ -23,6 +24,7 @@ export function PosCartItem({
   onQuantityChange,
   onRemoveFromCart,
 }: PosCartItemProps) {
+  const { t } = useTranslation(["common", "pages"])
   const productPrice = getProductPrice(item.product)
   const itemTotal = productPrice * item.quantity
   const maxQuantity = item.product.quantityInStock
@@ -55,7 +57,7 @@ export function PosCartItem({
 
           <p
             dir="ltr"
-            className="mt-1 text-right text-xs text-[var(--erp-muted)]"
+            className="mt-1 text-start text-xs text-[var(--erp-muted)]"
           >
             {formatCurrency(productPrice)}
           </p>
@@ -87,7 +89,7 @@ export function PosCartItem({
             inputMode="numeric"
             dir="ltr"
             className="h-9 w-16 rounded-xl border border-[var(--erp-border)] bg-transparent text-center text-sm font-semibold text-[var(--erp-text)] outline-none focus:border-[var(--erp-accent)]"
-            aria-label={`Quantity for ${item.product.name}`}
+            aria-label={`${t("common:quantity")} ${item.product.name}`}
           />
 
           <Button
@@ -107,7 +109,7 @@ export function PosCartItem({
 
       {item.quantity >= maxQuantity && (
         <p className="mt-2 text-xs text-amber-600">
-          وصلت إلى الكمية المتوفرة في المخزون.
+          {t("pages:pos.maxStockReached")}
         </p>
       )}
     </div>

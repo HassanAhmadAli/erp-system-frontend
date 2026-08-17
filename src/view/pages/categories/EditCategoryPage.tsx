@@ -2,6 +2,7 @@ import { type FormEvent, useEffect, useState } from "react"
 import { ArrowRight, FolderOpen } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 
 import { getCategoryById, updateCategory } from "@/services/category-service"
 import { formatId } from "@/utils/number-formatters"
@@ -18,13 +19,15 @@ import { Button } from "@/view/components/ui/button"
 import { CategoryImagePanel } from "@/view/components/categories/category-image-panel"
 
 const inputClass =
-  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
 const EMPTY_FORM: CategoryFormValues = {
   name: "",
+  nameAr: "",
   description: "",
+  descriptionAr: "",
 }
 
 function ErrorText({ message }: { message?: string }) {
@@ -36,6 +39,7 @@ function ErrorText({ message }: { message?: string }) {
 }
 
 export function EditCategoryPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { id } = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -55,7 +59,9 @@ export function EditCategoryPage() {
     if (data) {
       setForm({
         name: data.name ?? "",
+        nameAr: data.nameAr ?? "",
         description: data.description ?? "",
+        descriptionAr: data.descriptionAr ?? "",
       })
       setErrors({})
       setErrorMessage("")
@@ -79,7 +85,7 @@ export function EditCategoryPage() {
     },
 
     onError: () => {
-      setErrorMessage("فشل تحديث التصنيف، حاول مرة أخرى")
+      setErrorMessage(t("pages:categories.updateFailed"))
     },
   })
 
@@ -88,7 +94,7 @@ export function EditCategoryPage() {
     setErrorMessage("")
 
     if (!isValidId(categoryId)) {
-      setErrorMessage("رقم التصنيف غير صالح")
+      setErrorMessage(t("pages:categories.invalidCategoryId"))
       return
     }
 
@@ -104,38 +110,37 @@ export function EditCategoryPage() {
   }
 
   if (!isValidId(categoryId)) {
-    return <ErrorMessage message="رقم التصنيف غير صالح." />
+    return <ErrorMessage message={t("pages:categories.invalidCategoryId")} />
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
-        <p className="text-[var(--erp-muted)]">جاري تحميل بيانات التصنيف...</p>
+      <div className="space-y-6 text-start text-[var(--erp-text)]">
+        <p className="text-[var(--erp-muted)]">
+          {t("pages:categories.loadingCategory")}
+        </p>
       </div>
     )
   }
 
   if (isError || !data) {
-    return <ErrorMessage message="تعذر تحميل بيانات التصنيف." />
+    return <ErrorMessage message={t("pages:categories.loadCategoryFailed")} />
   }
 
   return (
-    <div
-      className="mx-auto max-w-3xl space-y-6 text-right text-[var(--erp-text)]"
-      dir="rtl"
-    >
+    <div className="mx-auto max-w-3xl space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-              تعديل التصنيف #{formatId(categoryId)}
+              {t("pages:categories.editTitle", { id: formatId(categoryId) })}
             </h1>
 
             <FolderOpen className="size-7 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            قم بتحديث بيانات التصنيف ثم احفظ التغييرات.
+            {t("pages:categories.editSubtitle")}
           </p>
         </div>
 
@@ -144,23 +149,23 @@ export function EditCategoryPage() {
           className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
         >
           <ArrowRight className="size-4" />
-          العودة إلى التفاصيل
+          {t("common:backToDetails")}
         </Link>
       </header>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
+        className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
       >
         <div>
           <label htmlFor="edit-category-name" className={labelClass}>
-            اسم التصنيف
+            {t("pages:categories.categoryName")}
           </label>
 
           <input
             id="edit-category-name"
             className={inputClass}
-            placeholder="أدخل اسم التصنيف"
+            placeholder={t("pages:categories.namePlaceholder")}
             value={form.name}
             onChange={(event) => setField("name", event.target.value)}
           />
@@ -168,18 +173,46 @@ export function EditCategoryPage() {
         </div>
 
         <div>
+          <label htmlFor="edit-category-name-ar" className={labelClass}>
+            {t("nameAr")}
+          </label>
+
+          <input
+            id="edit-category-name-ar"
+            className={inputClass}
+            value={form.nameAr ?? ""}
+            onChange={(event) => setField("nameAr", event.target.value)}
+          />
+          <ErrorText message={errors.nameAr} />
+        </div>
+
+        <div>
           <label htmlFor="edit-category-description" className={labelClass}>
-            الوصف
+            {t("common:description")}
           </label>
 
           <textarea
             id="edit-category-description"
             className={`${inputClass} min-h-28 resize-none`}
-            placeholder="أدخل وصف التصنيف (اختياري)"
+            placeholder={t("pages:categories.descriptionPlaceholder")}
             value={form.description}
             onChange={(event) => setField("description", event.target.value)}
           />
           <ErrorText message={errors.description} />
+        </div>
+
+        <div>
+          <label htmlFor="edit-category-description-ar" className={labelClass}>
+            {t("descriptionAr")}
+          </label>
+
+          <textarea
+            id="edit-category-description-ar"
+            className={`${inputClass} min-h-28 resize-none`}
+            value={form.descriptionAr ?? ""}
+            onChange={(event) => setField("descriptionAr", event.target.value)}
+          />
+          <ErrorText message={errors.descriptionAr} />
         </div>
 
         {errorMessage && (
@@ -190,7 +223,7 @@ export function EditCategoryPage() {
 
         <div className="flex flex-col gap-2 border-t border-[var(--erp-border)] pt-4 sm:flex-row sm:justify-end">
           <Button type="submit" disabled={mutation.isPending}>
-            {mutation.isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
+            {mutation.isPending ? t("common:saving") : t("common:saveChanges")}
           </Button>
 
           <Button
@@ -198,7 +231,7 @@ export function EditCategoryPage() {
             variant="outline"
             onClick={() => navigate(`/categories/${categoryId}`)}
           >
-            إلغاء
+            {t("common:cancel")}
           </Button>
         </div>
       </form>
@@ -213,8 +246,10 @@ export function EditCategoryPage() {
 }
 
 function ErrorMessage({ message }: { message: string }) {
+  const { t } = useTranslation(["common", "pages"])
+
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <p className="text-red-500 dark:text-red-300">{message}</p>
 
       <Link
@@ -222,7 +257,7 @@ function ErrorMessage({ message }: { message: string }) {
         className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
         <ArrowRight className="size-4" />
-        العودة إلى التصنيفات
+        {t("pages:categories.backToCategories")}
       </Link>
     </div>
   )

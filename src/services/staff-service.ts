@@ -1,4 +1,5 @@
 import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import i18n from "@/i18n"
 import {
   normalizePaginatedResponse,
   toPaginationQuery,
@@ -28,19 +29,13 @@ export const STAFF_ROLES: readonly StaffRole[] = [
   "WAREHOUSE_WORKER",
 ] as const
 
-export const STAFF_ROLE_LABELS: Record<StaffRole, string> = {
-  CASHIER: "كاشير",
-  ACCOUNTANT: "محاسب",
-  WAREHOUSE_WORKER: "عامل مستودع",
-}
-
 export function isStaffRole(role: UserRole): role is StaffRole {
   return (STAFF_ROLES as readonly string[]).includes(role)
 }
 
 export function formatStaffRole(role: UserRole) {
   if (isStaffRole(role)) {
-    return STAFF_ROLE_LABELS[role]
+    return i18n.t(`nav:roles.${role}`)
   }
 
   return role

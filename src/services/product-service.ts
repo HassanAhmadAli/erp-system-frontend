@@ -9,7 +9,9 @@ import { getAccessToken } from "@/utils/auth-storage"
 export type Product = {
   id: number
   name: string
+  nameAr?: string | null
   description?: string | null
+  descriptionAr?: string | null
   barcode: string
   purchasePrice?: number | string
   sellingPrice?: number | string
@@ -22,13 +24,21 @@ export type Product = {
   updatedAt?: string
 
   // Some backend responses may include nested objects; we keep it optional.
-  category?: { id: number; name: string; description?: string | null } | null
+  category?: {
+    id: number
+    name: string
+    nameAr?: string | null
+    description?: string | null
+    descriptionAr?: string | null
+  } | null
   supplier?: {
     id: number
     fullName: string
+    fullNameAr?: string | null
     phone?: string
     email?: string
     address?: string
+    addressAr?: string | null
   } | null
 }
 
@@ -45,10 +55,19 @@ export type ProductListResponse =
 export type ProductsQuery = PaginationParams
 
 export type ProductPhoto = {
-  id: number | string
-  // Backend might return fileName or url; keep optional.
-  url?: string
-  fileName?: string
+  id: number
+  productId?: number
+  storedFileId?: string
+  storedFile?: {
+    id: string
+    originalname?: string
+    mimetype?: string
+    path?: string
+    size?: number
+  } | null
+  /** Legacy/compat fields some responses may include */
+  url?: string | null
+  fileName?: string | null
 }
 
 export type ProductPhotoListResponse =
@@ -77,7 +96,9 @@ export type ImportJobListResponse =
 
 export type CreateProductInput = {
   name: string
+  nameAr?: string
   description?: string
+  descriptionAr?: string
   barcode: string
   purchasePrice: number
   sellingPrice: number
@@ -122,6 +143,55 @@ export function normalizeProductList(
 
 export function normalizeProductPhotos(response: unknown): ProductPhoto[] {
   return asArray<ProductPhoto>(response)
+}
+
+/**
+ * Builds an absolute URL for a product's primary image.
+ * Backend stores relative paths like `/product-photo/download/{storedFileId}` on `product.imageUrl`.
+ */
+export function getProductImageSrc(imageUrl?: string | null) {
+  if (!imageUrl?.trim()) return null
+
+  const trimmed = imageUrl.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`
+  return `${BASE_URL}/${trimmed}`
+}
+
+export function getProductPhotoStoredFileId(photo: ProductPhoto) {
+  const fromField = photo.storedFileId?.trim()
+  if (fromField) return fromField
+
+  const fromNested = photo.storedFile?.id?.trim()
+  if (fromNested) return fromNested
+
+  return null
+}
+
+export function getProductPhotoFileName(photo: ProductPhoto) {
+  return (
+    photo.storedFile?.originalname?.trim() || photo.fileName?.trim() || null
+  )
+}
+
+/**
+ * Builds an absolute URL for a product photo.
+ * Download endpoint is public and keyed by storedFileId (UUID), not photo id.
+ */
+export function getProductPhotoSrc(photo: ProductPhoto) {
+  if (photo.url?.trim()) {
+    const trimmed = photo.url.trim()
+    if (/^https?:\/\//i.test(trimmed)) return trimmed
+    if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`
+    return `${BASE_URL}/${trimmed}`
+  }
+
+  const storedFileId = getProductPhotoStoredFileId(photo)
+  if (storedFileId) {
+    return `${BASE_URL}/product-photo/download/${storedFileId}`
+  }
+
+  return null
 }
 
 export function normalizeImportJobs(response: unknown): ImportJob[] {
@@ -254,10 +324,11 @@ export async function deleteProductPhoto(photoId: number | string) {
   })
 }
 
-// Returns a Blob so the UI can render a thumbnail or trigger a download.
-export async function downloadProductPhoto(photoId: number | string) {
-  const response = await authorizedFetch(
-    `${BASE_URL}/product-photo/download/${photoId}`,
+// Returns a Blob so the UI can trigger a download.
+// Backend download is public and expects storedFileId (UUID), not photo id.
+export async function downloadProductPhoto(storedFileId: string) {
+  const response = await fetch(
+    `${BASE_URL}/product-photo/download/${storedFileId}`,
     { method: "GET" }
   )
 

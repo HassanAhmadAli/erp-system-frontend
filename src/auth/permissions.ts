@@ -205,13 +205,3 @@ export function getDefaultRouteForRole(role: UserRole | undefined): string {
       return "/login"
   }
 }
-
-export const ROLE_HEADER_TITLES: Record<
-  Exclude<UserRole, "CUSTOMER">,
-  string
-> = {
-  STORE_MANAGER: "مدير المتجر",
-  CASHIER: "الكاشير",
-  WAREHOUSE_WORKER: "مدير المخزون",
-  ACCOUNTANT: "المحاسب",
-}

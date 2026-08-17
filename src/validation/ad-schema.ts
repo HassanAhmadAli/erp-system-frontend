@@ -1,12 +1,13 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import {
   isHttpUrl,
   normalizeText,
   optionalText,
   toEnglishDigits,
 } from "./helpers"
-import { requiredText } from "./zod-helpers"
+import { optionalTrimmedText, requiredText } from "./zod-helpers"
 
 export const AD_PLACEMENTS = ["HOME", "CHECKOUT", "SIDEBAR"] as const
 export type AdPlacement = (typeof AD_PLACEMENTS)[number]
@@ -65,12 +66,12 @@ function dateTimeInputToIsoString(value: string) {
   return date.toISOString()
 }
 
-function requiredDateTimeInput(fieldMessage: string) {
+function requiredDateTimeInput(fieldMessage: () => string) {
   return z.string().superRefine((value, ctx) => {
     if (!value.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: fieldMessage,
+        message: fieldMessage(),
       })
       return
     }
@@ -78,13 +79,13 @@ function requiredDateTimeInput(fieldMessage: string) {
     if (!isValidDateTimeInput(value)) {
       ctx.addIssue({
         code: "custom",
-        message: "أدخل تاريخًا صالحًا.",
+        message: i18n.t("validation:mustBeDate"),
       })
     }
   })
 }
 
-function optionalHttpUrl(maxMessage: string) {
+function optionalHttpUrl(maxMessage: () => string) {
   return z
     .string()
     .optional()
@@ -96,14 +97,14 @@ function optionalHttpUrl(maxMessage: string) {
       if (normalized.length > 500) {
         ctx.addIssue({
           code: "custom",
-          message: maxMessage,
+          message: maxMessage(),
         })
       }
 
       if (!isHttpUrl(normalized)) {
         ctx.addIssue({
           code: "custom",
-          message: "أدخل رابطًا صالحًا يبدأ بـ http أو https.",
+          message: i18n.t("validation:mustBeUrl"),
         })
       }
     })
@@ -112,36 +113,50 @@ function optionalHttpUrl(maxMessage: string) {
 export const adSchema = z
   .object({
     title: requiredText({
-      requiredMessage: "عنوان الإعلان مطلوب.",
+      requiredMessage: () => i18n.t("validation:ad.titleRequired"),
       min: 2,
-      minMessage: "عنوان الإعلان يجب أن يكون حرفين على الأقل.",
+      minMessage: () => i18n.t("validation:ad.titleMin"),
       max: 120,
-      maxMessage: "عنوان الإعلان يجب ألا يتجاوز 120 حرفًا.",
+      maxMessage: () => i18n.t("validation:ad.titleMax"),
+    }),
+
+    titleAr: optionalTrimmedText({
+      max: 120,
+      maxMessage: () => i18n.t("validation:ad.titleArMax"),
     }),
 
     description: requiredText({
-      requiredMessage: "وصف الإعلان مطلوب.",
+      requiredMessage: () => i18n.t("validation:ad.descriptionRequired"),
       min: 2,
-      minMessage: "وصف الإعلان يجب أن يكون حرفين على الأقل.",
+      minMessage: () => i18n.t("validation:ad.descriptionMin"),
       max: 500,
-      maxMessage: "وصف الإعلان يجب ألا يتجاوز 500 حرف.",
+      maxMessage: () => i18n.t("validation:ad.descriptionMax"),
     }),
 
-    imageUrl: optionalHttpUrl("رابط الصورة يجب ألا يتجاوز 500 حرف."),
+    descriptionAr: optionalTrimmedText({
+      max: 500,
+      maxMessage: () => i18n.t("validation:ad.descriptionArMax"),
+    }),
 
-    linkUrl: optionalHttpUrl("رابط الإعلان يجب ألا يتجاوز 500 حرف."),
+    imageUrl: optionalHttpUrl(() => i18n.t("validation:ad.imageUrlMax")),
+
+    linkUrl: optionalHttpUrl(() => i18n.t("validation:ad.linkUrlMax")),
 
     placement: z.enum(AD_PLACEMENTS, {
-      error: "مكان ظهور الإعلان غير صالح.",
+      error: () => i18n.t("validation:ad.placementInvalid"),
     }),
 
     isActive: z.boolean({
-      error: "حالة الإعلان غير صالحة.",
+      error: () => i18n.t("validation:ad.statusInvalid"),
     }),
 
-    startDate: requiredDateTimeInput("تاريخ بداية الإعلان مطلوب."),
+    startDate: requiredDateTimeInput(() =>
+      i18n.t("validation:ad.startDateRequired")
+    ),
 
-    endDate: requiredDateTimeInput("تاريخ نهاية الإعلان مطلوب."),
+    endDate: requiredDateTimeInput(() =>
+      i18n.t("validation:ad.endDateRequired")
+    ),
   })
   .superRefine((values, ctx) => {
     const start = parseDateTimeInput(values.startDate)
@@ -153,7 +168,7 @@ export const adSchema = z
       ctx.addIssue({
         code: "custom",
         path: ["endDate"],
-        message: "تاريخ النهاية يجب أن يكون بعد تاريخ البداية.",
+        message: i18n.t("validation:endAfterStart"),
       })
     }
   })
@@ -162,7 +177,9 @@ export type AdFormValues = z.input<typeof adSchema>
 
 export type AdRequestPayload = {
   title: string
+  titleAr?: string
   description: string
+  descriptionAr?: string
   imageUrl: string | null
   linkUrl: string | null
   placement: AdPlacement
@@ -181,7 +198,9 @@ export function adZodErrorToFormErrors(error: z.ZodError) {
 
     if (
       field !== "title" &&
+      field !== "titleAr" &&
       field !== "description" &&
+      field !== "descriptionAr" &&
       field !== "imageUrl" &&
       field !== "linkUrl" &&
       field !== "placement" &&
@@ -200,13 +219,17 @@ export function adZodErrorToFormErrors(error: z.ZodError) {
 
 export function adFormValuesToPayload(values: AdFormValues): AdRequestPayload {
   const title = normalizeText(values.title)
+  const titleAr = optionalText(values.titleAr)
   const description = normalizeText(values.description)
+  const descriptionAr = optionalText(values.descriptionAr)
   const imageUrl = optionalText(values.imageUrl) ?? null
   const linkUrl = optionalText(values.linkUrl) ?? null
 
   return {
     title,
+    ...(titleAr ? { titleAr } : {}),
     description,
+    ...(descriptionAr ? { descriptionAr } : {}),
     imageUrl,
     linkUrl,
     placement: values.placement,

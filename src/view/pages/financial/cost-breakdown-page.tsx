@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
 import { useCostBreakdown } from "@/hooks/Financial/useFinancial"
 import {
@@ -13,6 +15,7 @@ import { ReportMetrics } from "@/view/components/reports/report-metrics"
 import { ReportTable } from "@/view/components/reports/report-table"
 
 export function CostBreakdownPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { from, to, setFrom, setTo, range } = useReportDateRange()
   const { data, isLoading, isError } = useCostBreakdown(range)
 
@@ -31,10 +34,10 @@ export function CostBreakdownPage() {
 
   return (
     <ReportLayout
-      title="تفصيل التكاليف"
-      description="توزيع التكاليف بين الفئات — المخطط الدائري يعرض نسبة كل فئة من الإجمالي"
+      title={t("financial.costBreakdown", { ns: "pages" })}
+      description={t("financial.costBreakdownReportDesc", { ns: "pages" })}
       backTo="/financial"
-      backLabel="التحليل المالي"
+      backLabel={t("financial.title", { ns: "pages" })}
       loading={isLoading}
       error={isError}
       filters={
@@ -51,15 +54,22 @@ export function CostBreakdownPage() {
       <div className="grid gap-4 lg:grid-cols-2">
         {isCompositionData(series) && (
           <DonutChart
-            title="نسبة كل فئة من إجمالي التكلفة"
+            title={t("financial.categoryShareOfTotal", { ns: "pages" })}
             data={series}
             unit="SP"
           />
         )}
-        <BarChart title="مقارنة التكاليف بالقيمة" data={series} unit="SP" />
+        <BarChart
+          title={t("financial.costComparison", { ns: "pages" })}
+          data={series}
+          unit="SP"
+        />
       </div>
 
-      <ReportTable title="تفاصيل التكاليف" rows={rows} />
+      <ReportTable
+        title={t("financial.costDetails", { ns: "pages" })}
+        rows={rows}
+      />
     </ReportLayout>
   )
 }

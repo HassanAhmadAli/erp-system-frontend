@@ -8,6 +8,7 @@ import {
   Truck,
   User,
 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Link, useParams } from "react-router-dom"
 
 import { useSupplierById } from "@/hooks/Suppliers/useSupplierById"
@@ -16,6 +17,7 @@ import { isValidId } from "@/validation/helpers"
 import { Button } from "@/view/components/ui/button"
 
 export function SupplierDetailsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { id } = useParams()
   const supplierId = Number(id)
 
@@ -26,19 +28,19 @@ export function SupplierDetailsPage() {
   } = useSupplierById(isValidId(supplierId) ? supplierId : null)
 
   if (!isValidId(supplierId)) {
-    return <ErrorMessage message="رقم المورد غير صالح." />
+    return <ErrorMessage message={t("pages:suppliers.invalidSupplierId")} />
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
-        <p className="text-[var(--erp-muted)]">جاري تحميل بيانات المورد...</p>
+      <div className="space-y-6 text-start text-[var(--erp-text)]">
+        <p className="text-[var(--erp-muted)]">{t("common:loadingDetails")}</p>
       </div>
     )
   }
 
   if (isError || !supplier) {
-    return <ErrorMessage message="تعذر تحميل بيانات المورد." />
+    return <ErrorMessage message={t("pages:suppliers.loadFailed")} />
   }
 
   const productCount =
@@ -47,7 +49,7 @@ export function SupplierDetailsPage() {
     supplier._count?.purchaseInvoices ?? supplier.purchaseInvoices?.length ?? 0
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[var(--erp-text)]">
@@ -55,13 +57,13 @@ export function SupplierDetailsPage() {
           </h1>
 
           <p className="mt-2 text-[var(--erp-muted)]">
-            تفاصيل المورد ومعلومات التواصل.
+            {t("pages:suppliers.detailsSubtitle")}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <Link to={`/suppliers/${supplierId}/edit`}>
-            <Button>تعديل المورد</Button>
+            <Button>{t("pages:suppliers.editSupplier")}</Button>
           </Link>
 
           <Link
@@ -69,26 +71,26 @@ export function SupplierDetailsPage() {
             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             <ArrowRight className="size-4" />
-            العودة إلى الموردين
+            {t("pages:suppliers.backToSuppliers")}
           </Link>
         </div>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <SummaryCard
-          label="عدد المنتجات"
+          label={t("common:productCount")}
           value={formatNumber(productCount)}
           icon={<Package className="size-5" />}
         />
 
         <SummaryCard
-          label="فواتير الشراء"
+          label={t("pages:suppliers.purchaseInvoices")}
           value={formatNumber(invoiceCount)}
           icon={<Truck className="size-5" />}
         />
 
         <SummaryCard
-          label="رقم المورد"
+          label={t("common:supplierId")}
           value={formatId(supplier.id)}
           icon={<User className="size-5" />}
         />
@@ -96,31 +98,31 @@ export function SupplierDetailsPage() {
 
       <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <h2 className="mb-4 text-xl font-semibold text-[var(--erp-text)]">
-          معلومات المورد
+          {t("pages:suppliers.supplierInfo")}
         </h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
           <InfoRow
-            label="الاسم الكامل"
+            label={t("common:fullName")}
             value={supplier.fullName}
             icon={<User className="size-4" />}
           />
 
           <InfoRow
-            label="رقم الهاتف"
+            label={t("common:phoneNumber")}
             value={supplier.phone}
             icon={<Phone className="size-4" />}
           />
 
           <InfoRow
-            label="البريد الإلكتروني"
+            label={t("common:email")}
             value={supplier.email}
             icon={<Mail className="size-4" />}
           />
 
           <InfoRow
-            label="العنوان"
-            value={supplier.address || "—"}
+            label={t("common:address")}
+            value={supplier.address || t("common:notAvailable")}
             icon={<MapPin className="size-4" />}
           />
         </div>
@@ -175,15 +177,17 @@ function InfoRow({
 }
 
 function ErrorMessage({ message }: { message: string }) {
+  const { t } = useTranslation(["common", "pages"])
+
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <p className="text-red-500 dark:text-red-300">{message}</p>
 
       <Link
         to="/suppliers"
         className="inline-flex rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
-        العودة إلى الموردين
+        {t("pages:suppliers.backToSuppliers")}
       </Link>
     </div>
   )

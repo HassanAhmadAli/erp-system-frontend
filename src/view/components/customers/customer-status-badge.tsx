@@ -1,4 +1,8 @@
+import { useTranslation } from "react-i18next"
+
 export function CustomerStatusBadge({ isActive }: { isActive: boolean }) {
+  const { t } = useTranslation("common")
+
   return (
     <span
       className={
@@ -7,7 +11,7 @@ export function CustomerStatusBadge({ isActive }: { isActive: boolean }) {
           : "rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-300"
       }
     >
-      {isActive ? "نشط" : "غير نشط"}
+      {isActive ? t("active") : t("inactive")}
     </span>
   )
 }

@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 type ReportDateFilterProps = {
   from: string
   to: string
@@ -14,10 +16,12 @@ export function ReportDateFilter({
   onFromChange,
   onToChange,
 }: ReportDateFilterProps) {
+  const { t } = useTranslation("common")
+
   return (
     <div className="flex flex-wrap items-end gap-3 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-4 shadow-[var(--erp-shadow)]">
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-[var(--erp-muted)]">من تاريخ</span>
+        <span className="font-medium text-[var(--erp-muted)]">{t("from")}</span>
         <input
           type="date"
           className={inputClass}
@@ -27,7 +31,7 @@ export function ReportDateFilter({
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium text-[var(--erp-muted)]">إلى تاريخ</span>
+        <span className="font-medium text-[var(--erp-muted)]">{t("to")}</span>
         <input
           type="date"
           className={inputClass}

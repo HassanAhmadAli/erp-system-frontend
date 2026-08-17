@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useAuditLogs } from "@/hooks/AuditLogs/useAuditLogs"
 import { cn } from "@/lib/utils"
@@ -50,6 +51,7 @@ function formatAuditDate(value: string) {
 }
 
 export function AuditLogsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, isFetching } = useAuditLogs({
     page,
@@ -59,48 +61,56 @@ export function AuditLogsPage() {
   const logs = data?.data ?? []
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header>
         <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-          سجل النشاطات
+          {t("auditLogs.title", { ns: "pages" })}
         </h1>
 
         <p className="mt-1 text-[var(--erp-muted)]">
-          سجل تدقيق العمليات في النظام — اضغط على عرض التفاصيل لرؤية المعلومات
-          الكاملة.
+          {t("auditLogs.subtitle", { ns: "pages" })}
         </p>
       </header>
 
       <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         {isLoading ? (
-          <p className="text-[var(--erp-muted)]">جاري التحميل...</p>
+          <p className="text-[var(--erp-muted)]">{t("loading")}</p>
         ) : isError ? (
           <p className="text-red-500 dark:text-red-300">
-            حدث خطأ أثناء تحميل السجل
+            {t("auditLogs.loadFailed", { ns: "pages" })}
           </p>
         ) : (
           <>
             <p className="mb-4 text-sm text-[var(--erp-muted)]">
-              عدد النتائج: {formatNumber(logs.length)}
-              {data?.total != null
-                ? ` · الإجمالي ${formatNumber(data.total)}`
-                : ""}
+              {t("resultCountTotal", {
+                count: formatNumber(logs.length),
+                total:
+                  data?.total != null
+                    ? formatNumber(data.total)
+                    : formatNumber(logs.length),
+              })}
             </p>
 
             <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[1000px] text-right text-sm">
+                <table className="w-full min-w-[1000px] text-start text-sm">
                   <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
                     <tr>
                       <th className="p-3 font-medium">#</th>
-                      <th className="p-3 font-medium">الإجراء</th>
-                      <th className="p-3 font-medium">الكيان</th>
-                      <th className="p-3 font-medium">معرّف الكيان</th>
-                      <th className="p-3 font-medium">المستخدم</th>
-                      <th className="p-3 font-medium">الدور</th>
-                      <th className="p-3 font-medium">التغييرات</th>
-                      <th className="p-3 font-medium">تاريخ التنفيذ</th>
-                      <th className="p-3 font-medium">العمليات</th>
+                      <th className="p-3 font-medium">
+                        {t("auditLogs.action", { ns: "pages" })}
+                      </th>
+                      <th className="p-3 font-medium">
+                        {t("auditLogs.entity", { ns: "pages" })}
+                      </th>
+                      <th className="p-3 font-medium">{t("entityId")}</th>
+                      <th className="p-3 font-medium">{t("username")}</th>
+                      <th className="p-3 font-medium">{t("role")}</th>
+                      <th className="p-3 font-medium">{t("changes")}</th>
+                      <th className="p-3 font-medium">
+                        {t("auditLogs.executedAt", { ns: "pages" })}
+                      </th>
+                      <th className="p-3 font-medium">{t("operations")}</th>
                     </tr>
                   </thead>
 
@@ -154,7 +164,7 @@ export function AuditLogsPage() {
                         <td className="p-3">
                           <Link to={`/audit-logs/${log.id}`}>
                             <Button variant="outline" size="sm">
-                              عرض التفاصيل
+                              {t("viewDetails")}
                             </Button>
                           </Link>
                         </td>
@@ -167,7 +177,7 @@ export function AuditLogsPage() {
                           colSpan={9}
                           className="p-6 text-center text-[var(--erp-muted)]"
                         >
-                          لا توجد سجلات
+                          {t("auditLogs.noLogs", { ns: "pages" })}
                         </td>
                       </tr>
                     )}

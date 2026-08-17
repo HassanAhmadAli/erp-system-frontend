@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Send } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { useSendNotification } from "@/hooks/Notifications/useNotifications"
 import { NotificationUserPicker } from "@/view/components/notifications/notification-user-picker"
@@ -16,17 +17,20 @@ import {
   type NotificationFormErrors,
 } from "@/validation/notification-schema"
 import {
-  targetRoleLabels,
-  targetTypeLabels,
+  getTargetRoleLabel,
+  getTargetTypeLabel,
 } from "@/view/components/notifications/notification-target-labels"
 import { Button } from "@/view/components/ui/button"
 import { toEnglishDigits } from "@/utils/number-formatters"
 
 export function SendNotificationForm() {
+  const { t } = useTranslation(["common", "pages"])
   const sendNotification = useSendNotification()
 
   const [title, setTitle] = useState("")
+  const [titleAr, setTitleAr] = useState("")
   const [body, setBody] = useState("")
+  const [bodyAr, setBodyAr] = useState("")
   const [targetType, setTargetType] = useState<NotificationTargetType>("ALL")
   const [targetRole, setTargetRole] =
     useState<NotificationTargetRole>("CASHIER")
@@ -51,7 +55,9 @@ export function SendNotificationForm() {
 
     const validation = notificationSchema.safeParse({
       title,
+      titleAr,
       body,
+      bodyAr,
       targetType,
       targetRole,
       userIds: selectedUserIds,
@@ -62,25 +68,26 @@ export function SendNotificationForm() {
       return
     }
 
-    sendNotification.mutate(
-      notificationFormValuesToPayload(validation.data),
-      {
-        onSuccess: () => {
-          setSuccessMessage("تم إرسال الإشعار بنجاح.")
-          setTitle("")
-          setBody("")
-          setSelectedUserIds([])
-          setTargetType("ALL")
-          setTargetRole("CASHIER")
-        },
-        onError: (error) => {
-          const message =
-            error instanceof Error ? error.message : "فشل إرسال الإشعار."
+    sendNotification.mutate(notificationFormValuesToPayload(validation.data), {
+      onSuccess: () => {
+        setSuccessMessage(t("notifications.sendSuccess", { ns: "pages" }))
+        setTitle("")
+        setTitleAr("")
+        setBody("")
+        setBodyAr("")
+        setSelectedUserIds([])
+        setTargetType("ALL")
+        setTargetRole("CASHIER")
+      },
+      onError: (error) => {
+        const message =
+          error instanceof Error
+            ? error.message
+            : t("notifications.sendFailed", { ns: "pages" })
 
-          setErrorMessage(toEnglishDigits(message))
-        },
-      }
-    )
+        setErrorMessage(toEnglishDigits(message))
+      },
+    })
   }
 
   return (
@@ -88,13 +95,13 @@ export function SendNotificationForm() {
       <div className="mb-5 flex items-center gap-2">
         <Send className="h-5 w-5 text-[var(--erp-accent)]" />
 
-        <div className="text-right">
+        <div className="text-start">
           <h2 className="text-lg font-semibold text-[var(--erp-text)]">
-            إرسال إشعار
+            {t("notifications.send", { ns: "pages" })}
           </h2>
 
           <p className="text-sm text-[var(--erp-muted)]">
-            أرسل إشعارًا داخليًا للجميع أو حسب الدور أو لمستخدمين محددين.
+            {t("notifications.sendSubtitle", { ns: "pages" })}
           </p>
         </div>
       </div>
@@ -102,7 +109,7 @@ export function SendNotificationForm() {
       <form onSubmit={handleSubmit} className="grid gap-4" noValidate>
         <div className="space-y-2">
           <input
-            placeholder="عنوان الإشعار"
+            placeholder={t("notifications.titlePlaceholder", { ns: "pages" })}
             value={title}
             onChange={(event) => setTitle(event.target.value)}
             className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none"
@@ -114,9 +121,22 @@ export function SendNotificationForm() {
         </div>
 
         <div className="space-y-2">
+          <input
+            placeholder={t("titleAr")}
+            value={titleAr}
+            onChange={(event) => setTitleAr(event.target.value)}
+            className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none"
+          />
+
+          {formErrors.titleAr && (
+            <p className="text-sm text-red-500">{formErrors.titleAr}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
           <textarea
             rows={4}
-            placeholder="نص الإشعار"
+            placeholder={t("notifications.bodyPlaceholder", { ns: "pages" })}
             value={body}
             onChange={(event) => setBody(event.target.value)}
             className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none"
@@ -127,10 +147,24 @@ export function SendNotificationForm() {
           )}
         </div>
 
+        <div className="space-y-2">
+          <textarea
+            rows={4}
+            placeholder={t("notifications.bodyAr", { ns: "pages" })}
+            value={bodyAr}
+            onChange={(event) => setBodyAr(event.target.value)}
+            className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-sm outline-none"
+          />
+
+          {formErrors.bodyAr && (
+            <p className="text-sm text-red-500">{formErrors.bodyAr}</p>
+          )}
+        </div>
+
         <div className="grid gap-4 md:grid-cols-2">
-          <label className="block text-right text-sm">
+          <label className="block text-start text-sm">
             <span className="mb-2 block text-[var(--erp-muted)]">
-              نوع المستهدف
+              {t("notifications.targetType", { ns: "pages" })}
             </span>
 
             <select
@@ -144,7 +178,7 @@ export function SendNotificationForm() {
             >
               {NOTIFICATION_TARGET_TYPES.map((type) => (
                 <option key={type} value={type}>
-                  {targetTypeLabels[type]}
+                  {getTargetTypeLabel(type)}
                 </option>
               ))}
             </select>
@@ -157,8 +191,10 @@ export function SendNotificationForm() {
           </label>
 
           {targetType === "ROLE" && (
-            <label className="block text-right text-sm">
-              <span className="mb-2 block text-[var(--erp-muted)]">الدور</span>
+            <label className="block text-start text-sm">
+              <span className="mb-2 block text-[var(--erp-muted)]">
+                {t("role")}
+              </span>
 
               <select
                 value={targetRole}
@@ -169,7 +205,7 @@ export function SendNotificationForm() {
               >
                 {NOTIFICATION_TARGET_ROLES.map((role) => (
                   <option key={role} value={role}>
-                    {targetRoleLabels[role]}
+                    {getTargetRoleLabel(role)}
                   </option>
                 ))}
               </select>
@@ -191,7 +227,7 @@ export function SendNotificationForm() {
             />
 
             <p className="text-sm text-[var(--erp-muted)]">
-              عدد المستخدمين المحددين:{" "}
+              {t("notifications.selectedUsersCount", { ns: "pages" })}{" "}
               <span dir="ltr" className="font-semibold">
                 {toEnglishDigits(String(selectedUserIds.length))}
               </span>
@@ -216,7 +252,9 @@ export function SendNotificationForm() {
         )}
 
         <Button type="submit" disabled={sendNotification.isPending}>
-          {sendNotification.isPending ? "جاري الإرسال..." : "إرسال الإشعار"}
+          {sendNotification.isPending
+            ? t("notifications.sending", { ns: "pages" })
+            : t("notifications.sendButton", { ns: "pages" })}
         </Button>
       </form>
     </section>

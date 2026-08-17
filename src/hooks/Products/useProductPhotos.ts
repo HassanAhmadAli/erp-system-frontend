@@ -31,6 +31,8 @@ export function useUploadProductPhoto() {
         queryKey: ["product-photos", variables.productId],
       })
       qc.invalidateQueries({ queryKey: ["product", variables.productId] })
+      qc.invalidateQueries({ queryKey: ["products"] })
+      qc.invalidateQueries({ queryKey: ["products-low-stock"] })
     },
   })
 }
@@ -46,6 +48,8 @@ export function useDeleteProductPhoto() {
       // page will also refresh itself by reloading photos.
       // If the backend response includes productId later, we can tighten this.
       qc.invalidateQueries({ queryKey: ["product-photos"] })
+      qc.invalidateQueries({ queryKey: ["products"] })
+      qc.invalidateQueries({ queryKey: ["product"] })
     },
   })
 }

@@ -10,11 +10,13 @@ import { isValidId } from "@/validation/helpers"
 export type Supplier = {
   id: number
   fullName: string
+  fullNameAr?: string | null
   phone: string
   email: string
   address: string
+  addressAr?: string | null
 
-  products?: { id: number; name?: string }[]
+  products?: { id: number; name?: string; nameAr?: string | null }[]
   purchaseInvoices?: { id: number }[]
 
   _count?: {

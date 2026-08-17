@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { usePermissions } from "@/hooks/usePermissions"
+import { useSyncLanguageFromUser } from "@/hooks/useSyncLanguageFromUser"
+import { useLocale } from "@/i18n/locale-provider"
 import { AppSidebar } from "@/view/components/layout/app-sidebar"
 import { TopBar } from "@/view/components/layout/top-bar"
 
@@ -16,7 +19,10 @@ function readSidebarCollapsed() {
 }
 
 export function AppShell() {
+  const { t } = useTranslation("common")
   const { headerTitle } = usePermissions()
+  const { dir, language } = useLocale()
+  useSyncLanguageFromUser()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(readSidebarCollapsed)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
@@ -66,19 +72,19 @@ export function AppShell() {
   return (
     <div
       className="flex h-svh flex-col overflow-hidden bg-[var(--erp-page)] text-[var(--erp-text)]"
-      dir="rtl"
-      lang="ar"
+      dir={dir}
+      lang={language}
     >
       <TopBar title={headerTitle} onMenuClick={() => setMobileNavOpen(true)} />
 
-      <div className="flex min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <AppSidebar
           collapsed={sidebarCollapsed}
           onToggle={toggleSidebar}
-          className="hidden lg:flex"
+          className="hidden min-h-0 lg:flex"
         />
 
-        <main className="erp-scrollbar min-h-0 flex-1 overflow-y-auto bg-[var(--erp-bg)] px-5 py-8 sm:px-10 lg:py-10">
+        <main className="erp-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--erp-bg)] px-5 py-8 sm:px-10 lg:py-10">
           <Outlet />
         </main>
       </div>
@@ -87,7 +93,7 @@ export function AppShell() {
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal>
           <button
             type="button"
-            aria-label="إغلاق القائمة"
+            aria-label={t("closeMenu")}
             className="absolute inset-0 bg-black/50"
             onClick={closeMobileNav}
           />

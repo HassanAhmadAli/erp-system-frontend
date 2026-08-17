@@ -1,4 +1,6 @@
-import { Menu } from "lucide-react"
+import { Link } from "react-router-dom"
+import { Menu, Settings } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { ThemeToggle } from "@/view/components/layout/theme-toggle"
 import { cn } from "@/lib/utils"
@@ -10,6 +12,8 @@ type TopBarProps = {
 }
 
 export function TopBar({ title, className, onMenuClick }: TopBarProps) {
+  const { t } = useTranslation("common")
+
   return (
     <header
       className={cn(
@@ -23,7 +27,7 @@ export function TopBar({ title, className, onMenuClick }: TopBarProps) {
           <button
             type="button"
             onClick={onMenuClick}
-            aria-label="فتح القائمة"
+            aria-label={t("openMenu")}
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25 lg:hidden"
           >
             <Menu className="size-5" />
@@ -38,7 +42,15 @@ export function TopBar({ title, className, onMenuClick }: TopBarProps) {
         />
       </div>
 
-      <div className="shrink-0">
+      <div className="flex shrink-0 items-center gap-2">
+        <Link
+          to="/settings"
+          aria-label={t("settings")}
+          title={t("settings")}
+          className="inline-flex size-9 items-center justify-center rounded-xl bg-white/15 text-white transition-colors hover:bg-white/25"
+        >
+          <Settings className="size-4" />
+        </Link>
         <ThemeToggle />
       </div>
     </header>

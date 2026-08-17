@@ -1,7 +1,8 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import { normalizeText, optionalText } from "./helpers"
-import { requiredText } from "./zod-helpers"
+import { optionalTrimmedText, requiredText } from "./zod-helpers"
 
 const PHONE_PATTERN = /^[0-9+\-()\s]+$/
 
@@ -14,32 +15,31 @@ export const STAFF_ROLE_VALUES = [
 export type StaffRoleValue = (typeof STAFF_ROLE_VALUES)[number]
 
 const staffRoleSchema = z.enum(STAFF_ROLE_VALUES, {
-  error: "دور الموظف مطلوب",
+  error: () => i18n.t("validation:staff.roleRequired"),
 })
 
-function phoneField(requiredMessage: string) {
+function phoneField(requiredMessage: () => string) {
   return requiredText({
     max: 30,
     requiredMessage,
-    maxMessage: "رقم الهاتف يجب ألا يتجاوز 30 حرف",
+    maxMessage: () => i18n.t("validation:shared.phoneMax30"),
   }).superRefine((value, ctx) => {
     const phone = normalizeText(value)
 
     if (phone && !PHONE_PATTERN.test(phone)) {
       ctx.addIssue({
         code: "custom",
-        message:
-          "رقم الهاتف يجب أن يحتوي على أرقام ومسافات والرموز + - ( ) فقط",
+        message: i18n.t("validation:shared.phoneInvalid"),
       })
     }
   })
 }
 
-function emailField(requiredMessage: string) {
+function emailField(requiredMessage: () => string) {
   return requiredText({
     max: 120,
     requiredMessage,
-    maxMessage: "البريد الإلكتروني يجب ألا يتجاوز 120 حرف",
+    maxMessage: () => i18n.t("validation:shared.emailMax120"),
   }).superRefine((value, ctx) => {
     const email = normalizeText(value)
 
@@ -49,7 +49,7 @@ function emailField(requiredMessage: string) {
     if (!validation.success) {
       ctx.addIssue({
         code: "custom",
-        message: "أدخل بريدًا إلكترونيًا صالحًا",
+        message: i18n.t("validation:shared.emailInvalid"),
       })
     }
   })
@@ -62,7 +62,7 @@ function nationalIdField() {
     if (!nationalId) {
       ctx.addIssue({
         code: "custom",
-        message: "الرقم القومي مطلوب",
+        message: i18n.t("validation:staff.nationalIdRequired"),
       })
       return
     }
@@ -70,14 +70,14 @@ function nationalIdField() {
     if (nationalId.length < 5) {
       ctx.addIssue({
         code: "custom",
-        message: "الرقم القومي يجب أن يكون 5 أحرف على الأقل",
+        message: i18n.t("validation:staff.nationalIdMin"),
       })
     }
 
     if (nationalId.length > 50) {
       ctx.addIssue({
         code: "custom",
-        message: "الرقم القومي يجب ألا يتجاوز 50 حرف",
+        message: i18n.t("validation:staff.nationalIdMax"),
       })
     }
   })
@@ -87,21 +87,26 @@ export const createStaffSchema = z.object({
   fullName: requiredText({
     min: 2,
     max: 100,
-    requiredMessage: "اسم الموظف مطلوب",
-    minMessage: "اسم الموظف يجب أن يكون حرفين على الأقل",
-    maxMessage: "اسم الموظف يجب ألا يتجاوز 100 حرف",
+    requiredMessage: () => i18n.t("validation:staff.nameRequired"),
+    minMessage: () => i18n.t("validation:staff.nameMin"),
+    maxMessage: () => i18n.t("validation:staff.nameMax"),
   }),
 
-  email: emailField("البريد الإلكتروني مطلوب"),
+  fullNameAr: optionalTrimmedText({
+    max: 100,
+    maxMessage: () => i18n.t("validation:shared.nameArMax100"),
+  }),
 
-  phoneNumber: phoneField("رقم الهاتف مطلوب"),
+  email: emailField(() => i18n.t("validation:emailRequired")),
+
+  phoneNumber: phoneField(() => i18n.t("validation:staff.phoneRequired")),
 
   password: requiredText({
     min: 8,
     max: 72,
-    requiredMessage: "كلمة المرور مطلوبة",
-    minMessage: "كلمة المرور يجب أن تكون 8 أحرف على الأقل",
-    maxMessage: "كلمة المرور يجب ألا تتجاوز 72 حرف",
+    requiredMessage: () => i18n.t("validation:staff.passwordRequired"),
+    minMessage: () => i18n.t("validation:staff.passwordMin"),
+    maxMessage: () => i18n.t("validation:staff.passwordMax"),
   }),
 
   nationalId: nationalIdField(),
@@ -114,9 +119,14 @@ export const createStaffSchema = z.object({
     if (jobTitle.length > 100) {
       ctx.addIssue({
         code: "custom",
-        message: "المسمى الوظيفي يجب ألا يتجاوز 100 حرف",
+        message: i18n.t("validation:staff.jobTitleMax"),
       })
     }
+  }),
+
+  jobTitleAr: optionalTrimmedText({
+    max: 100,
+    maxMessage: () => i18n.t("validation:staff.jobTitleArMax"),
   }),
 })
 
@@ -124,14 +134,19 @@ export const updateStaffSchema = z.object({
   fullName: requiredText({
     min: 2,
     max: 100,
-    requiredMessage: "اسم الموظف مطلوب",
-    minMessage: "اسم الموظف يجب أن يكون حرفين على الأقل",
-    maxMessage: "اسم الموظف يجب ألا يتجاوز 100 حرف",
+    requiredMessage: () => i18n.t("validation:staff.nameRequired"),
+    minMessage: () => i18n.t("validation:staff.nameMin"),
+    maxMessage: () => i18n.t("validation:staff.nameMax"),
   }),
 
-  email: emailField("البريد الإلكتروني مطلوب"),
+  fullNameAr: optionalTrimmedText({
+    max: 100,
+    maxMessage: () => i18n.t("validation:shared.nameArMax100"),
+  }),
 
-  phoneNumber: phoneField("رقم الهاتف مطلوب"),
+  email: emailField(() => i18n.t("validation:emailRequired")),
+
+  phoneNumber: phoneField(() => i18n.t("validation:staff.phoneRequired")),
 
   nationalId: nationalIdField(),
 })
@@ -148,16 +163,19 @@ export type UpdateStaffFormErrors = Partial<
 
 export type CreateStaffPayload = {
   fullName: string
+  fullNameAr?: string
   email: string
   phoneNumber: string
   password: string
   nationalId: string
   role: StaffRoleValue
   jobTitle?: string
+  jobTitleAr?: string
 }
 
 export type UpdateStaffProfilePayload = {
   fullName: string
+  fullNameAr?: string
   email: string
   phoneNumber: string
   nationalId: string
@@ -171,12 +189,14 @@ export function createStaffZodErrorToFormErrors(error: z.ZodError) {
 
     if (
       field !== "fullName" &&
+      field !== "fullNameAr" &&
       field !== "email" &&
       field !== "phoneNumber" &&
       field !== "password" &&
       field !== "nationalId" &&
       field !== "role" &&
-      field !== "jobTitle"
+      field !== "jobTitle" &&
+      field !== "jobTitleAr"
     ) {
       continue
     }
@@ -195,6 +215,7 @@ export function updateStaffZodErrorToFormErrors(error: z.ZodError) {
 
     if (
       field !== "fullName" &&
+      field !== "fullNameAr" &&
       field !== "email" &&
       field !== "phoneNumber" &&
       field !== "nationalId"
@@ -212,23 +233,30 @@ export function createStaffFormValuesToPayload(
   values: CreateStaffFormValues
 ): CreateStaffPayload {
   const jobTitle = optionalText(values.jobTitle)
+  const fullNameAr = optionalText(values.fullNameAr)
+  const jobTitleAr = optionalText(values.jobTitleAr)
 
   return {
     fullName: normalizeText(values.fullName),
+    ...(fullNameAr ? { fullNameAr } : {}),
     email: normalizeText(values.email).toLowerCase(),
     phoneNumber: normalizeText(values.phoneNumber),
     password: values.password,
     nationalId: normalizeText(values.nationalId),
     role: values.role,
     ...(jobTitle ? { jobTitle } : { jobTitle: "" }),
+    ...(jobTitleAr ? { jobTitleAr } : {}),
   }
 }
 
 export function updateStaffFormValuesToPayload(
   values: UpdateStaffFormValues
 ): UpdateStaffProfilePayload {
+  const fullNameAr = optionalText(values.fullNameAr)
+
   return {
     fullName: normalizeText(values.fullName),
+    ...(fullNameAr ? { fullNameAr } : {}),
     email: normalizeText(values.email).toLowerCase(),
     phoneNumber: normalizeText(values.phoneNumber),
     nationalId: normalizeText(values.nationalId),

@@ -1,9 +1,12 @@
 import { useState } from "react"
 import { Eye, History, Loader2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useNotificationHistory } from "@/hooks/Notifications/useNotifications"
+import { useLocale } from "@/i18n/locale-provider"
 import { toPaginationQuery } from "@/lib/pagination"
+import { localized, localizedFullName, localizedTitle } from "@/lib/localized"
 import { formatShortDateTime } from "@/utils/date-formatters"
 import { toEnglishDigits } from "@/utils/number-formatters"
 import { formatTargetLabel } from "@/view/components/notifications/notification-target-labels"
@@ -13,7 +16,9 @@ import { PaginationControls } from "@/view/components/ui/pagination-controls"
 const PAGE_SIZE = 10
 
 export function NotificationHistoryTable() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
+  const { language } = useLocale()
   const [page, setPage] = useState(1)
   const query = toPaginationQuery({ page, limit: PAGE_SIZE })
   const { data, isLoading, isError, error, isFetching } =
@@ -24,10 +29,12 @@ export function NotificationHistoryTable() {
   function openDetails(item: (typeof history)[number]) {
     navigate(`/notifications/details/history/${item.id}`, {
       state: {
-        title: item.title,
-        body: item.body,
+        title: localizedTitle(item, language),
+        body: localized(item.body, item.bodyAr, language),
         targetLabel: formatTargetLabel(item.targetType, item.targetRole),
-        senderName: item.sender?.fullName,
+        senderName: item.sender
+          ? localizedFullName(item.sender, language)
+          : undefined,
         recipientCount: item.recipientCount,
         sentAt: item.sentAt,
         source: "history",
@@ -45,13 +52,15 @@ export function NotificationHistoryTable() {
 
   if (isError) {
     const message =
-      error instanceof Error ? error.message : "حدث خطأ أثناء تحميل السجل."
+      error instanceof Error
+        ? error.message
+        : t("notifications.loadHistoryFailed", { ns: "pages" })
 
     return (
       <p className="text-sm text-red-500">
         {message.includes("403") || message.toLowerCase().includes("forbidden")
-          ? "ليس لديك صلاحية لعرض سجل الإشعارات المرسلة."
-          : "حدث خطأ أثناء تحميل سجل الإشعارات."}
+          ? t("notifications.noPermissionHistory", { ns: "pages" })
+          : t("notifications.loadHistoryFailed", { ns: "pages" })}
       </p>
     )
   }
@@ -63,11 +72,11 @@ export function NotificationHistoryTable() {
 
         <div>
           <h3 className="text-lg font-semibold text-[var(--erp-text)]">
-            لا يوجد سجل إرسال
+            {t("notifications.noSendHistory", { ns: "pages" })}
           </h3>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            ستظهر الإشعارات التي تم إرسالها من النظام هنا.
+            {t("notifications.sendHistoryEmptyHint", { ns: "pages" })}
           </p>
         </div>
       </div>
@@ -77,16 +86,16 @@ export function NotificationHistoryTable() {
   return (
     <div className="space-y-4">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1000px] text-right">
+        <table className="w-full min-w-[1000px] text-start">
           <thead>
             <tr className="border-b border-[var(--erp-border)] text-sm text-[var(--erp-muted)]">
-              <th className="px-4 py-3 font-medium">العنوان</th>
-              <th className="px-4 py-3 font-medium">النص</th>
-              <th className="px-4 py-3 font-medium">المستهدف</th>
-              <th className="px-4 py-3 font-medium">المرسل</th>
-              <th className="px-4 py-3 font-medium">عدد المستلمين</th>
-              <th className="px-4 py-3 font-medium">تاريخ الإرسال</th>
-              <th className="px-4 py-3 font-medium">الإجراءات</th>
+              <th className="px-4 py-3 font-medium">{t("title")}</th>
+              <th className="px-4 py-3 font-medium">{t("content")}</th>
+              <th className="px-4 py-3 font-medium">{t("target")}</th>
+              <th className="px-4 py-3 font-medium">{t("sender")}</th>
+              <th className="px-4 py-3 font-medium">{t("recipientCount")}</th>
+              <th className="px-4 py-3 font-medium">{t("sentAt")}</th>
+              <th className="px-4 py-3 font-medium">{t("actions")}</th>
             </tr>
           </thead>
 
@@ -97,11 +106,11 @@ export function NotificationHistoryTable() {
                 className="border-b border-[var(--erp-border)] last:border-0"
               >
                 <td className="px-4 py-4 text-sm font-semibold text-[var(--erp-text)]">
-                  {toEnglishDigits(item.title)}
+                  {toEnglishDigits(localizedTitle(item, language))}
                 </td>
 
                 <td className="max-w-[280px] truncate px-4 py-4 text-sm text-[var(--erp-muted)]">
-                  {toEnglishDigits(item.body)}
+                  {toEnglishDigits(localized(item.body, item.bodyAr, language))}
                 </td>
 
                 <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
@@ -109,7 +118,7 @@ export function NotificationHistoryTable() {
                 </td>
 
                 <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
-                  {item.sender?.fullName ?? "-"}
+                  {item.sender ? localizedFullName(item.sender, language) : "-"}
                 </td>
 
                 <td className="px-4 py-4 text-sm text-[var(--erp-muted)]">
@@ -132,7 +141,7 @@ export function NotificationHistoryTable() {
                     onClick={() => openDetails(item)}
                   >
                     <Eye className="size-4" />
-                    عرض التفاصيل
+                    {t("viewDetails")}
                   </Button>
                 </td>
               </tr>

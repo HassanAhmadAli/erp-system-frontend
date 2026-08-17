@@ -6,56 +6,59 @@ import {
   ShoppingCart,
   FileText,
 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import {
   ReportHubCard,
   ReportLayout,
 } from "@/view/components/reports/report-layout"
 
-const reportLinks = [
-  {
-    title: "ملخص مالي",
-    description: "نظرة سريعة على المبيعات والمشتريات والمصروفات والربح",
-    to: "/reports/summary",
-    icon: FileText,
-  },
-  {
-    title: "لوحة التحكم",
-    description: "مؤشرات الأداء الرئيسية مع مخططات بيانية",
-    to: "/reports/dashboard",
-    icon: LayoutDashboard,
-  },
-  {
-    title: "تقرير المخزون",
-    description: "حالة المخزون والمنتجات منخفضة الكمية",
-    to: "/reports/inventory",
-    icon: Boxes,
-  },
-  {
-    title: "تقرير المبيعات",
-    description: "تحليل فواتير المبيعات ومخطط الإيرادات",
-    to: "/reports/sales",
-    icon: ShoppingCart,
-  },
-  {
-    title: "تقرير المشتريات",
-    description: "تحليل فواتير الشراء وتكاليف التوريد",
-    to: "/reports/purchases",
-    icon: Receipt,
-  },
-  {
-    title: "هوامش الربح",
-    description: "ربحية المنتجات ونسب الهامش",
-    to: "/reports/profit-margins",
-    icon: BarChart3,
-  },
-]
-
 export function ReportsPage() {
+  const { t } = useTranslation(["common", "pages"])
+
+  const reportLinks = [
+    {
+      title: t("reports.summary", { ns: "pages" }),
+      description: t("reports.summaryDesc", { ns: "pages" }),
+      to: "/reports/summary",
+      icon: FileText,
+    },
+    {
+      title: t("reports.dashboard", { ns: "pages" }),
+      description: t("reports.dashboardDesc", { ns: "pages" }),
+      to: "/reports/dashboard",
+      icon: LayoutDashboard,
+    },
+    {
+      title: t("reports.inventory", { ns: "pages" }),
+      description: t("reports.inventoryDesc", { ns: "pages" }),
+      to: "/reports/inventory",
+      icon: Boxes,
+    },
+    {
+      title: t("reports.sales", { ns: "pages" }),
+      description: t("reports.salesDesc", { ns: "pages" }),
+      to: "/reports/sales",
+      icon: ShoppingCart,
+    },
+    {
+      title: t("reports.purchases", { ns: "pages" }),
+      description: t("reports.purchasesDesc", { ns: "pages" }),
+      to: "/reports/purchases",
+      icon: Receipt,
+    },
+    {
+      title: t("reports.profitMargins", { ns: "pages" }),
+      description: t("reports.profitMarginsDesc", { ns: "pages" }),
+      to: "/reports/profit-margins",
+      icon: BarChart3,
+    },
+  ]
+
   return (
     <ReportLayout
-      title="التقارير"
-      description="اختر نوع التقرير لعرضه في صفحة مخصصة مع مخططات واضحة"
+      title={t("reports.title", { ns: "pages" })}
+      description={t("reports.hubSubtitle", { ns: "pages" })}
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {reportLinks.map((item) => (

@@ -1,15 +1,13 @@
 import { useEffect, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
 import { PERMISSIONS } from "@/auth/permissions"
 import { useDeleteStaff } from "@/hooks/Staff/useDeleteStaff"
 import { useStaff } from "@/hooks/Staff/useStaff"
-import {
-  STAFF_ROLE_LABELS,
-  STAFF_ROLES,
-  formatStaffRole,
-  type StaffRole,
-} from "@/services/staff-service"
+import { useLocale } from "@/i18n/locale-provider"
+import { localized, localizedFullName } from "@/lib/localized"
+import { STAFF_ROLES, type StaffRole } from "@/services/staff-service"
 import { formatNumber } from "@/utils/number-formatters"
 import { Can } from "@/view/components/auth/can"
 import { Button } from "@/view/components/ui/button"
@@ -21,8 +19,10 @@ const selectClass =
   "rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-3 py-2 text-sm text-[var(--erp-text)] outline-none transition focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 export function StaffTable() {
+  const { t } = useTranslation(["common", "pages"])
   const [page, setPage] = useState(1)
   const [roleFilter, setRoleFilter] = useState<StaffRole | "ALL">("ALL")
+  const { language } = useLocale()
   const { data, isLoading, error, isFetching } = useStaff({
     page,
     limit: PAGE_SIZE,
@@ -38,7 +38,7 @@ export function StaffTable() {
 
   function handleDeleteStaff(id: number, name: string) {
     const shouldDelete = window.confirm(
-      `هل أنت متأكد من حذف حساب الموظف "${name}"؟`
+      t("pages:staff.confirmDeleteNamed", { name })
     )
 
     if (!shouldDelete) return
@@ -51,19 +51,23 @@ export function StaffTable() {
       <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-            قائمة الموظفين
+            {t("pages:staff.staffList")}
           </h2>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            عدد النتائج: {formatNumber(staff.length)}
             {data?.total != null
-              ? ` · الإجمالي ${formatNumber(data.total)}`
-              : ""}
+              ? t("common:resultCountTotal", {
+                  count: formatNumber(staff.length),
+                  total: formatNumber(data.total),
+                })
+              : t("common:resultCount", {
+                  count: formatNumber(staff.length),
+                })}
           </p>
         </div>
 
         <label className="flex items-center gap-2 text-sm text-[var(--erp-muted)]">
-          <span>تصفية حسب الدور</span>
+          <span>{t("common:filterByRole")}</span>
           <select
             value={roleFilter}
             onChange={(event) =>
@@ -71,10 +75,10 @@ export function StaffTable() {
             }
             className={selectClass}
           >
-            <option value="ALL">الكل</option>
+            <option value="ALL">{t("common:all")}</option>
             {STAFF_ROLES.map((role) => (
               <option key={role} value={role}>
-                {STAFF_ROLE_LABELS[role]}
+                {t(`roles.${role}`, { ns: "common" })}
               </option>
             ))}
           </select>
@@ -82,19 +86,19 @@ export function StaffTable() {
       </div>
 
       {isLoading && (
-        <p className="text-sm text-[var(--erp-muted)]">جاري التحميل...</p>
+        <p className="text-sm text-[var(--erp-muted)]">{t("common:loading")}</p>
       )}
 
       {error && (
         <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
-          حدث خطأ في تحميل الموظفين
+          {t("pages:staff.loadListFailed")}
         </p>
       )}
 
       {!isLoading && !error && staff.length === 0 && (
         <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-center">
           <p className="text-sm text-[var(--erp-muted)]">
-            لا يوجد موظفون حالياً.
+            {t("pages:staff.noStaff")}
           </p>
 
           <Can permission={PERMISSIONS.EMPLOYEE_MANAGE}>
@@ -102,7 +106,7 @@ export function StaffTable() {
               to="/staff/create"
               className="mt-4 inline-flex rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
             >
-              إضافة أول موظف
+              {t("pages:staff.addFirstStaff")}
             </Link>
           </Can>
         </div>
@@ -111,7 +115,7 @@ export function StaffTable() {
       {!isLoading && !error && staff.length > 0 && (
         <>
           <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-            <table className="w-full min-w-[720px] table-fixed text-right text-sm">
+            <table className="w-full min-w-[720px] table-fixed text-start text-sm">
               <colgroup>
                 <col className="w-[20%]" />
                 <col className="w-[18%]" />
@@ -123,12 +127,16 @@ export function StaffTable() {
 
               <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
                 <tr>
-                  <th className="px-3 py-3 font-medium">الاسم</th>
-                  <th className="px-3 py-3 font-medium">البريد الإلكتروني</th>
-                  <th className="px-3 py-3 font-medium">الهاتف</th>
-                  <th className="px-3 py-3 font-medium">الدور</th>
-                  <th className="px-3 py-3 font-medium">المسمى الوظيفي</th>
-                  <th className="px-3 py-3 text-center font-medium">إجراءات</th>
+                  <th className="px-3 py-3 font-medium">{t("common:name")}</th>
+                  <th className="px-3 py-3 font-medium">{t("common:email")}</th>
+                  <th className="px-3 py-3 font-medium">{t("common:phone")}</th>
+                  <th className="px-3 py-3 font-medium">{t("common:role")}</th>
+                  <th className="px-3 py-3 font-medium">
+                    {t("pages:staff.jobTitle")}
+                  </th>
+                  <th className="px-3 py-3 text-center font-medium">
+                    {t("common:actions")}
+                  </th>
                 </tr>
               </thead>
 
@@ -139,7 +147,9 @@ export function StaffTable() {
                     className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
                   >
                     <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
-                      <span className="block truncate">{member.fullName}</span>
+                      <span className="block truncate">
+                        {localizedFullName(member, language)}
+                      </span>
                     </td>
 
                     <td className="px-3 py-3 text-[var(--erp-muted)]">
@@ -154,13 +164,17 @@ export function StaffTable() {
 
                     <td className="px-3 py-3 text-[var(--erp-muted)]">
                       <span className="block truncate">
-                        {formatStaffRole(member.role)}
+                        {t(`roles.${member.role}`, { ns: "common" })}
                       </span>
                     </td>
 
                     <td className="px-3 py-3 text-[var(--erp-muted)]">
                       <span className="block truncate">
-                        {member.jobTitle || "—"}
+                        {localized(
+                          member.jobTitle,
+                          member.jobTitleAr,
+                          language
+                        ) || t("common:notAvailable")}
                       </span>
                     </td>
 
@@ -168,14 +182,14 @@ export function StaffTable() {
                       <div className="flex flex-wrap justify-center gap-1.5">
                         <Link to={`/staff/${member.id}`}>
                           <Button variant="outline" size="xs">
-                            عرض
+                            {t("common:view")}
                           </Button>
                         </Link>
 
                         <Can permission={PERMISSIONS.EMPLOYEE_MANAGE}>
                           <Link to={`/staff/${member.id}/edit`}>
                             <Button variant="outline" size="xs">
-                              تعديل
+                              {t("common:edit")}
                             </Button>
                           </Link>
 
@@ -184,11 +198,14 @@ export function StaffTable() {
                               variant="destructive"
                               size="xs"
                               onClick={() =>
-                                handleDeleteStaff(member.id, member.fullName)
+                                handleDeleteStaff(
+                                  member.id,
+                                  localizedFullName(member, language)
+                                )
                               }
                               disabled={deleteMutation.isPending}
                             >
-                              حذف
+                              {t("common:delete")}
                             </Button>
                           </Can>
                         </Can>

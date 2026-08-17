@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
 import { useEffect, useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { FolderOpen, Plus, Receipt, Wallet } from "lucide-react"
 
 import { useExpenses } from "@/hooks/Expenses/useExpenses"
@@ -21,6 +22,7 @@ function formatAmount(value: unknown) {
 }
 
 export function ExpensesPage() {
+  const { t } = useTranslation(["common", "pages"])
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const { data, isLoading, isError, isFetching } = useExpenses({
@@ -51,19 +53,19 @@ export function ExpensesPage() {
   const isFiltered = search.trim().length > 0
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-              المصروفات
+              {t("expenses.title", { ns: "pages" })}
             </h1>
 
             <Receipt className="size-7 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            إدارة وتتبع مصروفات المتجر.
+            {t("expenses.subtitle", { ns: "pages" })}
           </p>
         </div>
 
@@ -71,7 +73,7 @@ export function ExpensesPage() {
           <Link to="/expenses/create">
             <Button className="gap-2">
               <Plus className="size-4" />
-              إضافة مصروف
+              {t("expenses.create", { ns: "pages" })}
             </Button>
           </Link>
         </Can>
@@ -80,20 +82,23 @@ export function ExpensesPage() {
       {!isLoading && !isError && (
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <SummaryCard
-            label="إجمالي الصفحة"
+            label={t("expenses.pageTotal", { ns: "pages" })}
             value={formatAmount(pageTotal)}
             hint={
               isFiltered
-                ? "بعد البحث في الصفحة الحالية"
+                ? t("expenses.afterPageSearch", { ns: "pages" })
                 : data?.total != null
-                  ? `من أصل ${formatNumber(data.total)} مصروف`
+                  ? t("expenses.ofTotalExpenses", {
+                      ns: "pages",
+                      total: formatNumber(data.total),
+                    })
                   : undefined
             }
             icon={<Wallet className="size-5" />}
           />
 
           <SummaryCard
-            label="عدد المصروفات"
+            label={t("expenses.expenseCount", { ns: "pages" })}
             value={
               data?.total != null
                 ? formatNumber(data.total)
@@ -101,14 +106,16 @@ export function ExpensesPage() {
             }
             hint={
               isFiltered
-                ? `معروض في الصفحة: ${formatNumber(filtered.length)}`
+                ? t("shownOnPage", {
+                    count: formatNumber(filtered.length),
+                  })
                 : undefined
             }
             icon={<Receipt className="size-5" />}
           />
 
           <SummaryCard
-            label="عدد الفئات (الصفحة)"
+            label={t("expenses.categoryCountPage", { ns: "pages" })}
             value={formatNumber(categoryCount)}
             icon={<FolderOpen className="size-5" />}
           />

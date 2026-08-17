@@ -15,6 +15,7 @@ import {
   Package,
   Percent,
   ReceiptText,
+  Settings,
   ShoppingCart,
   Tags,
   TrendingUp,
@@ -23,6 +24,7 @@ import {
   Users,
 } from "lucide-react"
 import { NavLink, useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { SIDEBAR_ACCESS } from "@/auth/route-access"
 import { usePermissions } from "@/hooks/usePermissions"
@@ -31,12 +33,16 @@ import { clearTokens } from "@/utils/auth-storage"
 
 type NavItem = {
   icon: ComponentType<{ className?: string }>
-  label: string
+  labelKey: string
   to: string
   showDot?: boolean
 }
 
-type NavItemProps = NavItem & {
+type NavItemProps = {
+  icon: ComponentType<{ className?: string }>
+  label: string
+  to: string
+  showDot?: boolean
   collapsed: boolean
   onNavigate?: () => void
 }
@@ -50,106 +56,27 @@ type AppSidebarProps = {
 }
 
 const sidebarItems: NavItem[] = [
-  {
-    icon: Home,
-    label: "نظرة عامة",
-    to: "/overview",
-  },
-  {
-    icon: Home,
-    label: "لوحة المحاسب",
-    to: "/accountant/overview",
-  },
-  {
-    icon: Calculator,
-    label: "نقطة البيع",
-    to: "/pos",
-  },
-  {
-    icon: Users,
-    label: "العملاء",
-    to: "/customers",
-  },
-  {
-    icon: UserCog,
-    label: "الموظفون",
-    to: "/staff",
-  },
-  {
-    icon: ShoppingCart,
-    label: "الطلبات",
-    to: "/orders",
-  },
-  {
-    icon: ReceiptText,
-    label: "فواتير المبيعات",
-    to: "/sales-invoices",
-  },
-  {
-    icon: ReceiptText,
-    label: "فواتير الشراء",
-    to: "/purchase-invoices",
-  },
-  {
-    icon: Bell,
-    label: "الإشعارات",
-    to: "/notifications",
-  },
-  {
-    icon: Megaphone,
-    label: "الإعلانات",
-    to: "/ads",
-  },
-  {
-    icon: ClipboardList,
-    label: "سجل النشاطات",
-    to: "/audit-logs",
-  },
-  {
-    icon: Boxes,
-    label: "المخزون",
-    to: "/inventory",
-  },
-  {
-    icon: Tags,
-    label: "التصنيفات",
-    to: "/categories",
-  },
-  {
-    icon: Package,
-    label: "المنتجات",
-    to: "/products",
-  },
-  {
-    icon: Truck,
-    label: "الموردون",
-    to: "/suppliers",
-  },
-  {
-    icon: Percent,
-    label: "الخصومات",
-    to: "/discounts",
-  },
-  {
-    icon: DollarSign,
-    label: "المصروفات",
-    to: "/expenses",
-  },
-  {
-    icon: FileText,
-    label: "التقارير",
-    to: "/reports",
-  },
-  {
-    icon: TrendingUp,
-    label: "التحليل المالي",
-    to: "/financial",
-  },
-  {
-    icon: Gift,
-    label: "مكافآت الولاء",
-    to: "/loyalty-rewards",
-  },
+  { icon: Home, labelKey: "overview", to: "/overview" },
+  { icon: Home, labelKey: "accountantOverview", to: "/accountant/overview" },
+  { icon: Calculator, labelKey: "pos", to: "/pos" },
+  { icon: Users, labelKey: "customers", to: "/customers" },
+  { icon: UserCog, labelKey: "staff", to: "/staff" },
+  { icon: ShoppingCart, labelKey: "orders", to: "/orders" },
+  { icon: ReceiptText, labelKey: "salesInvoices", to: "/sales-invoices" },
+  { icon: ReceiptText, labelKey: "purchaseInvoices", to: "/purchase-invoices" },
+  { icon: Bell, labelKey: "notifications", to: "/notifications" },
+  { icon: Megaphone, labelKey: "ads", to: "/ads" },
+  { icon: ClipboardList, labelKey: "auditLogs", to: "/audit-logs" },
+  { icon: Boxes, labelKey: "inventory", to: "/inventory" },
+  { icon: Tags, labelKey: "categories", to: "/categories" },
+  { icon: Package, labelKey: "products", to: "/products" },
+  { icon: Truck, labelKey: "suppliers", to: "/suppliers" },
+  { icon: Percent, labelKey: "discounts", to: "/discounts" },
+  { icon: DollarSign, labelKey: "expenses", to: "/expenses" },
+  { icon: FileText, labelKey: "reports", to: "/reports" },
+  { icon: TrendingUp, labelKey: "financial", to: "/financial" },
+  { icon: Gift, labelKey: "loyaltyRewards", to: "/loyalty-rewards" },
+  { icon: Settings, labelKey: "settings", to: "/settings" },
 ]
 
 function SidebarNavItem({
@@ -176,7 +103,7 @@ function SidebarNavItem({
         )
       }
     >
-      {!collapsed && <span className="min-w-0 flex-1 text-right">{label}</span>}
+      {!collapsed && <span className="min-w-0 flex-1 text-start">{label}</span>}
 
       <span className="relative inline-flex shrink-0">
         <Icon className="size-[18px]" />
@@ -195,17 +122,13 @@ export function AppSidebar({
   className,
   showCollapseToggle = true,
 }: AppSidebarProps) {
+  const { t } = useTranslation(["nav", "common"])
   const navigate = useNavigate()
   const { canSeeSidebarItem } = usePermissions()
 
   const visibleItems = sidebarItems.filter((item) => {
     const access = SIDEBAR_ACCESS.find((entry) => entry.to === item.to)
 
-    /**
-     * Fail closed:
-     * if a sidebar item has no matching permission rule,
-     * hide it instead of accidentally showing it to everyone.
-     */
     if (!access) {
       return false
     }
@@ -222,7 +145,7 @@ export function AppSidebar({
   return (
     <aside
       className={cn(
-        "erp-scrollbar flex shrink-0 flex-col overflow-y-auto border-l border-[var(--erp-border)] bg-[var(--erp-sidebar)] py-6 transition-[width,padding] duration-200 ease-in-out",
+        "erp-scrollbar flex shrink-0 flex-col overflow-y-auto border-e border-[var(--erp-border)] bg-[var(--erp-sidebar)] py-6 transition-[width,padding] duration-200 ease-in-out",
         collapsed ? "w-[76px] px-3" : "w-[280px] px-5",
         className
       )}
@@ -239,15 +162,21 @@ export function AppSidebar({
             onClick={onToggle}
             aria-expanded={!collapsed}
             aria-label={
-              collapsed ? "توسيع القائمة الجانبية" : "طي القائمة الجانبية"
+              collapsed
+                ? t("common:expandSidebar")
+                : t("common:collapseSidebar")
             }
-            title={collapsed ? "توسيع القائمة" : "طي القائمة"}
+            title={
+              collapsed
+                ? t("common:expandSidebar")
+                : t("common:collapseSidebar")
+            }
             className="inline-flex size-9 shrink-0 items-center justify-center rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] text-[var(--erp-muted)] transition-colors hover:bg-[var(--erp-nav-active-bg)] hover:text-[var(--erp-brand-solid)]"
           >
             {collapsed ? (
-              <ChevronLeft className="size-4" />
+              <ChevronLeft className="size-4 rtl:rotate-180" />
             ) : (
-              <ChevronRight className="size-4" />
+              <ChevronRight className="size-4 rtl:rotate-180" />
             )}
           </button>
         </div>
@@ -257,7 +186,10 @@ export function AppSidebar({
         {visibleItems.map((item) => (
           <SidebarNavItem
             key={item.to}
-            {...item}
+            icon={item.icon}
+            label={t(`nav:${item.labelKey}`)}
+            to={item.to}
+            showDot={item.showDot}
             collapsed={collapsed}
             onNavigate={onNavigate}
           />
@@ -268,14 +200,16 @@ export function AppSidebar({
         <button
           type="button"
           onClick={handleLogout}
-          title={collapsed ? "تسجيل الخروج" : undefined}
+          title={collapsed ? t("common:logout") : undefined}
           className={cn(
             "flex w-full items-center rounded-2xl text-sm font-medium text-[var(--erp-logout)] transition-colors hover:bg-red-500/10",
             collapsed ? "justify-center px-2 py-2.5" : "gap-3 px-3 py-2.5"
           )}
         >
           {!collapsed && (
-            <span className="min-w-0 flex-1 text-right">تسجيل الخروج</span>
+            <span className="min-w-0 flex-1 text-start">
+              {t("common:logout")}
+            </span>
           )}
           <LogOut className="size-[18px]" />
         </button>

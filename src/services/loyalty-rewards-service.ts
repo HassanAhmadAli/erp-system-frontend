@@ -13,7 +13,9 @@ import { isValidUuid } from "@/validation/helpers"
 export type LoyaltyReward = {
   id: string
   name: string
+  nameAr?: string | null
   description?: string | null
+  descriptionAr?: string | null
   pointsCost: number
   discountType: LoyaltyDiscountType
   discountValue: number | string

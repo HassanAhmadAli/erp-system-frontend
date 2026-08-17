@@ -1,5 +1,6 @@
 import { type FormEvent, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useCreateSupplier } from "@/hooks/Suppliers/useCreateSupplier"
 import {
@@ -12,15 +13,17 @@ import {
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
-  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
 const EMPTY_FORM: SupplierFormValues = {
   fullName: "",
+  fullNameAr: "",
   phone: "",
   email: "",
   address: "",
+  addressAr: "",
 }
 
 function ErrorText({ message }: { message?: string }) {
@@ -32,6 +35,7 @@ function ErrorText({ message }: { message?: string }) {
 }
 
 export function CreateSupplierForm() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const mutation = useCreateSupplier()
 
@@ -65,7 +69,9 @@ export function CreateSupplierForm() {
       navigate("/suppliers")
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء المورد"
+        error instanceof Error
+          ? error.message
+          : t("pages:suppliers.createFailed")
       setErrorMessage(message)
     }
   }
@@ -73,32 +79,45 @@ export function CreateSupplierForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
+      className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
     >
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label htmlFor="supplier-fullName" className={labelClass}>
-            اسم المورد
+            {t("pages:suppliers.supplierName")}
           </label>
           <input
             id="supplier-fullName"
             value={form.fullName}
             onChange={(event) => setField("fullName", event.target.value)}
-            placeholder="أدخل اسم المورد"
+            placeholder={t("pages:suppliers.namePlaceholder")}
             className={inputClass}
           />
           <ErrorText message={errors.fullName} />
         </div>
 
         <div>
+          <label htmlFor="supplier-fullNameAr" className={labelClass}>
+            {t("fullNameAr")}
+          </label>
+          <input
+            id="supplier-fullNameAr"
+            value={form.fullNameAr ?? ""}
+            onChange={(event) => setField("fullNameAr", event.target.value)}
+            className={inputClass}
+          />
+          <ErrorText message={errors.fullNameAr} />
+        </div>
+
+        <div>
           <label htmlFor="supplier-phone" className={labelClass}>
-            رقم الهاتف
+            {t("common:phoneNumber")}
           </label>
           <input
             id="supplier-phone"
             value={form.phone}
             onChange={(event) => setField("phone", event.target.value)}
-            placeholder="أدخل رقم الهاتف"
+            placeholder={t("common:phonePlaceholder")}
             className={inputClass}
           />
           <ErrorText message={errors.phone} />
@@ -106,14 +125,14 @@ export function CreateSupplierForm() {
 
         <div>
           <label htmlFor="supplier-email" className={labelClass}>
-            البريد الإلكتروني
+            {t("common:email")}
           </label>
           <input
             id="supplier-email"
             type="email"
             value={form.email}
             onChange={(event) => setField("email", event.target.value)}
-            placeholder="أدخل البريد الإلكتروني"
+            placeholder={t("common:emailPlaceholder")}
             className={inputClass}
           />
           <ErrorText message={errors.email} />
@@ -121,16 +140,29 @@ export function CreateSupplierForm() {
 
         <div>
           <label htmlFor="supplier-address" className={labelClass}>
-            العنوان
+            {t("common:address")}
           </label>
           <input
             id="supplier-address"
             value={form.address}
             onChange={(event) => setField("address", event.target.value)}
-            placeholder="أدخل عنوان المورد"
+            placeholder={t("pages:suppliers.addressPlaceholder")}
             className={inputClass}
           />
           <ErrorText message={errors.address} />
+        </div>
+
+        <div>
+          <label htmlFor="supplier-addressAr" className={labelClass}>
+            {t("addressAr")}
+          </label>
+          <input
+            id="supplier-addressAr"
+            value={form.addressAr ?? ""}
+            onChange={(event) => setField("addressAr", event.target.value)}
+            className={inputClass}
+          />
+          <ErrorText message={errors.addressAr} />
         </div>
       </div>
 
@@ -142,7 +174,9 @@ export function CreateSupplierForm() {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "جاري الحفظ..." : "إضافة المورد"}
+          {mutation.isPending
+            ? t("common:saving")
+            : t("pages:suppliers.create")}
         </Button>
 
         <Button
@@ -150,7 +184,7 @@ export function CreateSupplierForm() {
           variant="outline"
           onClick={() => navigate("/suppliers")}
         >
-          إلغاء
+          {t("common:cancel")}
         </Button>
       </div>
     </form>

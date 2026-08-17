@@ -1,3 +1,4 @@
+import i18n from "@/i18n"
 import {
   formatNumber as formatGlobalNumber,
   toEnglishDigits,
@@ -19,49 +20,49 @@ export type TableColumn = {
   label: string
 }
 
-const METRIC_LABELS: Record<string, string> = {
-  totalSales: "إجمالي المبيعات",
-  sales: "المبيعات",
-  totalPurchases: "إجمالي المشتريات",
-  purchases: "المشتريات",
-  totalExpenses: "المصروفات",
-  expenses: "المصروفات",
-  netProfit: "صافي الربح",
-  profit: "الربح",
-  revenue: "الإيرادات",
-  discountsGiven: "الخصومات الممنوحة",
-  grossProfit: "الربح الإجمالي",
-  cost: "التكلفة",
-  purchasingCosts: "تكاليف الشراء",
-  operatingExpenses: "المصروفات التشغيلية",
-  margin: "هامش الربح",
-  profitMargin: "هامش الربح",
-  negativeCount: "هوامش سالبة",
-  marginPercent: "نسبة الهامش",
-  quantity: "الكمية",
-  count: "العدد",
-  salesCount: "عدد المبيعات",
-  ordersDelivered: "الطلبات المسلمة",
-  pendingOrders: "الطلبات المعلقة",
-  lowStockProducts: "منتجات منخفضة المخزون",
-  totalProducts: "إجمالي المنتجات",
-  total: "الإجمالي",
-  amount: "المبلغ",
-  totalAmount: "الإجمالي",
-  lowStockCount: "منتجات منخفضة المخزون",
-  outOfStockCount: "نفاد المخزون",
-  inventoryValue: "قيمة المخزون",
-  stockValue: "قيمة المخزون",
-  invoiceCount: "عدد الفواتير",
-  totalSpent: "إجمالي الإنفاق",
-  invoiceDate: "تاريخ الفاتورة",
-  createdAt: "تاريخ الإنشاء",
-  updatedAt: "آخر تحديث",
-  supplier: "المورد",
-  customer: "العميل",
-  status: "الحالة",
-  id: "الرقم",
-}
+const METRIC_LABEL_KEYS = [
+  "totalSales",
+  "sales",
+  "totalPurchases",
+  "purchases",
+  "totalExpenses",
+  "expenses",
+  "netProfit",
+  "profit",
+  "revenue",
+  "discountsGiven",
+  "grossProfit",
+  "cost",
+  "purchasingCosts",
+  "operatingExpenses",
+  "margin",
+  "profitMargin",
+  "negativeCount",
+  "marginPercent",
+  "quantity",
+  "count",
+  "salesCount",
+  "ordersDelivered",
+  "pendingOrders",
+  "lowStockProducts",
+  "totalProducts",
+  "total",
+  "amount",
+  "totalAmount",
+  "lowStockCount",
+  "outOfStockCount",
+  "inventoryValue",
+  "stockValue",
+  "invoiceCount",
+  "totalSpent",
+  "invoiceDate",
+  "createdAt",
+  "updatedAt",
+  "supplier",
+  "customer",
+  "status",
+  "id",
+] as const
 
 const SKIP_KEYS = new Set([
   "data",
@@ -97,7 +98,9 @@ export function toNumber(value: unknown): number | null {
 }
 
 export function formatMetricLabel(key: string): string {
-  if (METRIC_LABELS[key]) return METRIC_LABELS[key]
+  if ((METRIC_LABEL_KEYS as readonly string[]).includes(key)) {
+    return i18n.t(`pages:reports.metrics.${key}`)
+  }
 
   return key
     .replace(/([A-Z])/g, " $1")

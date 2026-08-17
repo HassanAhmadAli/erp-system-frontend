@@ -1,4 +1,5 @@
 import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import i18n from "@/i18n"
 
 export type AuditLogUser = {
   id: number
@@ -19,42 +20,56 @@ export type AuditLog = {
   user: AuditLogUser
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  CREATE: "إنشاء",
-  UPDATE: "تحديث",
-  DELETE: "حذف",
-  LOGIN: "تسجيل دخول",
-  LOGOUT: "تسجيل خروج",
-}
+const AUDIT_ACTION_KEYS = [
+  "CREATE",
+  "UPDATE",
+  "DELETE",
+  "LOGIN",
+  "LOGOUT",
+] as const
 
-const ENTITY_LABELS: Record<string, string> = {
-  Order: "طلب",
-  Product: "منتج",
-  Supplier: "مورد",
-  Category: "تصنيف",
-  Purchase: "فاتورة شراء",
-  Expense: "مصروف",
-  Customer: "عميل",
-  Discount: "خصم",
-}
+const AUDIT_ENTITY_KEYS = [
+  "Order",
+  "Product",
+  "Supplier",
+  "Category",
+  "Purchase",
+  "Expense",
+  "Customer",
+  "Discount",
+] as const
 
-const ROLE_LABELS: Record<string, string> = {
-  STORE_MANAGER: "مدير المتجر",
-  CASHIER: "كاشير",
-  ACCOUNTANT: "محاسب",
-  WAREHOUSE_WORKER: "عامل مستودع",
-}
+const AUDIT_ROLE_KEYS = [
+  "STORE_MANAGER",
+  "CASHIER",
+  "ACCOUNTANT",
+  "WAREHOUSE_WORKER",
+] as const
 
 export function formatAuditAction(action: string): string {
-  return ACTION_LABELS[action.toUpperCase()] ?? action
+  const key = action.toUpperCase()
+
+  if ((AUDIT_ACTION_KEYS as readonly string[]).includes(key)) {
+    return i18n.t(`pages:auditLogs.actions.${key}`)
+  }
+
+  return action
 }
 
 export function formatAuditEntity(entity: string): string {
-  return ENTITY_LABELS[entity] ?? entity
+  if ((AUDIT_ENTITY_KEYS as readonly string[]).includes(entity)) {
+    return i18n.t(`pages:auditLogs.entities.${entity}`)
+  }
+
+  return entity
 }
 
 export function formatAuditRole(role: string): string {
-  return ROLE_LABELS[role] ?? role
+  if ((AUDIT_ROLE_KEYS as readonly string[]).includes(role)) {
+    return i18n.t(`nav:roles.${role}`)
+  }
+
+  return role
 }
 
 export function formatAuditValue(
@@ -84,7 +99,7 @@ export function auditChangePreview(log: AuditLog, maxLength = 80): string {
 
   if (parts.length === 0) return "—"
 
-  const text = parts.join("، ")
+  const text = parts.join(", ")
   return text.length > maxLength ? `${text.slice(0, maxLength)}…` : text
 }
 

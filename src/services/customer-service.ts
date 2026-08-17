@@ -14,15 +14,18 @@ import { isValidId } from "@/validation/helpers"
 export type CustomerUser = {
   id: number
   fullName: string
+  fullNameAr?: string | null
   email: string
   phoneNumber: string
   isActive: boolean
+  language?: string
 }
 
 export type Customer = {
   id: number
   userId: number
   address?: string
+  addressAr?: string | null
   loyaltyPoints: number
   totalSpent: string
   user: CustomerUser

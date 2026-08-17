@@ -1,4 +1,5 @@
 import { Plus } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import type { PosProduct } from "@/services/pos-service"
 import { Button } from "@/view/components/ui/button"
@@ -15,6 +16,7 @@ type PosProductCardProps = {
 }
 
 export function PosProductCard({ product, onAddToCart }: PosProductCardProps) {
+  const { t } = useTranslation(["common", "pages"])
   const isOutOfStock = product.quantityInStock <= 0
 
   return (
@@ -27,11 +29,11 @@ export function PosProductCard({ product, onAddToCart }: PosProductCardProps) {
 
           <p
             dir="ltr"
-            className="mt-1 text-right text-xs text-[var(--erp-muted)]"
+            className="mt-1 text-start text-xs text-[var(--erp-muted)]"
           >
             {product.barcode
               ? toEnglishDigits(product.barcode)
-              : "لا يوجد باركود"}
+              : t("common:noBarcode")}
           </p>
         </div>
 
@@ -45,14 +47,14 @@ export function PosProductCard({ product, onAddToCart }: PosProductCardProps) {
 
       <div className="mt-4 flex items-center justify-between">
         <div>
-          <p className="text-xs text-[var(--erp-muted)]">السعر</p>
+          <p className="text-xs text-[var(--erp-muted)]">{t("common:price")}</p>
           <p dir="ltr" className="text-left font-bold text-[var(--erp-text)]">
             {formatCurrency(product.sellingPrice)}
           </p>
         </div>
 
         <div className="text-left">
-          <p className="text-xs text-[var(--erp-muted)]">المخزون</p>
+          <p className="text-xs text-[var(--erp-muted)]">{t("common:stock")}</p>
           <p
             dir="ltr"
             className={
@@ -72,7 +74,7 @@ export function PosProductCard({ product, onAddToCart }: PosProductCardProps) {
         onClick={() => onAddToCart(product)}
       >
         <Plus className="h-4 w-4" />
-        إضافة للسلة
+        {t("common:addToCart")}
       </Button>
     </article>
   )

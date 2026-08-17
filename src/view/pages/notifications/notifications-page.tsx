@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { PERMISSIONS } from "@/auth/permissions"
 import { usePermissions } from "@/hooks/usePermissions"
@@ -9,16 +10,17 @@ import { Button } from "@/view/components/ui/button"
 
 type NotificationsTab = "inbox" | "send" | "history"
 
-const tabs: { id: NotificationsTab; label: string }[] = [
-  { id: "inbox", label: "صندوق الوارد" },
-  { id: "send", label: "إرسال إشعار" },
-  { id: "history", label: "سجل الإرسال" },
-]
-
 export function NotificationsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { can } = usePermissions()
   const canSend = can(PERMISSIONS.NOTIFICATIONS_SEND)
   const canViewHistory = can(PERMISSIONS.NOTIFICATIONS_VIEW_HISTORY)
+
+  const tabs: { id: NotificationsTab; label: string }[] = [
+    { id: "inbox", label: t("notifications.tabInbox", { ns: "pages" }) },
+    { id: "send", label: t("notifications.tabSend", { ns: "pages" }) },
+    { id: "history", label: t("notifications.tabHistory", { ns: "pages" }) },
+  ]
 
   const visibleTabs = tabs.filter((tab) => {
     if (tab.id === "send") return canSend
@@ -34,11 +36,13 @@ export function NotificationsPage() {
     : "inbox"
 
   return (
-    <main className="space-y-6" dir="rtl">
+    <main className="space-y-6">
       <header>
-        <h1 className="text-2xl font-bold text-[var(--erp-text)]">الإشعارات</h1>
+        <h1 className="text-2xl font-bold text-[var(--erp-text)]">
+          {t("notifications.title", { ns: "pages" })}
+        </h1>
         <p className="mt-1 text-sm text-[var(--erp-muted)]">
-          إدارة الإشعارات الشخصية وإرسال الإشعارات الداخلية.
+          {t("notifications.subtitle", { ns: "pages" })}
         </p>
       </header>
 
@@ -59,7 +63,7 @@ export function NotificationsPage() {
         <section className="space-y-4 rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h2 className="text-lg font-semibold text-[var(--erp-text)]">
-              إشعاراتي
+              {t("notifications.myNotifications", { ns: "pages" })}
             </h2>
 
             <label className="flex items-center gap-2 text-sm text-[var(--erp-muted)]">
@@ -68,7 +72,7 @@ export function NotificationsPage() {
                 checked={unreadOnly}
                 onChange={(event) => setUnreadOnly(event.target.checked)}
               />
-              عرض غير المقروء فقط
+              {t("notifications.unreadOnly", { ns: "pages" })}
             </label>
           </div>
 
@@ -81,7 +85,7 @@ export function NotificationsPage() {
       {resolvedTab === "history" && (
         <section className="rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
           <h2 className="mb-5 text-lg font-semibold text-[var(--erp-text)]">
-            سجل الإشعارات المرسلة
+            {t("notifications.sendHistoryTitle", { ns: "pages" })}
           </h2>
 
           <NotificationHistoryTable />

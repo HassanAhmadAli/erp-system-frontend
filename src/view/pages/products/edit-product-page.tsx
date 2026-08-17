@@ -1,4 +1,5 @@
 import { AlertTriangle, ArrowRight, Pencil } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 
 import { useProductById } from "@/hooks/Products/useProductById"
@@ -8,6 +9,7 @@ import { ProductPhotosPanel } from "@/view/components/products/product-photos-pa
 import { Button } from "@/view/components/ui/button"
 
 export function EditProductPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { id } = useParams()
   const navigate = useNavigate()
 
@@ -21,18 +23,18 @@ export function EditProductPage() {
 
   if (!isValidProductId) {
     return (
-      <main className="space-y-6 text-[var(--erp-text)]" dir="rtl">
-        <section className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-6 text-right shadow-[var(--erp-shadow)] dark:bg-red-500/15">
+      <main className="space-y-6 text-[var(--erp-text)]">
+        <section className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-6 text-start shadow-[var(--erp-shadow)] dark:bg-red-500/15">
           <div className="flex items-start gap-3">
             <AlertTriangle className="mt-0.5 size-5 shrink-0 text-red-600 dark:text-red-300" />
 
             <div>
               <h1 className="text-lg font-bold text-red-700 dark:text-red-300">
-                معرف المنتج غير صالح
+                {t("pages:products.invalidProductId")}
               </h1>
 
               <p className="mt-1 text-sm text-red-700/80 dark:text-red-300/80">
-                لا يمكن تعديل المنتج لأن الرقم غير صحيح.
+                {t("pages:products.invalidProductEditHint")}
               </p>
 
               <Button
@@ -42,7 +44,7 @@ export function EditProductPage() {
                 onClick={() => navigate("/products")}
               >
                 <ArrowRight className="size-4" />
-                رجوع للمنتجات
+                {t("pages:products.backToProducts")}
               </Button>
             </div>
           </div>
@@ -53,10 +55,10 @@ export function EditProductPage() {
 
   if (isLoading) {
     return (
-      <main className="space-y-6 text-[var(--erp-text)]" dir="rtl">
+      <main className="space-y-6 text-[var(--erp-text)]">
         <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-center shadow-[var(--erp-shadow)]">
           <p className="text-sm text-[var(--erp-muted)]">
-            جاري تحميل بيانات المنتج...
+            {t("pages:products.loadingProduct")}
           </p>
         </section>
       </main>
@@ -65,18 +67,18 @@ export function EditProductPage() {
 
   if (!data || error) {
     return (
-      <main className="space-y-6 text-[var(--erp-text)]" dir="rtl">
-        <section className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-6 text-right shadow-[var(--erp-shadow)] dark:bg-red-500/15">
+      <main className="space-y-6 text-[var(--erp-text)]">
+        <section className="rounded-[24px] border border-red-500/20 bg-red-500/10 p-6 text-start shadow-[var(--erp-shadow)] dark:bg-red-500/15">
           <div className="flex items-start gap-3">
             <AlertTriangle className="mt-0.5 size-5 shrink-0 text-red-600 dark:text-red-300" />
 
             <div>
               <h1 className="text-lg font-bold text-red-700 dark:text-red-300">
-                حدث خطأ أثناء تحميل المنتج
+                {t("pages:products.loadFailed")}
               </h1>
 
               <p className="mt-1 text-sm text-red-700/80 dark:text-red-300/80">
-                تأكد من أن المنتج موجود ثم حاول مرة أخرى.
+                {t("pages:products.loadFailedHint")}
               </p>
 
               <Button
@@ -86,7 +88,7 @@ export function EditProductPage() {
                 onClick={() => navigate("/products")}
               >
                 <ArrowRight className="size-4" />
-                رجوع للمنتجات
+                {t("pages:products.backToProducts")}
               </Button>
             </div>
           </div>
@@ -96,23 +98,23 @@ export function EditProductPage() {
   }
 
   return (
-    <main className="space-y-6 text-[var(--erp-text)]" dir="rtl">
+    <main className="space-y-6 text-[var(--erp-text)]">
       <section className="flex flex-col gap-4 rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)] sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-right">
+        <div className="text-start">
           <div className="flex items-center gap-2">
             <Pencil className="size-6 text-[var(--erp-accent)]" />
 
             <h1 className="text-2xl font-bold text-[var(--erp-text)]">
-              تعديل المنتج
+              {t("pages:products.edit")}
             </h1>
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            تعديل بيانات المنتج وصوره من نفس الصفحة.
+            {t("pages:products.editSubtitle")}
           </p>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            رقم المنتج:{" "}
+            {t("pages:products.productNumber")}:{" "}
             <span dir="ltr" className="inline-block font-semibold">
               #{toEnglishDigits(String(data.id))}
             </span>
@@ -127,19 +129,19 @@ export function EditProductPage() {
             onClick={() => navigate(`/products/${data.id}`)}
           >
             <ArrowRight className="size-4" />
-            رجوع للتفاصيل
+            {t("common:backToDetails")}
           </Button>
         </div>
       </section>
 
       <section className="space-y-4">
-        <div className="text-right">
+        <div className="text-start">
           <h2 className="text-lg font-bold text-[var(--erp-text)]">
-            بيانات المنتج
+            {t("pages:products.editDataTitle")}
           </h2>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            قم بتحديث البيانات الأساسية ثم احفظ التعديلات.
+            {t("pages:products.editDataSubtitle")}
           </p>
         </div>
 
@@ -153,9 +155,7 @@ export function EditProductPage() {
         />
       </section>
 
-      <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-4 shadow-[var(--erp-shadow)] sm:p-5">
-  <ProductPhotosPanel productId={data.id} />
-</section>
+      <ProductPhotosPanel productId={data.id} />
     </main>
   )
 }

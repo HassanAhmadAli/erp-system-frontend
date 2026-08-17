@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { formatNumber, inferTableColumns, toNumber } from "@/lib/report-parsers"
 import { formatDate, formatDateTime } from "@/utils/number-formatters"
 
@@ -52,11 +54,12 @@ function formatCell(value: unknown, columnKey: string) {
 }
 
 export function ReportTable({ title, rows }: ReportTableProps) {
+  const { t } = useTranslation("common")
   const columns = inferTableColumns(rows)
 
   if (rows.length === 0) {
     return (
-      <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
+      <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         {title && (
           <h3 className="mb-4 text-xl font-semibold text-[var(--erp-text)]">
             {title}
@@ -64,14 +67,14 @@ export function ReportTable({ title, rows }: ReportTableProps) {
         )}
 
         <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-center">
-          <p className="text-sm text-[var(--erp-muted)]">لا توجد صفوف لعرضها</p>
+          <p className="text-sm text-[var(--erp-muted)]">{t("noRows")}</p>
         </div>
       </section>
     )
   }
 
   return (
-    <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
+    <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       {title && (
         <h3 className="mb-5 text-xl font-semibold text-[var(--erp-text)]">
           {title}
@@ -80,7 +83,7 @@ export function ReportTable({ title, rows }: ReportTableProps) {
 
       <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] text-right text-sm">
+          <table className="w-full min-w-[640px] text-start text-sm">
             <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
               <tr>
                 {columns.map((col) => (

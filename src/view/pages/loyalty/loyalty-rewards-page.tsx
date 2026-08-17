@@ -1,5 +1,6 @@
 import { type FormEvent, type ReactNode, useMemo, useState } from "react"
 import { Gift, Pencil, Plus, Star, Trash2, X } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import {
   useCreateLoyaltyReward,
@@ -7,8 +8,9 @@ import {
   useLoyaltyRewards,
   useUpdateLoyaltyReward,
 } from "@/hooks/Loyalty/useLoyaltyRewards"
+import { useLocale } from "@/i18n/locale-provider"
+import { localizedDescription, localizedName } from "@/lib/localized"
 import {
-  LOYALTY_DISCOUNT_TYPE_LABELS,
   LOYALTY_DISCOUNT_TYPES,
   loyaltyRewardSchema,
   loyaltyRewardValuesToPayload,
@@ -25,7 +27,7 @@ import type { LoyaltyReward } from "@/services/loyalty-rewards-service"
 const PAGE_SIZE = 10
 
 const inputClass =
-  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
@@ -44,7 +46,16 @@ function resolveDiscountType(value: string): LoyaltyDiscountType {
   return value === "PERCENTAGE" ? "PERCENTAGE" : "FIXED_AMOUNT"
 }
 
+function discountTypeLabel(
+  type: LoyaltyDiscountType | string,
+  t: (key: string) => string
+) {
+  return type === "PERCENTAGE" ? t("percentage") : t("fixedAmount")
+}
+
 export function LoyaltyRewardsPage() {
+  const { t } = useTranslation(["common", "pages"])
+  const { language } = useLocale()
   const [rewardsPage, setRewardsPage] = useState(1)
   const {
     data: rewardsData,
@@ -62,7 +73,9 @@ export function LoyaltyRewardsPage() {
 
   const [editingReward, setEditingReward] = useState<LoyaltyReward | null>(null)
   const [name, setName] = useState("")
+  const [nameAr, setNameAr] = useState("")
   const [description, setDescription] = useState("")
+  const [descriptionAr, setDescriptionAr] = useState("")
   const [pointsCost, setPointsCost] = useState("")
   const [discountType, setDiscountType] =
     useState<LoyaltyDiscountType>("FIXED_AMOUNT")
@@ -94,7 +107,9 @@ export function LoyaltyRewardsPage() {
   function resetForm() {
     setEditingReward(null)
     setName("")
+    setNameAr("")
     setDescription("")
+    setDescriptionAr("")
     setPointsCost("")
     setDiscountType("FIXED_AMOUNT")
     setDiscountValue("")
@@ -107,7 +122,9 @@ export function LoyaltyRewardsPage() {
   function fillFormFromReward(reward: LoyaltyReward) {
     setEditingReward(reward)
     setName(reward.name ?? "")
+    setNameAr(reward.nameAr ?? "")
     setDescription(reward.description ?? "")
+    setDescriptionAr(reward.descriptionAr ?? "")
     setPointsCost(String(reward.pointsCost ?? ""))
     setDiscountType(resolveDiscountType(reward.discountType))
     setDiscountValue(String(reward.discountValue ?? ""))
@@ -138,7 +155,9 @@ export function LoyaltyRewardsPage() {
 
     const validation = loyaltyRewardSchema.safeParse({
       name,
+      nameAr,
       description,
+      descriptionAr,
       pointsCost,
       discountType,
       discountValue,
@@ -157,7 +176,7 @@ export function LoyaltyRewardsPage() {
     try {
       if (isEditing) {
         if (!isValidUuid(editingReward.id)) {
-          setRewardError("معرّف المكافأة غير صالح.")
+          setRewardError(t("loyalty.invalidRewardId", { ns: "pages" }))
           return
         }
 
@@ -167,15 +186,19 @@ export function LoyaltyRewardsPage() {
         })
 
         resetForm()
-        setRewardMessage("تم تحديث المكافأة بنجاح")
+        setRewardMessage(t("loyalty.updateSuccess", { ns: "pages" }))
       } else {
         await createReward.mutateAsync(payload)
         resetForm()
-        setRewardMessage("تم إنشاء المكافأة بنجاح")
+        setRewardMessage(t("loyalty.createSuccess", { ns: "pages" }))
         setRewardsPage(1)
       }
     } catch {
-      setRewardError(isEditing ? "فشل تحديث المكافأة" : "فشل إنشاء المكافأة")
+      setRewardError(
+        isEditing
+          ? t("loyalty.updateFailed", { ns: "pages" })
+          : t("loyalty.createFailed", { ns: "pages" })
+      )
     }
   }
 
@@ -184,11 +207,10 @@ export function LoyaltyRewardsPage() {
     setRewardMessage("")
 
     if (!isValidUuid(reward.id)) {
-      setRewardError("معرّف المكافأة غير صالح.")
+      setRewardError(t("loyalty.invalidRewardId", { ns: "pages" }))
       return
     }
 
-    // Backend update DTO currently requires pointsCost on every PATCH.
     updateReward.mutate({
       id: reward.id,
       data: {
@@ -203,11 +225,13 @@ export function LoyaltyRewardsPage() {
     setRewardMessage("")
 
     if (!isValidUuid(id)) {
-      setRewardError("معرّف المكافأة غير صالح.")
+      setRewardError(t("loyalty.invalidRewardId", { ns: "pages" }))
       return
     }
 
-    const shouldDelete = window.confirm("هل أنت متأكد من حذف هذه المكافأة؟")
+    const shouldDelete = window.confirm(
+      t("loyalty.confirmDelete", { ns: "pages" })
+    )
 
     if (!shouldDelete) return
 
@@ -219,37 +243,37 @@ export function LoyaltyRewardsPage() {
   }
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header>
         <div className="flex items-center justify-end gap-2">
           <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-            مكافآت الولاء
+            {t("loyalty.title", { ns: "pages" })}
           </h1>
 
           <Gift className="size-7 text-[var(--erp-brand-solid)]" />
         </div>
 
         <p className="mt-1 text-sm text-[var(--erp-muted)]">
-          إدارة عروض استبدال نقاط الولاء بخصومات للعملاء.
+          {t("loyalty.subtitle", { ns: "pages" })}
         </p>
       </header>
 
       {!isLoading && !isError && (
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <SummaryCard
-            label="عدد المكافآت"
+            label={t("loyalty.rewardsCount", { ns: "pages" })}
             value={formatNumber(rewardsData?.total ?? rewards.length)}
             icon={<Gift className="size-5" />}
           />
 
           <SummaryCard
-            label="المكافآت النشطة (الصفحة)"
+            label={t("loyalty.activeRewardsPage", { ns: "pages" })}
             value={formatNumber(activeRewardsCount)}
             icon={<Star className="size-5" />}
           />
 
           <SummaryCard
-            label="أعلى تكلفة نقاط (الصفحة)"
+            label={t("loyalty.highestPointsPage", { ns: "pages" })}
             value={formatNumber(highestPointsCost)}
             icon={<Plus className="size-5" />}
           />
@@ -261,13 +285,15 @@ export function LoyaltyRewardsPage() {
           <div className="mb-5 flex items-start justify-between gap-3">
             <div>
               <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-                {isEditing ? "تعديل مكافأة" : "إضافة مكافأة"}
+                {isEditing
+                  ? t("loyalty.editReward", { ns: "pages" })
+                  : t("loyalty.createReward", { ns: "pages" })}
               </h2>
 
               <p className="mt-1 text-sm text-[var(--erp-muted)]">
                 {isEditing
-                  ? "حدّث بيانات عرض الولاء ثم احفظ التعديلات."
-                  : "أنشئ عرض ولاء يحدد تكلفة النقاط ونوع الخصم ومدة صلاحيته."}
+                  ? t("loyalty.editSubtitle", { ns: "pages" })
+                  : t("loyalty.createSubtitle", { ns: "pages" })}
               </p>
             </div>
 
@@ -280,7 +306,7 @@ export function LoyaltyRewardsPage() {
                 onClick={handleCancelEdit}
               >
                 <X className="size-3.5" />
-                إلغاء
+                {t("cancel")}
               </Button>
             )}
           </div>
@@ -288,14 +314,14 @@ export function LoyaltyRewardsPage() {
           <form onSubmit={handleSubmitReward} className="space-y-4" noValidate>
             <div>
               <label htmlFor="loyalty-name" className={labelClass}>
-                اسم المكافأة
+                {t("loyalty.rewardName", { ns: "pages" })}
               </label>
 
               <input
                 id="loyalty-name"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="مثال: خصم 10% مقابل 100 نقطة"
+                placeholder={t("loyalty.namePlaceholder", { ns: "pages" })}
                 className={inputClass}
               />
 
@@ -307,8 +333,27 @@ export function LoyaltyRewardsPage() {
             </div>
 
             <div>
+              <label htmlFor="loyalty-name-ar" className={labelClass}>
+                {t("nameAr")}
+              </label>
+
+              <input
+                id="loyalty-name-ar"
+                value={nameAr}
+                onChange={(event) => setNameAr(event.target.value)}
+                className={inputClass}
+              />
+
+              {rewardFormErrors.nameAr && (
+                <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                  {rewardFormErrors.nameAr}
+                </p>
+              )}
+            </div>
+
+            <div>
               <label htmlFor="loyalty-description" className={labelClass}>
-                الوصف (اختياري)
+                {t("loyalty.descriptionOptional", { ns: "pages" })}
               </label>
 
               <textarea
@@ -316,7 +361,9 @@ export function LoyaltyRewardsPage() {
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
                 rows={3}
-                placeholder="تفاصيل إضافية عن العرض"
+                placeholder={t("loyalty.descriptionPlaceholder", {
+                  ns: "pages",
+                })}
                 className={inputClass}
               />
 
@@ -328,8 +375,28 @@ export function LoyaltyRewardsPage() {
             </div>
 
             <div>
+              <label htmlFor="loyalty-description-ar" className={labelClass}>
+                {t("descriptionAr")}
+              </label>
+
+              <textarea
+                id="loyalty-description-ar"
+                value={descriptionAr}
+                onChange={(event) => setDescriptionAr(event.target.value)}
+                rows={3}
+                className={inputClass}
+              />
+
+              {rewardFormErrors.descriptionAr && (
+                <p className="mt-1 text-sm text-red-500 dark:text-red-300">
+                  {rewardFormErrors.descriptionAr}
+                </p>
+              )}
+            </div>
+
+            <div>
               <label htmlFor="loyalty-points-cost" className={labelClass}>
-                تكلفة النقاط
+                {t("loyalty.pointsCost", { ns: "pages" })}
               </label>
 
               <input
@@ -338,7 +405,7 @@ export function LoyaltyRewardsPage() {
                 min={1}
                 value={pointsCost}
                 onChange={(event) => setPointsCost(event.target.value)}
-                placeholder="مثال: 100"
+                placeholder={t("loyalty.pointsPlaceholder", { ns: "pages" })}
                 className={inputClass}
               />
 
@@ -352,7 +419,7 @@ export function LoyaltyRewardsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="loyalty-discount-type" className={labelClass}>
-                  نوع الخصم
+                  {t("loyalty.discountType", { ns: "pages" })}
                 </label>
 
                 <select
@@ -365,7 +432,7 @@ export function LoyaltyRewardsPage() {
                 >
                   {LOYALTY_DISCOUNT_TYPES.map((type) => (
                     <option key={type} value={type}>
-                      {LOYALTY_DISCOUNT_TYPE_LABELS[type]}
+                      {discountTypeLabel(type, t)}
                     </option>
                   ))}
                 </select>
@@ -379,7 +446,7 @@ export function LoyaltyRewardsPage() {
 
               <div>
                 <label htmlFor="loyalty-discount-value" className={labelClass}>
-                  قيمة الخصم
+                  {t("loyalty.discountValue", { ns: "pages" })}
                 </label>
 
                 <input
@@ -390,7 +457,9 @@ export function LoyaltyRewardsPage() {
                   value={discountValue}
                   onChange={(event) => setDiscountValue(event.target.value)}
                   placeholder={
-                    discountType === "PERCENTAGE" ? "مثال: 10" : "مثال: 5000"
+                    discountType === "PERCENTAGE"
+                      ? t("loyalty.percentPlaceholder", { ns: "pages" })
+                      : t("loyalty.amountPlaceholder", { ns: "pages" })
                   }
                   className={inputClass}
                 />
@@ -406,7 +475,7 @@ export function LoyaltyRewardsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="loyalty-max-uses" className={labelClass}>
-                  الحد الأقصى للاستخدام
+                  {t("loyalty.maxUses", { ns: "pages" })}
                 </label>
 
                 <input
@@ -427,7 +496,7 @@ export function LoyaltyRewardsPage() {
 
               <div>
                 <label htmlFor="loyalty-validity-days" className={labelClass}>
-                  مدة الصلاحية (أيام)
+                  {t("loyalty.validityDays", { ns: "pages" })}
                 </label>
 
                 <input
@@ -448,7 +517,7 @@ export function LoyaltyRewardsPage() {
             </div>
 
             <label className="flex items-center justify-end gap-2 text-sm text-[var(--erp-text)]">
-              <span>المكافأة نشطة</span>
+              <span>{t("loyalty.rewardActive", { ns: "pages" })}</span>
               <input
                 type="checkbox"
                 checked={isActive}
@@ -477,11 +546,11 @@ export function LoyaltyRewardsPage() {
               )}
               {isSaving
                 ? isEditing
-                  ? "جاري الحفظ..."
-                  : "جاري الإنشاء..."
+                  ? t("saving")
+                  : t("loyalty.creating", { ns: "pages" })
                 : isEditing
-                  ? "حفظ التعديلات"
-                  : "إنشاء المكافأة"}
+                  ? t("saveChanges")
+                  : t("loyalty.createRewardButton", { ns: "pages" })}
             </Button>
           </form>
         </section>
@@ -543,10 +612,13 @@ function RewardsTable({
   onToggleReward: (reward: LoyaltyReward) => void
   onDeleteReward: (id: string) => void
 }) {
+  const { t } = useTranslation(["common", "pages"])
+  const { language } = useLocale()
+
   if (isLoading) {
     return (
       <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-muted)] shadow-[var(--erp-shadow)]">
-        جاري تحميل المكافآت...
+        {t("loyalty.loadingRewards", { ns: "pages" })}
       </section>
     )
   }
@@ -554,7 +626,7 @@ function RewardsTable({
   if (isError) {
     return (
       <section className="rounded-3xl border border-red-500/20 bg-red-500/10 p-6 text-red-700 shadow-[var(--erp-shadow)] dark:bg-red-500/15 dark:text-red-300">
-        حدث خطأ أثناء تحميل المكافآت
+        {t("loyalty.loadRewardsFailed", { ns: "pages" })}
       </section>
     )
   }
@@ -563,17 +635,22 @@ function RewardsTable({
     <section className="space-y-4 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <div>
         <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-          قائمة المكافآت
+          {t("loyalty.rewardsList", { ns: "pages" })}
         </h2>
 
         <p className="mt-1 text-sm text-[var(--erp-muted)]">
-          عدد النتائج: {formatNumber(rewards.length)}
-          {total != null ? ` · الإجمالي ${formatNumber(total)}` : ""}
+          {t("resultCountTotal", {
+            count: formatNumber(rewards.length),
+            total:
+              total != null
+                ? formatNumber(total)
+                : formatNumber(rewards.length),
+          })}
         </p>
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-        <table className="w-full min-w-[920px] table-fixed text-right text-sm">
+        <table className="w-full min-w-[920px] table-fixed text-start text-sm">
           <colgroup>
             <col className="w-[20%]" />
             <col className="w-[10%]" />
@@ -586,13 +663,17 @@ function RewardsTable({
 
           <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
             <tr>
-              <th className="px-3 py-3 font-medium">الاسم</th>
-              <th className="px-3 py-3 font-medium">النقاط</th>
-              <th className="px-3 py-3 font-medium">الخصم</th>
-              <th className="px-3 py-3 font-medium">الاستخدام</th>
-              <th className="px-3 py-3 font-medium">الصلاحية</th>
-              <th className="px-3 py-3 text-center font-medium">الحالة</th>
-              <th className="px-3 py-3 text-center font-medium">العمليات</th>
+              <th className="px-3 py-3 font-medium">{t("name")}</th>
+              <th className="px-3 py-3 font-medium">{t("points")}</th>
+              <th className="px-3 py-3 font-medium">{t("discount")}</th>
+              <th className="px-3 py-3 font-medium">{t("usage")}</th>
+              <th className="px-3 py-3 font-medium">{t("validity")}</th>
+              <th className="px-3 py-3 text-center font-medium">
+                {t("status")}
+              </th>
+              <th className="px-3 py-3 text-center font-medium">
+                {t("operations")}
+              </th>
             </tr>
           </thead>
 
@@ -608,11 +689,11 @@ function RewardsTable({
               >
                 <td className="px-3 py-3">
                   <p className="truncate font-medium text-[var(--erp-text)]">
-                    {reward.name}
+                    {localizedName(reward, language)}
                   </p>
-                  {reward.description ? (
+                  {localizedDescription(reward, language) ? (
                     <p className="mt-1 truncate text-xs text-[var(--erp-muted)]">
-                      {reward.description}
+                      {localizedDescription(reward, language)}
                     </p>
                   ) : null}
                 </td>
@@ -629,9 +710,7 @@ function RewardsTable({
                     )}
                   </span>
                   <span className="mt-1 block text-xs text-[var(--erp-muted)]">
-                    {LOYALTY_DISCOUNT_TYPE_LABELS[
-                      reward.discountType as LoyaltyDiscountType
-                    ] ?? reward.discountType}
+                    {discountTypeLabel(reward.discountType, t)}
                   </span>
                 </td>
 
@@ -640,7 +719,7 @@ function RewardsTable({
                 </td>
 
                 <td className="px-3 py-3 text-[var(--erp-muted)]">
-                  {formatNumber(reward.validityDays)} يوم
+                  {t("daysCount", { count: formatNumber(reward.validityDays) })}
                 </td>
 
                 <td className="px-3 py-3">
@@ -658,7 +737,7 @@ function RewardsTable({
                       onClick={() => onEditReward(reward)}
                     >
                       <Pencil className="size-3.5" />
-                      تعديل
+                      {t("edit")}
                     </Button>
 
                     <Button
@@ -667,7 +746,7 @@ function RewardsTable({
                       disabled={isUpdating}
                       onClick={() => onToggleReward(reward)}
                     >
-                      {reward.isActive ? "تعطيل" : "تفعيل"}
+                      {reward.isActive ? t("disable") : t("enable")}
                     </Button>
 
                     <Button
@@ -678,7 +757,7 @@ function RewardsTable({
                       className="gap-1"
                     >
                       <Trash2 className="size-3.5" />
-                      حذف
+                      {t("delete")}
                     </Button>
                   </div>
                 </td>
@@ -691,7 +770,7 @@ function RewardsTable({
                   colSpan={7}
                   className="px-4 py-8 text-center text-sm text-[var(--erp-muted)]"
                 >
-                  لا توجد مكافآت
+                  {t("loyalty.noRewards", { ns: "pages" })}
                 </td>
               </tr>
             )}
@@ -736,6 +815,8 @@ function SummaryCard({
 }
 
 function StatusBadge({ active }: { active: boolean }) {
+  const { t } = useTranslation("common")
+
   return (
     <span
       className={
@@ -744,7 +825,7 @@ function StatusBadge({ active }: { active: boolean }) {
           : "rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-300"
       }
     >
-      {active ? "نشط" : "غير نشط"}
+      {active ? t("active") : t("inactive")}
     </span>
   )
 }

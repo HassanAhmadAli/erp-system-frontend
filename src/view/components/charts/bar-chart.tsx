@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { formatNumber } from "@/lib/report-parsers"
 import type { ChartPoint } from "@/lib/report-parsers"
 
@@ -15,8 +17,11 @@ export function BarChart({
   title,
   data,
   unit = "",
-  emptyMessage = "لا توجد بيانات للعرض",
+  emptyMessage,
 }: BarChartProps) {
+  const { t } = useTranslation("common")
+  const resolvedEmptyMessage = emptyMessage ?? t("charts.noData")
+
   if (data.length === 0) {
     return (
       <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
@@ -24,7 +29,7 @@ export function BarChart({
           <h3 className="mb-4 text-center text-lg font-bold">{title}</h3>
         )}
         <p className="text-center text-sm text-[var(--erp-muted)]">
-          {emptyMessage}
+          {resolvedEmptyMessage}
         </p>
       </section>
     )
@@ -36,7 +41,6 @@ export function BarChart({
   const hasNegative = min < 0
   const range = Math.max(max - min, 1)
 
-  // Keep a full plot height even when max is 0 so bars stay on the baseline.
   const positiveSpace = hasNegative
     ? (Math.max(max, 0) / range) * PLOT_HEIGHT
     : PLOT_HEIGHT

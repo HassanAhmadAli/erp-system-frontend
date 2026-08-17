@@ -1,26 +1,28 @@
 import { ArrowRight, PackagePlus } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { ProductForm } from "@/view/components/products/product-form"
 import { Button } from "@/view/components/ui/button"
 
 export function CreateProductPage() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
 
   return (
-    <main className="space-y-6 text-[var(--erp-text)]" dir="rtl">
+    <main className="space-y-6 text-[var(--erp-text)]">
       <section className="flex flex-col gap-4 rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)] sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-right">
+        <div className="text-start">
           <div className="flex items-center gap-2">
             <PackagePlus className="size-6 text-[var(--erp-accent)]" />
 
             <h1 className="text-2xl font-bold text-[var(--erp-text)]">
-              إضافة منتج
+              {t("pages:products.create")}
             </h1>
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            أدخل بيانات المنتج ثم احفظ
+            {t("pages:products.createSubtitle")}
           </p>
         </div>
 
@@ -31,7 +33,7 @@ export function CreateProductPage() {
           onClick={() => navigate("/products")}
         >
           <ArrowRight className="size-4" />
-          رجوع للمنتجات
+          {t("pages:products.backToProducts")}
         </Button>
       </section>
 

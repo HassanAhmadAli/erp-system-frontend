@@ -1,19 +1,15 @@
+import i18n from "@/i18n"
 import type {
   NotificationTargetRole,
   NotificationTargetType,
 } from "@/services/notification-service"
 
-export const targetTypeLabels: Record<NotificationTargetType, string> = {
-  ALL: "الجميع",
-  ROLE: "حسب الدور",
-  USER: "مستخدمون محددون",
+export function getTargetTypeLabel(type: NotificationTargetType): string {
+  return i18n.t(`notifications.targetTypes.${type}`, { ns: "pages" })
 }
 
-export const targetRoleLabels: Record<NotificationTargetRole, string> = {
-  CASHIER: "كاشير",
-  STORE_MANAGER: "مدير متجر",
-  ACCOUNTANT: "محاسب",
-  WAREHOUSE_WORKER: "عامل مستودع",
+export function getTargetRoleLabel(role: NotificationTargetRole): string {
+  return i18n.t(`roles.${role}`, { ns: "common" })
 }
 
 export function formatTargetLabel(
@@ -21,20 +17,20 @@ export function formatTargetLabel(
   targetRole: NotificationTargetRole | null
 ) {
   if (targetType === "ROLE" && targetRole) {
-    return `${targetTypeLabels.ROLE}: ${targetRoleLabels[targetRole]}`
+    return `${getTargetTypeLabel("ROLE")}: ${getTargetRoleLabel(targetRole)}`
   }
 
-  return targetTypeLabels[targetType]
+  return getTargetTypeLabel(targetType)
 }
 
-/** Inbox badge: role-only label without the "حسب الدور" prefix. */
+/** Inbox badge: role-only label without the "By role" prefix. */
 export function formatInboxTargetLabel(
   targetType: NotificationTargetType,
   targetRole: NotificationTargetRole | null
 ) {
   if (targetType === "ROLE" && targetRole) {
-    return targetRoleLabels[targetRole]
+    return getTargetRoleLabel(targetRole)
   }
 
-  return targetTypeLabels[targetType]
+  return getTargetTypeLabel(targetType)
 }

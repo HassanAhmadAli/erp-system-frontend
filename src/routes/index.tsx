@@ -85,6 +85,7 @@ import { AuditLogDetailsPage } from "@/view/pages/audit-logs/audit-log-details-p
 
 import { NotificationsPage } from "@/view/pages/notifications/notifications-page"
 import { NotificationDetailsPage } from "@/view/pages/notifications/notification-details-page"
+import { SettingsPage } from "@/view/pages/settings/settings-page"
 
 function CreateCategoryPage() {
   const navigate = useNavigate()
@@ -246,6 +247,9 @@ export function AppRoutes() {
             path="notifications/details/:source/:id"
             element={<NotificationDetailsPage />}
           />
+
+          {/* Settings */}
+          <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Route>
 

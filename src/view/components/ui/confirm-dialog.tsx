@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { Button } from "@/view/components/ui/button"
 
 type ConfirmDialogProps = {
@@ -13,14 +15,16 @@ type ConfirmDialogProps = {
 
 export function ConfirmDialog({
   open,
-  title = "هل أنت متأكد؟",
+  title,
   description,
-  confirmLabel = "حذف",
-  cancelLabel = "إلغاء",
+  confirmLabel,
+  cancelLabel,
   isLoading = false,
   onClose,
   onConfirm,
 }: ConfirmDialogProps) {
+  const { t } = useTranslation("common")
+
   if (!open) return null
 
   return (
@@ -32,7 +36,7 @@ export function ConfirmDialog({
     >
       <div className="w-full max-w-[420px] rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <h2 id="confirm-dialog-title" className="mb-2 text-lg font-bold">
-          {title}
+          {title ?? t("confirmDialog.title")}
         </h2>
 
         {description && (
@@ -50,7 +54,7 @@ export function ConfirmDialog({
             onClick={onClose}
             disabled={isLoading}
           >
-            {cancelLabel}
+            {cancelLabel ?? t("cancel")}
           </Button>
 
           <Button
@@ -59,7 +63,9 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={isLoading}
           >
-            {isLoading ? "جار التنفيذ..." : confirmLabel}
+            {isLoading
+              ? t("confirmDialog.processing")
+              : (confirmLabel ?? t("delete"))}
           </Button>
         </div>
       </div>

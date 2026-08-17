@@ -1,29 +1,34 @@
+import { useTranslation } from "react-i18next"
+
 type Product = {
-  name: string
-  category: string
+  nameKey: "milk" | "bread" | "rice"
   sold: number
 }
 
 const products: Product[] = [
-  { name: "حليب نيو بارك", category: "ألبان وأجبان", sold: 140 },
-  { name: "خبز عربي", category: "مخبوزات", sold: 118 },
-  { name: "أرز بسمتي", category: "مواد غذائية", sold: 96 },
+  { nameKey: "milk", sold: 140 },
+  { nameKey: "bread", sold: 118 },
+  { nameKey: "rice", sold: 96 },
 ]
 
 export function TopProductsCard() {
+  const { t } = useTranslation(["common", "pages"])
+
   return (
     <section className="rounded-[20px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <div className="mb-4 flex items-center justify-between gap-3">
-        <h3 className="text-xl font-bold">المنتجات الأكثر مبيعًا</h3>
+        <h3 className="text-xl font-bold">
+          {t("overview.topProducts", { ns: "pages" })}
+        </h3>
         <span className="rounded-full bg-[var(--erp-bg)] px-3 py-1 text-xs font-medium text-[var(--erp-muted)]">
-          هذا الأسبوع
+          {t("overview.thisWeek", { ns: "pages" })}
         </span>
       </div>
 
       <div className="space-y-3">
         {products.map((product, index) => (
           <div
-            key={`${product.name}-${index}`}
+            key={product.nameKey}
             className="flex items-center justify-between gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-3 transition-colors dark:bg-white/[0.04]"
           >
             <div className="flex min-w-0 items-center gap-3">
@@ -31,12 +36,16 @@ export function TopProductsCard() {
                 {index + 1}
               </div>
 
-              <div className="min-w-0 text-right">
+              <div className="min-w-0 text-start">
                 <p className="truncate font-semibold text-[var(--erp-text)]">
-                  {product.name}
+                  {t(`overview.demoProducts.${product.nameKey}.name`, {
+                    ns: "pages",
+                  })}
                 </p>
                 <p className="truncate text-sm text-[var(--erp-muted)]">
-                  {product.category}
+                  {t(`overview.demoProducts.${product.nameKey}.category`, {
+                    ns: "pages",
+                  })}
                 </p>
               </div>
             </div>
@@ -46,7 +55,7 @@ export function TopProductsCard() {
                 {product.sold}
               </p>
               <p className="mt-1 text-xs font-medium text-[var(--erp-muted)]">
-                مبيع
+                {t("overview.sold", { ns: "pages" })}
               </p>
             </div>
           </div>

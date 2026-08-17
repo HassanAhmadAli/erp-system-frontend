@@ -2,6 +2,7 @@ import { type FormEvent, useState } from "react"
 import { ArrowRight, FolderOpen, UploadCloud } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 
 import {
   createCategory,
@@ -19,7 +20,7 @@ import {
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
-  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
@@ -35,7 +36,9 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
 const EMPTY_FORM: CategoryFormValues = {
   name: "",
+  nameAr: "",
   description: "",
+  descriptionAr: "",
 }
 
 type CreateCategoryFormProps = {
@@ -51,6 +54,7 @@ function ErrorText({ message }: { message?: string }) {
 }
 
 export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const queryClient = useQueryClient()
 
@@ -77,7 +81,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
     if (!isAllowedFileType(file, ALLOWED_IMAGE_TYPES)) {
       setMessage({
         type: "error",
-        text: "يرجى اختيار ملف صورة صالح (JPG, PNG, WEBP, GIF)",
+        text: t("common:invalidImageFile"),
       })
       return
     }
@@ -85,7 +89,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
     if (!isWithinMaxFileSize(file, MAX_IMAGE_BYTES)) {
       setMessage({
         type: "error",
-        text: "حجم الصورة يجب ألا يتجاوز 5 ميجابايت",
+        text: t("common:imageTooLarge"),
       })
       return
     }
@@ -121,8 +125,10 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
             type: "error",
             text:
               error instanceof Error
-                ? `تم إنشاء التصنيف لكن فشل رفع الصورة: ${error.message}`
-                : "تم إنشاء التصنيف لكن فشل رفع الصورة",
+                ? t("pages:categories.createdImageUploadFailedWithError", {
+                    error: error.message,
+                  })
+                : t("pages:categories.createdImageUploadFailed"),
           })
 
           queryClient.invalidateQueries({
@@ -144,7 +150,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
 
       setMessage({
         type: "success",
-        text: "تم إضافة التصنيف بنجاح",
+        text: t("pages:categories.createSuccess"),
       })
 
       onSuccess?.()
@@ -153,7 +159,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
     } catch {
       setMessage({
         type: "error",
-        text: "فشل إضافة التصنيف، حاول مرة أخرى",
+        text: t("pages:categories.createFailed"),
       })
     } finally {
       setLoading(false)
@@ -161,22 +167,19 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
   }
 
   return (
-    <div
-      className="mx-auto max-w-3xl space-y-6 text-right text-[var(--erp-text)]"
-      dir="rtl"
-    >
+    <div className="mx-auto max-w-3xl space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-              إضافة تصنيف
+              {t("pages:categories.create")}
             </h1>
 
             <FolderOpen className="size-7 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            أضف تصنيفًا جديدًا لتنظيم المنتجات داخل المخزون.
+            {t("pages:categories.createSubtitle")}
           </p>
         </div>
 
@@ -185,13 +188,13 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
           className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
         >
           <ArrowRight className="size-4" />
-          العودة إلى التصنيفات
+          {t("pages:categories.backToCategories")}
         </Link>
       </header>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
+        className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
       >
         {message.text && (
           <div
@@ -207,13 +210,13 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
 
         <div>
           <label htmlFor="category-name" className={labelClass}>
-            اسم التصنيف
+            {t("pages:categories.categoryName")}
           </label>
 
           <input
             id="category-name"
             className={inputClass}
-            placeholder="أدخل اسم التصنيف"
+            placeholder={t("pages:categories.namePlaceholder")}
             value={form.name}
             onChange={(event) => setField("name", event.target.value)}
           />
@@ -221,14 +224,28 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
         </div>
 
         <div>
+          <label htmlFor="category-name-ar" className={labelClass}>
+            {t("nameAr")}
+          </label>
+
+          <input
+            id="category-name-ar"
+            className={inputClass}
+            value={form.nameAr ?? ""}
+            onChange={(event) => setField("nameAr", event.target.value)}
+          />
+          <ErrorText message={errors.nameAr} />
+        </div>
+
+        <div>
           <label htmlFor="category-description" className={labelClass}>
-            الوصف
+            {t("common:description")}
           </label>
 
           <textarea
             id="category-description"
             className={`${inputClass} min-h-28 resize-none`}
-            placeholder="أدخل وصف التصنيف (اختياري)"
+            placeholder={t("pages:categories.descriptionPlaceholder")}
             value={form.description}
             onChange={(event) => setField("description", event.target.value)}
           />
@@ -236,8 +253,22 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
         </div>
 
         <div>
+          <label htmlFor="category-description-ar" className={labelClass}>
+            {t("descriptionAr")}
+          </label>
+
+          <textarea
+            id="category-description-ar"
+            className={`${inputClass} min-h-28 resize-none`}
+            value={form.descriptionAr ?? ""}
+            onChange={(event) => setField("descriptionAr", event.target.value)}
+          />
+          <ErrorText message={errors.descriptionAr} />
+        </div>
+
+        <div>
           <label htmlFor="category-image" className={labelClass}>
-            صورة التصنيف (اختياري)
+            {t("pages:categories.categoryImageOptional")}
           </label>
 
           <label
@@ -246,10 +277,10 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
           >
             <UploadCloud className="mb-2 size-7 text-[var(--erp-brand-solid)]" />
             <span className="text-sm font-medium text-[var(--erp-text)]">
-              انقر لاختيار صورة
+              {t("common:clickToSelectImage")}
             </span>
             <span className="mt-1 text-xs text-[var(--erp-muted)]">
-              JPG, PNG, WEBP, GIF — حتى 5MB
+              {t("common:imageFormats")}
             </span>
             <span
               dir="ltr"
@@ -257,7 +288,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
             >
               {selectedFile?.name
                 ? toEnglishDigits(selectedFile.name)
-                : "No file selected"}
+                : t("common:noFileSelected")}
             </span>
             <input
               id="category-image"
@@ -275,7 +306,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
 
         <div className="flex flex-col gap-2 border-t border-[var(--erp-border)] pt-4 sm:flex-row sm:justify-end">
           <Button type="submit" disabled={loading}>
-            {loading ? "جاري الإضافة..." : "إضافة التصنيف"}
+            {loading ? t("common:adding") : t("pages:categories.create")}
           </Button>
 
           <Button
@@ -283,7 +314,7 @@ export function CreateCategoryForm({ onSuccess }: CreateCategoryFormProps) {
             variant="outline"
             onClick={() => navigate("/categories")}
           >
-            إلغاء
+            {t("common:cancel")}
           </Button>
         </div>
       </form>

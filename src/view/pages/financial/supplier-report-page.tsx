@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { useSupplierReport } from "@/hooks/Financial/useFinancial"
 import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
@@ -14,6 +15,7 @@ import { ReportMetrics } from "@/view/components/reports/report-metrics"
 import { ReportTable } from "@/view/components/reports/report-table"
 
 export function SupplierReportPage() {
+  const { t } = useTranslation(["common", "pages"])
   const [supplierId, setSupplierId] = useState("")
   const { data: suppliersData } = useSuppliers()
   const suppliers = suppliersData?.data ?? []
@@ -39,22 +41,26 @@ export function SupplierReportPage() {
 
   return (
     <ReportLayout
-      title="تقرير المورد"
-      description="مشتريات المورد عبر الزمن ومقارنة المبالغ"
+      title={t("financial.supplierReport", { ns: "pages" })}
+      description={t("financial.supplierReportDescLong", { ns: "pages" })}
       backTo="/financial"
-      backLabel="التحليل المالي"
+      backLabel={t("financial.title", { ns: "pages" })}
       loading={!!supplierId && isLoading}
       error={!!supplierId && isError}
     >
       <div className="rounded-2xl border bg-[var(--erp-card)] p-4">
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-[var(--erp-muted)]">اختر المورد</span>
+          <span className="text-[var(--erp-muted)]">
+            {t("financial.selectSupplier", { ns: "pages" })}
+          </span>
           <select
             className="max-w-md rounded-xl border px-3 py-2"
             value={supplierId}
             onChange={(e) => setSupplierId(e.target.value)}
           >
-            <option value="">— اختر مورداً —</option>
+            <option value="">
+              {t("financial.selectSupplierPlaceholder", { ns: "pages" })}
+            </option>
             {suppliers.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.fullName}
@@ -66,7 +72,7 @@ export function SupplierReportPage() {
 
       {!supplierId ? (
         <p className="rounded-2xl border bg-[var(--erp-card)] p-8 text-center text-[var(--erp-muted)]">
-          اختر مورداً لعرض التقرير
+          {t("financial.selectSupplierHint", { ns: "pages" })}
         </p>
       ) : (
         <>
@@ -74,15 +80,22 @@ export function SupplierReportPage() {
 
           {timeSeries.length >= 2 ? (
             <LineChart
-              title="مشتريات المورد عبر الزمن"
+              title={t("financial.supplierPurchasesTrend", { ns: "pages" })}
               data={timeSeries}
               unit="SP"
             />
           ) : (
-            <BarChart title="مبالغ المشتريات" data={amountBars} unit="SP" />
+            <BarChart
+              title={t("financial.purchaseAmounts", { ns: "pages" })}
+              data={amountBars}
+              unit="SP"
+            />
           )}
 
-          <ReportTable title="تفاصيل المعاملات" rows={rows} />
+          <ReportTable
+            title={t("financial.transactionDetails", { ns: "pages" })}
+            rows={rows}
+          />
         </>
       )}
     </ReportLayout>

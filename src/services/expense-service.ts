@@ -5,6 +5,7 @@ import {
   type PaginationParams,
 } from "@/lib/pagination"
 import { toNumber } from "@/lib/report-parsers"
+import { formatNumber } from "@/utils/number-formatters"
 import {
   expensePayloadToApiPayload,
   type ExpenseRequestPayload,
@@ -14,13 +15,16 @@ import { isValidId } from "@/validation/helpers"
 export type Expense = {
   id: number
   description: string
+  descriptionAr?: string | null
   category: string
+  categoryAr?: string | null
   amount: number | string
   expenseDate: string
   recordedById?: number
   recordedBy?: {
     id: number
     fullName?: string
+    fullNameAr?: string | null
     email?: string
   }
   createdAt?: string
@@ -50,10 +54,7 @@ export function sumExpenseAmounts(expenses: Expense[]): number {
 }
 
 export function formatExpenseAmount(amount: unknown): string {
-  return parseExpenseAmount(amount).toLocaleString("ar-SY", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })
+  return formatNumber(parseExpenseAmount(amount))
 }
 
 export function normalizeExpensesList(

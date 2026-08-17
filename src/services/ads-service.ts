@@ -12,7 +12,9 @@ export type { AdPlacement }
 export type Ad = {
   id: number
   title: string
+  titleAr?: string | null
   description?: string | null
+  descriptionAr?: string | null
   imageUrl?: string | null
   linkUrl?: string | null
   placement: AdPlacement

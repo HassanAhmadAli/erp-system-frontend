@@ -21,6 +21,7 @@ export type { DiscountScope, DiscountType }
 export type Discount = {
   id: number
   name: string
+  nameAr?: string | null
   type: DiscountType
   value: string
   scope: DiscountScope
@@ -43,6 +44,7 @@ export type Discount = {
   createdBy?: {
     id: number
     fullName: string
+    fullNameAr?: string | null
   }
 }
 

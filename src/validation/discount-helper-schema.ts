@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import {
   optionalPositiveIntegerOrNull,
   requirePositiveInteger,
@@ -18,8 +19,8 @@ function buildDiscountLookupSchema() {
   return z
     .object({
       subtotal: positiveNumberText({
-        requiredMessage: "إجمالي الفاتورة مطلوب",
-        invalidMessage: "يرجى إدخال إجمالي فاتورة صحيح",
+        requiredMessage: () => i18n.t("validation:discount.subtotalRequired"),
+        invalidMessage: () => i18n.t("validation:discount.subtotalInvalid"),
       }),
       categoryId: z.string().optional(),
       productId: z.string().optional(),
@@ -32,7 +33,7 @@ function buildDiscountLookupSchema() {
       ) {
         ctx.addIssue({
           code: "custom",
-          message: "يرجى اختيار التصنيف",
+          message: i18n.t("validation:shared.selectCategory"),
           path: ["categoryId"],
         })
       }
@@ -43,7 +44,7 @@ function buildDiscountLookupSchema() {
       ) {
         ctx.addIssue({
           code: "custom",
-          message: "يرجى اختيار المنتج",
+          message: i18n.t("validation:shared.selectProduct"),
           path: ["productId"],
         })
       }
@@ -52,8 +53,8 @@ function buildDiscountLookupSchema() {
 
 export const calculateDiscountSchema = buildDiscountLookupSchema().extend({
   discountId: positiveIntegerText({
-    requiredMessage: "رقم الخصم مطلوب",
-    invalidMessage: "يرجى إدخال رقم خصم صحيح",
+    requiredMessage: () => i18n.t("validation:discount.discountIdRequired"),
+    invalidMessage: () => i18n.t("validation:discount.discountIdInvalid"),
   }),
 })
 

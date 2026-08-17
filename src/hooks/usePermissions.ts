@@ -1,10 +1,11 @@
+import { useTranslation } from "react-i18next"
+
 import {
   canManageSalesInvoiceStatus,
   getDefaultRouteForRole,
   getPermissionsForRole,
   hasAllPermissions,
   hasPermission,
-  ROLE_HEADER_TITLES,
   type Permission,
 } from "@/auth/permissions"
 import {
@@ -16,6 +17,7 @@ import { useCurrentUser } from "@/hooks/useCurrentUser"
 import type { UserRole } from "@/services/user-service"
 
 export function usePermissions() {
+  const { t } = useTranslation("nav")
   const { data: user, isLoading, isError } = useCurrentUser()
   const role = user?.role
 
@@ -43,6 +45,9 @@ export function usePermissions() {
     return canManageSalesInvoiceStatus(role, user?.id, cashierUserId)
   }
 
+  const headerTitle =
+    role && role !== "CUSTOMER" ? t(`roles.${role}`) : t("roles.STORE_MANAGER")
+
   return {
     user,
     role,
@@ -55,8 +60,7 @@ export function usePermissions() {
     canSeeSidebarItem,
     canManageSalesInvoice,
     defaultRoute: getDefaultRouteForRole(role),
-    headerTitle:
-      role && role !== "CUSTOMER" ? ROLE_HEADER_TITLES[role] : "مدير المتجر",
+    headerTitle,
   }
 }
 

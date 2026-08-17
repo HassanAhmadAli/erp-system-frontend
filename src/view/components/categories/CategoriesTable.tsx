@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Eye, ImageOff, Pencil, Trash2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import {
@@ -7,6 +8,8 @@ import {
   useDeleteCategory,
 } from "@/hooks/Categories/useCategories"
 import { PERMISSIONS } from "@/auth/permissions"
+import { useLocale } from "@/i18n/locale-provider"
+import { localizedDescription, localizedName } from "@/lib/localized"
 import { getCategoryImageSrc } from "@/services/category-service"
 import { Can } from "@/view/components/auth/can"
 import { formatNumber } from "@/utils/number-formatters"
@@ -18,9 +21,11 @@ import { PaginationControls } from "@/view/components/ui/pagination-controls"
 const PAGE_SIZE = 15
 
 export function CategoriesTable() {
+  const { t } = useTranslation(["common", "pages"])
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const { language } = useLocale()
 
   const navigate = useNavigate()
 
@@ -55,7 +60,7 @@ export function CategoriesTable() {
   if (isError) {
     return (
       <section className="rounded-3xl border border-red-500/20 bg-red-500/10 p-6 text-red-700 shadow-[var(--erp-shadow)] dark:bg-red-500/15 dark:text-red-300">
-        حدث خطأ أثناء تحميل التصنيفات.
+        {t("pages:categories.loadListFailed")}
       </section>
     )
   }
@@ -65,24 +70,26 @@ export function CategoriesTable() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-            قائمة التصنيفات
+            {t("pages:categories.categoryList")}
           </h2>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            عدد النتائج: {formatNumber(categories.length)}
+            {t("common:resultCount", {
+              count: formatNumber(categories.length),
+            })}
           </p>
         </div>
 
         <input
-          placeholder="بحث باسم التصنيف أو الوصف..."
+          placeholder={t("pages:categories.searchPlaceholder")}
           value={search}
           onChange={(event) => handleSearch(event.target.value)}
-          className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 md:max-w-sm"
+          className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 md:max-w-sm"
         />
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-        <table className="w-full min-w-[720px] table-fixed text-right text-sm">
+        <table className="w-full min-w-[720px] table-fixed text-start text-sm">
           <colgroup>
             <col className="w-[12%]" />
             <col className="w-[22%]" />
@@ -93,11 +100,15 @@ export function CategoriesTable() {
 
           <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
             <tr>
-              <th className="px-3 py-3 font-medium">الصورة</th>
-              <th className="px-3 py-3 font-medium">الاسم</th>
-              <th className="px-3 py-3 font-medium">الوصف</th>
-              <th className="px-3 py-3 font-medium">المنتجات</th>
-              <th className="px-3 py-3 text-center font-medium">الإجراءات</th>
+              <th className="px-3 py-3 font-medium">{t("common:image")}</th>
+              <th className="px-3 py-3 font-medium">{t("common:name")}</th>
+              <th className="px-3 py-3 font-medium">
+                {t("common:description")}
+              </th>
+              <th className="px-3 py-3 font-medium">{t("common:product")}</th>
+              <th className="px-3 py-3 text-center font-medium">
+                {t("common:actions")}
+              </th>
             </tr>
           </thead>
 
@@ -107,6 +118,9 @@ export function CategoriesTable() {
                 category.imageUrl,
                 category.storedFileId
               )
+              const displayName = localizedName(category, language)
+              const displayDescription =
+                localizedDescription(category, language) || "—"
 
               return (
                 <tr
@@ -118,7 +132,7 @@ export function CategoriesTable() {
                       {imageSrc ? (
                         <img
                           src={imageSrc}
-                          alt={category.name}
+                          alt={displayName}
                           className="size-full object-cover"
                         />
                       ) : (
@@ -128,13 +142,11 @@ export function CategoriesTable() {
                   </td>
 
                   <td className="px-3 py-4 font-medium text-[var(--erp-text)]">
-                    <span className="block truncate">{category.name}</span>
+                    <span className="block truncate">{displayName}</span>
                   </td>
 
                   <td className="px-3 py-4 text-[var(--erp-muted)]">
-                    <span className="block truncate">
-                      {category.description || "—"}
-                    </span>
+                    <span className="block truncate">{displayDescription}</span>
                   </td>
 
                   <td className="px-3 py-4 text-[var(--erp-text)]">
@@ -150,7 +162,7 @@ export function CategoriesTable() {
                         onClick={() => navigate(`/categories/${category.id}`)}
                       >
                         <Eye className="size-3.5" />
-                        عرض
+                        {t("common:view")}
                       </Button>
 
                       <Can permission={PERMISSIONS.CATEGORY_MANAGE}>
@@ -163,7 +175,7 @@ export function CategoriesTable() {
                           }
                         >
                           <Pencil className="size-3.5" />
-                          تعديل
+                          {t("common:edit")}
                         </Button>
 
                         <Button
@@ -173,7 +185,7 @@ export function CategoriesTable() {
                           onClick={() => setDeleteId(category.id)}
                         >
                           <Trash2 className="size-3.5" />
-                          حذف
+                          {t("common:delete")}
                         </Button>
                       </Can>
                     </div>
@@ -188,7 +200,7 @@ export function CategoriesTable() {
                   colSpan={5}
                   className="px-4 py-8 text-center text-sm text-[var(--erp-muted)]"
                 >
-                  لا توجد تصنيفات
+                  {t("pages:categories.noCategories")}
                 </td>
               </tr>
             )}
@@ -209,10 +221,10 @@ export function CategoriesTable() {
 
       <ConfirmDialog
         open={deleteId !== null}
-        title="حذف التصنيف"
-        description="هل أنت متأكد من حذف هذا التصنيف؟ لا يمكن التراجع عن هذه العملية."
-        confirmLabel="حذف"
-        cancelLabel="إلغاء"
+        title={t("pages:categories.deleteCategory")}
+        description={t("common:confirmDeleteIrreversible")}
+        confirmLabel={t("common:delete")}
+        cancelLabel={t("common:cancel")}
         isLoading={deleteMutation.isPending}
         onClose={() => setDeleteId(null)}
         onConfirm={handleConfirmDelete}

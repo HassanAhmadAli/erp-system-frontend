@@ -1,5 +1,6 @@
-import { useProfitMargins } from "@/hooks/Financial/useFinancial"
+import { useTranslation } from "react-i18next"
 
+import { useProfitMargins } from "@/hooks/Financial/useFinancial"
 import {
   extractLowProfitMargins,
   extractProfitMarginHistogram,
@@ -9,49 +10,38 @@ import {
   extractTopProfitMargins,
   profitMarginBarColor,
 } from "@/lib/report-chart-data"
-
 import { extractTableRows } from "@/lib/report-parsers"
-
 import { BarChart } from "@/view/components/charts/bar-chart"
-
 import { DonutChart } from "@/view/components/charts/donut-chart"
-
 import { HorizontalBarChart } from "@/view/components/charts/horizontal-bar-chart"
-
 import { ExportReportButton } from "@/view/components/reports/export-report-button"
-
 import { ReportLayout } from "@/view/components/reports/report-layout"
-
 import { ReportMetrics } from "@/view/components/reports/report-metrics"
-
 import { ReportTable } from "@/view/components/reports/report-table"
 
 export function ReportProfitMarginsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { data, isLoading, isError } = useProfitMargins()
 
   const margins = extractProfitMarginSeries(data)
-
   const metrics = extractProfitMarginMetrics(margins)
-
   const topMargins = extractTopProfitMargins(margins, 10)
-
   const lowMargins = extractLowProfitMargins(margins, 10)
-
   const tierComposition = extractProfitMarginTierComposition(margins)
-
   const histogram = extractProfitMarginHistogram(margins)
-
   const rows = extractTableRows(data)
 
   return (
     <ReportLayout
-      title="هوامش الربح"
-      description="تحليل هامش الربح لكل منتج — أعلى وأدنى المنتجات وتوزيع مستويات الهامش"
+      title={t("reports.profitMargins", { ns: "pages" })}
+      description={t("reports.profitMarginsReportDesc", { ns: "pages" })}
       backTo="/reports"
-      backLabel="كل التقارير"
+      backLabel={t("reports.allReports", { ns: "pages" })}
       loading={isLoading}
       error={isError}
-      actions={<ExportReportButton type="profit-margins" label="تصدير CSV" />}
+      actions={
+        <ExportReportButton type="profit-margins" label={t("exportCsv")} />
+      }
     >
       <ReportMetrics metrics={metrics} />
 
@@ -59,72 +49,76 @@ export function ReportProfitMarginsPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <HorizontalBarChart
-          title="أعلى ١٠ منتجات بالهامش"
+          title={t("reports.top10Margin", { ns: "pages" })}
           data={topMargins}
           unit="%"
           maxScale={100}
           maxItems={10}
           getBarColor={profitMarginBarColor}
-          emptyMessage="لا توجد بيانات هوامش للمنتجات"
+          emptyMessage={t("reports.noMarginData", { ns: "pages" })}
         />
 
         <HorizontalBarChart
-          title="أدنى ١٠ منتجات بالهامش"
+          title={t("reports.bottom10Margin", { ns: "pages" })}
           data={lowMargins}
           unit="%"
           maxScale={100}
           maxItems={10}
           getBarColor={profitMarginBarColor}
-          emptyMessage="لا توجد بيانات هوامش للمنتجات"
+          emptyMessage={t("reports.noMarginData", { ns: "pages" })}
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {tierComposition.length > 0 && (
           <DonutChart
-            title="توزيع المنتجات حسب مستوى الهامش"
+            title={t("reports.marginDistribution", { ns: "pages" })}
             data={tierComposition}
-            unit="منتج"
+            unit={t("reports.productUnit", { ns: "pages" })}
           />
         )}
 
         <BarChart
-          title="عدد المنتجات في كل نطاق هامش"
+          title={t("reports.productsPerMarginRange", { ns: "pages" })}
           data={histogram}
           unit=""
-          emptyMessage="لا توجد بيانات لتوزيع الهوامش"
+          emptyMessage={t("reports.noMarginDistribution", { ns: "pages" })}
         />
       </div>
 
       <HorizontalBarChart
-        title="جميع المنتجات مرتبة حسب الهامش"
+        title={t("reports.allProductsByMargin", { ns: "pages" })}
         data={margins}
         unit="%"
         maxScale={100}
         maxItems={20}
         getBarColor={profitMarginBarColor}
-        emptyMessage="لا توجد بيانات هوامش للمنتجات"
+        emptyMessage={t("reports.noMarginData", { ns: "pages" })}
       />
 
-      <ReportTable title="تفاصيل المنتجات" rows={rows} />
+      <ReportTable
+        title={t("reports.productDetails", { ns: "pages" })}
+        rows={rows}
+      />
     </ReportLayout>
   )
 }
 
 function MarginLegend() {
+  const { t } = useTranslation(["common", "pages"])
+
   const items = [
-    { color: "#22a06b", label: "مرتفع (٣٠٪+)" },
-
-    { color: "#4b22b5", label: "متوسط (١٠–٣٠٪)" },
-
-    { color: "#f0ad34", label: "منخفض (٠–١٠٪)" },
-
-    { color: "#d52b45", label: "سالب" },
+    { color: "#22a06b", label: t("reports.marginHigh", { ns: "pages" }) },
+    { color: "#4b22b5", label: t("reports.marginMedium", { ns: "pages" }) },
+    { color: "#f0ad34", label: t("reports.marginLow", { ns: "pages" }) },
+    { color: "#d52b45", label: t("reports.marginNegative", { ns: "pages" }) },
   ]
 
   return (
     <section className="flex flex-wrap justify-end gap-4 rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-4 py-3 text-sm">
-      <span className="text-[var(--erp-muted)]">دليل الألوان:</span>
+      <span className="text-[var(--erp-muted)]">
+        {t("reports.colorLegend", { ns: "pages" })}
+      </span>
 
       {items.map((item) => (
         <span key={item.label} className="inline-flex items-center gap-2">

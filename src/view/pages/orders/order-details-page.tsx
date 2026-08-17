@@ -1,11 +1,13 @@
 import { useNavigate, useParams } from "react-router-dom"
 import { ArrowRight, Loader2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { useOrder } from "@/hooks/useOrders"
 import { OrderDetailsCard } from "@/view/components/orders/order-details-card"
 import { Button } from "@/view/components/ui/button"
 
 export function OrderDetailsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const { id } = useParams()
 
@@ -14,7 +16,7 @@ export function OrderDetailsPage() {
 
   if (!Number.isFinite(orderId) || orderId <= 0) {
     return (
-      <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+      <main className="space-y-6 text-start text-[var(--erp-text)]">
         <Button
           type="button"
           variant="outline"
@@ -22,12 +24,12 @@ export function OrderDetailsPage() {
           onClick={() => navigate("/orders")}
         >
           <ArrowRight className="size-4" />
-          العودة للطلبات
+          {t("pages:orders.backToOrders")}
         </Button>
 
         <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
           <p className="text-sm text-red-500 dark:text-red-300">
-            رقم الطلب غير صالح.
+            {t("pages:orders.invalidOrderId")}
           </p>
         </section>
       </main>
@@ -44,7 +46,7 @@ export function OrderDetailsPage() {
 
   if (isError || !order) {
     return (
-      <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+      <main className="space-y-6 text-start text-[var(--erp-text)]">
         <Button
           type="button"
           variant="outline"
@@ -52,12 +54,12 @@ export function OrderDetailsPage() {
           onClick={() => navigate("/orders")}
         >
           <ArrowRight className="size-4" />
-          العودة للطلبات
+          {t("pages:orders.backToOrders")}
         </Button>
 
         <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
           <p className="text-sm text-red-500 dark:text-red-300">
-            لم يتم العثور على الطلب.
+            {t("pages:orders.notFound")}
           </p>
         </section>
       </main>
@@ -65,7 +67,7 @@ export function OrderDetailsPage() {
   }
 
   return (
-    <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <main className="space-y-6 text-start text-[var(--erp-text)]">
       <Button
         type="button"
         variant="outline"
@@ -73,7 +75,7 @@ export function OrderDetailsPage() {
         onClick={() => navigate("/orders")}
       >
         <ArrowRight className="size-4" />
-        العودة للطلبات
+        {t("pages:orders.backToOrders")}
       </Button>
 
       <OrderDetailsCard

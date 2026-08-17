@@ -6,7 +6,9 @@ import { isValidId, normalizeText, optionalText } from "@/validation/helpers"
 export type Category = {
   id: number
   name: string
+  nameAr?: string | null
   description?: string | null
+  descriptionAr?: string | null
   imageUrl?: string | null
   storedFileId?: string | null
   _count?: { products: number }
@@ -34,7 +36,9 @@ export type CategoriesQuery = {
 export type CategoryDetails = {
   id: number
   name: string
+  nameAr?: string | null
   description?: string | null
+  descriptionAr?: string | null
   imageUrl?: string | null
   storedFileId?: string | null
   products: {

@@ -1,12 +1,19 @@
 ﻿import { useEffect, useState } from "react"
 import { Bell, Loader2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import {
   useMarkNotificationRead,
   useMarkNotificationUnread,
   useMyNotifications,
 } from "@/hooks/Notifications/useNotifications"
+import { useLocale } from "@/i18n/locale-provider"
 import { toPaginationQuery } from "@/lib/pagination"
+import {
+  localizedFullName,
+  localizedTitle,
+  localized as localizedText,
+} from "@/lib/localized"
 import { formatShortDateTime } from "@/utils/date-formatters"
 import { formatInboxTargetLabel } from "@/view/components/notifications/notification-target-labels"
 import { Button } from "@/view/components/ui/button"
@@ -21,7 +28,9 @@ const PAGE_SIZE = 10
 export function NotificationsInbox({
   unreadOnly = false,
 }: NotificationsInboxProps) {
+  const { t } = useTranslation(["common", "pages"])
   const [page, setPage] = useState(1)
+  const { language } = useLocale()
   const query = toPaginationQuery({ page, limit: PAGE_SIZE })
   const { data, isLoading, isError, isFetching } = useMyNotifications({
     unreadOnly,
@@ -46,7 +55,9 @@ export function NotificationsInbox({
 
   if (isError) {
     return (
-      <p className="text-sm text-red-500">حدث خطأ أثناء تحميل الإشعارات.</p>
+      <p className="text-sm text-red-500">
+        {t("notifications.loadInboxFailed", { ns: "pages" })}
+      </p>
     )
   }
 
@@ -57,11 +68,13 @@ export function NotificationsInbox({
 
         <div>
           <h3 className="text-lg font-semibold text-[var(--erp-text)]">
-            {unreadOnly ? "لا توجد إشعارات غير مقروءة" : "لا توجد إشعارات"}
+            {unreadOnly
+              ? t("notifications.noUnread", { ns: "pages" })
+              : t("notifications.noNotifications", { ns: "pages" })}
           </h3>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            ستظهر الإشعارات المرسلة إليك هنا.
+            {t("notifications.inboxEmptyHint", { ns: "pages" })}
           </p>
         </div>
       </div>
@@ -80,10 +93,10 @@ export function NotificationsInbox({
           }`}
         >
           <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0 flex-1 text-right">
+            <div className="min-w-0 flex-1 text-start">
               <div className="flex flex-wrap items-center justify-end gap-2">
                 <h3 className="font-semibold text-[var(--erp-text)]">
-                  {notification.title}
+                  {localizedTitle(notification, language)}
                 </h3>
 
                 <span className="rounded-full bg-[var(--erp-accent)]/10 px-2.5 py-0.5 text-xs font-medium text-[var(--erp-accent)]">
@@ -95,7 +108,11 @@ export function NotificationsInbox({
               </div>
 
               <p className="mt-2 text-sm leading-relaxed whitespace-pre-wrap text-[var(--erp-text)]/85">
-                {notification.body}
+                {localizedText(
+                  notification.body,
+                  notification.bodyAr,
+                  language
+                )}
               </p>
 
               <div className="mt-3 flex flex-wrap items-center justify-end gap-3 text-xs text-[var(--erp-text)]/65">
@@ -104,7 +121,11 @@ export function NotificationsInbox({
                 </span>
 
                 {notification.sender && (
-                  <span>من: {notification.sender.fullName}</span>
+                  <span>
+                    {t("fromSender", {
+                      name: localizedFullName(notification.sender, language),
+                    })}
+                  </span>
                 )}
               </div>
             </div>
@@ -117,7 +138,7 @@ export function NotificationsInbox({
                   disabled={markUnread.isPending}
                   onClick={() => markUnread.mutate(notification.recipientId)}
                 >
-                  غير مقروء
+                  {t("statuses.unread")}
                 </Button>
               ) : (
                 <Button
@@ -126,7 +147,7 @@ export function NotificationsInbox({
                   disabled={markRead.isPending}
                   onClick={() => markRead.mutate(notification.recipientId)}
                 >
-                  مقروء
+                  {t("statuses.read")}
                 </Button>
               )}
             </div>

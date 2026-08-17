@@ -11,12 +11,14 @@ import {
   formatNumber as formatGlobalNumber,
   toEnglishDigits,
 } from "@/utils/number-formatters"
+import { useTranslation } from "react-i18next"
+import type { TFunction } from "i18next"
 
-export const salesInvoiceStatusLabels: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  COMPLETED: "مكتملة",
-  REFUNDED: "مستردة",
-  CANCELLED: "ملغاة",
+export const SALES_INVOICE_STATUS_KEYS: Record<string, string> = {
+  PENDING: "statuses.pending",
+  COMPLETED: "statuses.completed",
+  REFUNDED: "statuses.refunded",
+  CANCELLED: "statuses.cancelled",
 }
 
 const salesInvoiceStatusStyles: Record<string, string> = {
@@ -28,6 +30,12 @@ const salesInvoiceStatusStyles: Record<string, string> = {
     "bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:bg-rose-500/15 dark:text-rose-300",
   CANCELLED:
     "bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:bg-rose-500/15 dark:text-rose-300",
+}
+
+export function getSalesInvoiceStatusLabel(status: string, t: TFunction) {
+  const safeStatus = normalizeSalesInvoiceStatus(status)
+  const key = SALES_INVOICE_STATUS_KEYS[safeStatus]
+  return key ? t(`common:${key}`) : safeStatus
 }
 
 export function formatNumber(value?: string | number | null) {
@@ -42,20 +50,17 @@ export function formatMoney(value?: string | number | null) {
   return formatCurrency(value)
 }
 
-/**
- * Used by the sales invoice table/details.
- * It uses the global date-time formatter, which displays dates in English
- * and automatically converts to the user's local browser/PC timezone.
- */
 export function formatDate(value?: string | Date | null) {
   return formatDateTime(value)
 }
 
-export function getCustomerName(invoice: SalesInvoice) {
+export function getCustomerName(invoice: SalesInvoice, t: TFunction) {
   return (
     invoice.customer?.user?.fullName ||
     invoice.customer?.user?.email ||
-    `عميل #${formatId(invoice.customerId ?? "—")}`
+    t("common:customerFallback", {
+      id: formatId(invoice.customerId ?? "—"),
+    })
   )
 }
 
@@ -113,6 +118,7 @@ export function NumberText({ value }: { value: string | number }) {
 }
 
 export function SalesInvoiceStatusBadge({ status }: { status?: string }) {
+  const { t } = useTranslation("common")
   const safeStatus = normalizeSalesInvoiceStatus(status)
 
   return (
@@ -123,7 +129,7 @@ export function SalesInvoiceStatusBadge({ status }: { status?: string }) {
           "bg-slate-500/10 text-slate-700 ring-slate-500/20 dark:text-slate-300"
       )}
     >
-      {salesInvoiceStatusLabels[safeStatus] ?? safeStatus}
+      {getSalesInvoiceStatusLabel(safeStatus, t)}
     </span>
   )
 }

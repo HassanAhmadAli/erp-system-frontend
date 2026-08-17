@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { ArrowRight, Clock, FileText, Monitor, User } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useAuditLogById } from "@/hooks/AuditLogs/useAuditLogById"
 import {
@@ -27,6 +28,7 @@ function formatAuditDate(value: string) {
 }
 
 export function AuditLogDetailsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { id } = useParams()
   const logId = Number(id)
 
@@ -37,27 +39,39 @@ export function AuditLogDetailsPage() {
   } = useAuditLogById(Number.isFinite(logId) ? logId : null)
 
   if (!Number.isFinite(logId)) {
-    return <ErrorMessage message="رقم السجل غير صالح." />
+    return (
+      <ErrorMessage
+        message={t("auditLogs.invalidLogId", { ns: "pages" })}
+        backLabel={t("auditLogs.backToLogs", { ns: "pages" })}
+      />
+    )
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
-        <p className="text-[var(--erp-muted)]">جاري تحميل تفاصيل السجل...</p>
+      <div className="space-y-6 text-start text-[var(--erp-text)]">
+        <p className="text-[var(--erp-muted)]">
+          {t("auditLogs.loadingDetails", { ns: "pages" })}
+        </p>
       </div>
     )
   }
 
   if (isError || !log) {
-    return <ErrorMessage message="تعذر تحميل تفاصيل السجل." />
+    return (
+      <ErrorMessage
+        message={t("auditLogs.loadDetailsFailed", { ns: "pages" })}
+        backLabel={t("auditLogs.backToLogs", { ns: "pages" })}
+      />
+    )
   }
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 sm:flex-row-reverse sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-            سجل النشاط #{formatId(log.id)}
+            {t("auditLogs.logTitle", { ns: "pages", id: formatId(log.id) })}
           </h1>
 
           <p className="mt-2 text-[var(--erp-muted)]">
@@ -70,70 +84,70 @@ export function AuditLogDetailsPage() {
           className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
         >
           <ArrowRight className="size-4" />
-          العودة إلى السجل
+          {t("auditLogs.backToLogs", { ns: "pages" })}
         </Link>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          label="الإجراء"
+          label={t("auditLogs.action", { ns: "pages" })}
           value={formatAuditAction(log.action)}
           icon={<FileText className="size-5" />}
         />
 
         <SummaryCard
-          label="المستخدم"
+          label={t("username")}
           value={log.user.fullName}
           icon={<User className="size-5" />}
         />
 
         <SummaryCard
-          label="الكيان"
+          label={t("auditLogs.entity", { ns: "pages" })}
           value={formatEntity(log)}
           icon={<Monitor className="size-5" />}
         />
 
         <SummaryCard
-          label="تاريخ التنفيذ"
+          label={t("auditLogs.executedAt", { ns: "pages" })}
           value={formatAuditDate(log.performedAt)}
           icon={<Clock className="size-5" />}
         />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <CustomerInfoCard title="معلومات العملية">
-          <CustomerInfoRow label="رقم السجل" value={formatId(log.id)} />
+        <CustomerInfoCard title={t("auditLogs.operationInfo", { ns: "pages" })}>
+          <CustomerInfoRow label={t("logId")} value={formatId(log.id)} />
 
           <CustomerInfoRow
-            label="الإجراء"
+            label={t("auditLogs.action", { ns: "pages" })}
             value={formatAuditAction(log.action)}
           />
 
           <CustomerInfoRow
-            label="الكيان"
+            label={t("auditLogs.entity", { ns: "pages" })}
             value={formatAuditEntity(log.entity)}
           />
 
           <CustomerInfoRow
-            label="معرّف الكيان"
+            label={t("entityId")}
             value={formatId(log.entityId)}
           />
 
           <CustomerInfoRow
-            label="تاريخ التنفيذ"
+            label={t("auditLogs.executedAt", { ns: "pages" })}
             value={formatAuditDate(log.performedAt)}
           />
         </CustomerInfoCard>
 
-        <CustomerInfoCard title="معلومات المستخدم">
-          <CustomerInfoRow label="اسم المستخدم" value={log.user.fullName} />
+        <CustomerInfoCard title={t("auditLogs.userInfo", { ns: "pages" })}>
+          <CustomerInfoRow label={t("username")} value={log.user.fullName} />
 
-          <CustomerInfoRow label="رقم المستخدم" value={formatId(log.userId)} />
+          <CustomerInfoRow label={t("userId")} value={formatId(log.userId)} />
 
-          <CustomerInfoRow label="البريد الإلكتروني" value={log.user.email} />
+          <CustomerInfoRow label={t("email")} value={log.user.email} />
 
           <CustomerInfoRow
-            label="الدور"
+            label={t("role")}
             value={formatAuditRole(log.user.role)}
           />
         </CustomerInfoCard>
@@ -141,15 +155,17 @@ export function AuditLogDetailsPage() {
 
       <section className="grid gap-4 lg:grid-cols-2">
         <JsonCard
-          title="القيمة السابقة"
+          title={t("previousValue")}
           content={formatAuditValue(log.oldValue)}
           empty={!log.oldValue}
+          emptyLabel={t("none")}
         />
 
         <JsonCard
-          title="القيمة الجديدة"
+          title={t("newValue")}
           content={formatAuditValue(log.newValue)}
           empty={!log.newValue}
+          emptyLabel={t("none")}
         />
       </section>
     </div>
@@ -188,10 +204,12 @@ function JsonCard({
   title,
   content,
   empty,
+  emptyLabel,
 }: {
   title: string
   content: string
   empty?: boolean
+  emptyLabel: string
 }) {
   return (
     <div className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
@@ -200,7 +218,7 @@ function JsonCard({
       </h2>
 
       {empty ? (
-        <p className="text-sm text-[var(--erp-muted)]">لا يوجد</p>
+        <p className="text-sm text-[var(--erp-muted)]">{emptyLabel}</p>
       ) : (
         <pre className="erp-scrollbar max-h-80 overflow-auto rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4 text-left text-xs leading-6 whitespace-pre-wrap text-[var(--erp-text)]">
           {content}
@@ -210,16 +228,22 @@ function JsonCard({
   )
 }
 
-function ErrorMessage({ message }: { message: string }) {
+function ErrorMessage({
+  message,
+  backLabel,
+}: {
+  message: string
+  backLabel: string
+}) {
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <p className="text-red-500 dark:text-red-300">{message}</p>
 
       <Link
         to="/audit-logs"
         className="inline-flex rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
-        العودة إلى السجل
+        {backLabel}
       </Link>
     </div>
   )

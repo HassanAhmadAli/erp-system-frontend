@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { CheckCircle, Eye, Loader2, PackageCheck, XCircle } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { useUpdateOrderStatus } from "@/hooks/useOrders"
 import { PERMISSIONS } from "@/auth/permissions"
@@ -15,12 +16,12 @@ type OrdersTableProps = {
   isError: boolean
 }
 
-const statusLabels: Record<OrderStatus, string> = {
-  PENDING: "قيد الانتظار",
-  PREPARING: "قيد التحضير",
-  OUT_FOR_DELIVERY: "قيد التوصيل",
-  DELIVERED: "تم التسليم",
-  CANCELLED: "ملغي",
+const ORDER_STATUS_KEYS: Record<OrderStatus, string> = {
+  PENDING: "statuses.pending",
+  PREPARING: "statuses.preparing",
+  OUT_FOR_DELIVERY: "statuses.outForDelivery",
+  DELIVERED: "statuses.delivered",
+  CANCELLED: "statuses.cancelled",
 }
 
 const nextStatusByStatus: Record<OrderStatus, OrderStatus | null> = {
@@ -31,12 +32,12 @@ const nextStatusByStatus: Record<OrderStatus, OrderStatus | null> = {
   CANCELLED: null,
 }
 
-const proceedButtonLabels: Record<OrderStatus, string> = {
-  PENDING: "بدء التحضير",
-  PREPARING: "إرسال للتوصيل",
-  OUT_FOR_DELIVERY: "تأكيد التسليم",
-  DELIVERED: "متابعة",
-  CANCELLED: "متابعة",
+const proceedButtonKeys: Record<OrderStatus, string> = {
+  PENDING: "pages:orders.startPreparing",
+  PREPARING: "pages:orders.sendForDelivery",
+  OUT_FOR_DELIVERY: "pages:orders.confirmDelivery",
+  DELIVERED: "common:proceed",
+  CANCELLED: "common:proceed",
 }
 
 const ORDER_STATUS_OPTIONS: OrderStatus[] = [
@@ -47,10 +48,6 @@ const ORDER_STATUS_OPTIONS: OrderStatus[] = [
   "CANCELLED",
 ]
 
-function formatStatus(status: OrderStatus) {
-  return statusLabels[status] ?? status
-}
-
 function getNextStatus(status: OrderStatus) {
   return nextStatusByStatus[status] ?? null
 }
@@ -59,15 +56,12 @@ function canCancelOrder(status: OrderStatus) {
   return status !== "DELIVERED" && status !== "CANCELLED"
 }
 
-function getProceedButtonLabel(status: OrderStatus) {
-  return proceedButtonLabels[status] ?? "متابعة"
-}
-
 function isOrderStatus(value: string): value is OrderStatus {
   return ORDER_STATUS_OPTIONS.includes(value as OrderStatus)
 }
 
 export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const { can } = usePermissions()
   const canManage = can(PERMISSIONS.ORDERS_MANAGE)
@@ -75,16 +69,25 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
   const updateStatusMutation = useUpdateOrderStatus()
   const [statusError, setStatusError] = useState("")
 
+  function formatStatus(status: OrderStatus) {
+    const key = ORDER_STATUS_KEYS[status]
+    return key ? t(`common:${key}`) : status
+  }
+
+  function getProceedButtonLabel(status: OrderStatus) {
+    return t(proceedButtonKeys[status] ?? "common:proceed")
+  }
+
   function handleProceed(order: Order) {
     setStatusError("")
 
     if (!isValidId(order.id)) {
-      setStatusError("رقم الطلب غير صالح.")
+      setStatusError(t("pages:orders.invalidOrderId"))
       return
     }
 
     if (!isOrderStatus(order.status)) {
-      setStatusError("حالة الطلب غير صالحة.")
+      setStatusError(t("pages:orders.invalidOrderStatus"))
       return
     }
 
@@ -104,12 +107,12 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
     setStatusError("")
 
     if (!isValidId(order.id)) {
-      setStatusError("رقم الطلب غير صالح.")
+      setStatusError(t("pages:orders.invalidOrderId"))
       return
     }
 
     if (!isOrderStatus(order.status)) {
-      setStatusError("حالة الطلب غير صالحة.")
+      setStatusError(t("pages:orders.invalidOrderStatus"))
       return
     }
 
@@ -134,7 +137,7 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
   if (isError) {
     return (
       <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
-        <p className="text-sm text-red-500">حدث خطأ أثناء تحميل الطلبات.</p>
+        <p className="text-sm text-red-500">{t("pages:orders.loadFailed")}</p>
       </section>
     )
   }
@@ -142,7 +145,7 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
   return (
     <section className="rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
       <h2 className="mb-5 text-lg font-semibold text-[var(--erp-text)]">
-        قائمة الطلبات
+        {t("pages:orders.listTitle")}
       </h2>
 
       {orders.length === 0 ? (
@@ -151,26 +154,30 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
 
           <div>
             <h3 className="text-lg font-semibold text-[var(--erp-text)]">
-              لا توجد طلبات حالياً
+              {t("pages:orders.noOrders")}
             </h3>
 
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              ستظهر الطلبات هنا عند إضافتها من النظام.
+              {t("pages:orders.noOrdersHint")}
             </p>
           </div>
         </div>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[950px] text-right">
+          <table className="w-full min-w-[950px] text-start">
             <thead>
               <tr className="border-b border-[var(--erp-border)] text-sm text-[var(--erp-muted)]">
-                <th className="px-4 py-3 font-medium">رقم الطلب</th>
-                <th className="px-4 py-3 font-medium">العميل</th>
-                <th className="px-4 py-3 font-medium">العنوان</th>
-                <th className="px-4 py-3 font-medium">الحالة</th>
-                <th className="px-4 py-3 font-medium">المجموع</th>
-                <th className="px-4 py-3 font-medium">الإجراء</th>
-                <th className="px-4 py-3 font-medium">تفاصيل</th>
+                <th className="px-4 py-3 font-medium">{t("common:orderId")}</th>
+                <th className="px-4 py-3 font-medium">
+                  {t("common:customer")}
+                </th>
+                <th className="px-4 py-3 font-medium">{t("common:address")}</th>
+                <th className="px-4 py-3 font-medium">{t("common:status")}</th>
+                <th className="px-4 py-3 font-medium">
+                  {t("common:subtotal")}
+                </th>
+                <th className="px-4 py-3 font-medium">{t("common:actions")}</th>
+                <th className="px-4 py-3 font-medium">{t("common:details")}</th>
               </tr>
             </thead>
 
@@ -214,11 +221,11 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
                     <td className="px-4 py-4">
                       {isFinalStatus ? (
                         <span className="text-sm text-[var(--erp-muted)]">
-                          لا يوجد إجراء
+                          {t("common:noAction")}
                         </span>
                       ) : !canManage ? (
                         <span className="text-sm text-[var(--erp-muted)]">
-                          لا تملك صلاحية التحديث
+                          {t("common:noPermission")}
                         </span>
                       ) : (
                         <div className="flex items-center gap-2">
@@ -242,7 +249,7 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
                               className="bg-red-600 text-white hover:bg-red-700"
                             >
                               <XCircle className="h-4 w-4" />
-                              إلغاء
+                              {t("pages:orders.cancelOrder")}
                             </Button>
                           )}
                         </div>
@@ -256,7 +263,7 @@ export function OrdersTable({ orders, isLoading, isError }: OrdersTableProps) {
                         onClick={() => navigate(`/orders/${order.id}`)}
                       >
                         <Eye className="h-4 w-4" />
-                        عرض
+                        {t("common:view")}
                       </Button>
                     </td>
                   </tr>

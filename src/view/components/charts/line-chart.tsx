@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import type { ChartPoint } from "@/lib/report-parsers"
 import { formatNumber } from "@/lib/report-parsers"
 
@@ -8,12 +10,14 @@ type LineChartProps = {
 }
 
 export function LineChart({ title, data, unit = "" }: LineChartProps) {
+  const { t } = useTranslation("common")
+
   if (data.length === 0) {
     return (
       <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
         {title && <h3 className="mb-4 text-lg font-bold">{title}</h3>}
         <p className="text-sm text-[var(--erp-muted)]">
-          لا توجد بيانات زمنية للعرض
+          {t("charts.noTimeSeriesData")}
         </p>
       </section>
     )
@@ -24,7 +28,10 @@ export function LineChart({ title, data, unit = "" }: LineChartProps) {
       <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
         {title && <h3 className="mb-4 text-lg font-bold">{title}</h3>}
         <p className="text-center text-sm text-[var(--erp-muted)]">
-          نقطة واحدة فقط: {data[0].label} — {formatNumber(data[0].value, unit)}
+          {t("charts.singlePoint", {
+            label: data[0].label,
+            value: formatNumber(data[0].value, unit),
+          })}
         </p>
       </section>
     )
@@ -72,8 +79,8 @@ export function LineChart({ title, data, unit = "" }: LineChartProps) {
       )}
 
       <div className="mb-2 flex justify-between text-xs text-[var(--erp-muted)]">
-        <span>الأعلى: {formatNumber(yMax, unit)}</span>
-        <span>الأدنى: {formatNumber(yMin, unit)}</span>
+        <span>{t("charts.high", { value: formatNumber(yMax, unit) })}</span>
+        <span>{t("charts.low", { value: formatNumber(yMin, unit) })}</span>
       </div>
 
       <div className="overflow-x-auto">

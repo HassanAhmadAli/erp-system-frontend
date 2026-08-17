@@ -1,14 +1,11 @@
 import { z } from "zod"
 
-import {
-  normalizeText,
-  parsePositiveInteger,
-} from "./helpers"
-import { requiredText } from "./zod-helpers"
+import i18n from "@/i18n"
+import { normalizeText, optionalText, parsePositiveInteger } from "./helpers"
+import { optionalTrimmedText, requiredText } from "./zod-helpers"
 
 export const NOTIFICATION_TARGET_TYPES = ["ALL", "ROLE", "USER"] as const
-export type NotificationTargetType =
-  (typeof NOTIFICATION_TARGET_TYPES)[number]
+export type NotificationTargetType = (typeof NOTIFICATION_TARGET_TYPES)[number]
 
 export const NOTIFICATION_TARGET_ROLES = [
   "CASHIER",
@@ -16,32 +13,41 @@ export const NOTIFICATION_TARGET_ROLES = [
   "ACCOUNTANT",
   "WAREHOUSE_WORKER",
 ] as const
-export type NotificationTargetRole =
-  (typeof NOTIFICATION_TARGET_ROLES)[number]
+export type NotificationTargetRole = (typeof NOTIFICATION_TARGET_ROLES)[number]
 
 const userIdSchema = z.union([z.string(), z.number()])
 
 export const notificationSchema = z
   .object({
     title: requiredText({
-      requiredMessage: "عنوان الإشعار مطلوب.",
+      requiredMessage: () => i18n.t("validation:notification.titleRequired"),
       min: 2,
-      minMessage: "عنوان الإشعار يجب أن يكون حرفين على الأقل.",
+      minMessage: () => i18n.t("validation:notification.titleMin"),
       max: 120,
-      maxMessage: "عنوان الإشعار يجب ألا يتجاوز 120 حرفًا.",
+      maxMessage: () => i18n.t("validation:notification.titleMax"),
+    }),
+    titleAr: optionalTrimmedText({
+      max: 120,
+      maxMessage: () => i18n.t("validation:notification.titleArMax"),
     }),
     body: requiredText({
-      requiredMessage: "نص الإشعار مطلوب.",
+      requiredMessage: () => i18n.t("validation:notification.bodyRequired"),
       min: 2,
-      minMessage: "نص الإشعار يجب أن يكون حرفين على الأقل.",
+      minMessage: () => i18n.t("validation:notification.bodyMin"),
       max: 1000,
-      maxMessage: "نص الإشعار يجب ألا يتجاوز 1000 حرف.",
+      maxMessage: () => i18n.t("validation:notification.bodyMax"),
+    }),
+    bodyAr: optionalTrimmedText({
+      max: 1000,
+      maxMessage: () => i18n.t("validation:notification.bodyArMax"),
     }),
     targetType: z.string().superRefine((value, ctx) => {
-      if (!NOTIFICATION_TARGET_TYPES.includes(value as NotificationTargetType)) {
+      if (
+        !NOTIFICATION_TARGET_TYPES.includes(value as NotificationTargetType)
+      ) {
         ctx.addIssue({
           code: "custom",
-          message: "نوع المستهدف غير صالح.",
+          message: i18n.t("validation:notification.targetTypeInvalid"),
         })
       }
     }),
@@ -54,7 +60,7 @@ export const notificationSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["targetRole"],
-          message: "الدور مطلوب عند الإرسال حسب الدور.",
+          message: i18n.t("validation:notification.roleRequiredForRoleTarget"),
         })
       } else if (
         !NOTIFICATION_TARGET_ROLES.includes(
@@ -64,7 +70,7 @@ export const notificationSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["targetRole"],
-          message: "الدور غير صالح.",
+          message: i18n.t("validation:notification.roleInvalid"),
         })
       }
     }
@@ -76,7 +82,7 @@ export const notificationSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["userIds"],
-          message: "يرجى اختيار مستخدم واحد على الأقل.",
+          message: i18n.t("validation:notification.userRequired"),
         })
         return
       }
@@ -89,7 +95,7 @@ export const notificationSchema = z
           ctx.addIssue({
             code: "custom",
             path: ["userIds"],
-            message: "أرقام المستخدمين يجب أن تكون أرقامًا صحيحة موجبة.",
+            message: i18n.t("validation:notification.userIdsInvalid"),
           })
           return
         }
@@ -101,7 +107,7 @@ export const notificationSchema = z
         ctx.addIssue({
           code: "custom",
           path: ["userIds"],
-          message: "لا يمكن اختيار نفس المستخدم أكثر من مرة.",
+          message: i18n.t("validation:notification.duplicateUser"),
         })
       }
     }
@@ -111,7 +117,9 @@ export type NotificationFormValues = z.input<typeof notificationSchema>
 
 export type NotificationRequestPayload = {
   title: string
+  titleAr?: string
   body: string
+  bodyAr?: string
   targetType: NotificationTargetType
   targetRole?: NotificationTargetRole
   userIds?: number[]
@@ -128,7 +136,9 @@ export function notificationZodErrorToFormErrors(error: z.ZodError) {
     const field = issue.path[0]
     if (
       field !== "title" &&
+      field !== "titleAr" &&
       field !== "body" &&
+      field !== "bodyAr" &&
       field !== "targetType" &&
       field !== "targetRole" &&
       field !== "userIds"
@@ -146,9 +156,13 @@ export function notificationFormValuesToPayload(
   values: NotificationFormValues
 ): NotificationRequestPayload {
   const targetType = values.targetType as NotificationTargetType
+  const titleAr = optionalText(values.titleAr)
+  const bodyAr = optionalText(values.bodyAr)
   const payload: NotificationRequestPayload = {
     title: normalizeText(values.title),
+    ...(titleAr ? { titleAr } : {}),
     body: normalizeText(values.body),
+    ...(bodyAr ? { bodyAr } : {}),
     targetType,
   }
 

@@ -14,6 +14,7 @@ export type { NotificationTargetRole, NotificationTargetType }
 export type NotificationSender = {
   id: number
   fullName: string
+  fullNameAr?: string | null
   email: string
 }
 
@@ -27,7 +28,9 @@ export type InboxNotificationRecipient = {
     id: number
     senderId: number
     title: string
+    titleAr?: string | null
     body: string
+    bodyAr?: string | null
     targetType: NotificationTargetType
     targetRole: NotificationTargetRole | null
     sentAt: string
@@ -41,7 +44,9 @@ export type InboxNotification = {
   isRead: boolean
   readAt: string | null
   title: string
+  titleAr?: string | null
   body: string
+  bodyAr?: string | null
   targetType: NotificationTargetType
   targetRole: NotificationTargetRole | null
   sentAt: string
@@ -51,7 +56,9 @@ export type InboxNotification = {
 export type SentNotificationHistory = {
   id: number
   title: string
+  titleAr?: string | null
   body: string
+  bodyAr?: string | null
   targetType: NotificationTargetType
   targetRole: NotificationTargetRole | null
   sentAt: string
@@ -82,7 +89,9 @@ export function mapInboxRecipient(
     isRead: recipient.isRead,
     readAt: recipient.readAt,
     title: recipient.notification.title,
+    titleAr: recipient.notification.titleAr,
     body: recipient.notification.body,
+    bodyAr: recipient.notification.bodyAr,
     targetType: recipient.notification.targetType,
     targetRole: recipient.notification.targetRole,
     sentAt: recipient.notification.sentAt,

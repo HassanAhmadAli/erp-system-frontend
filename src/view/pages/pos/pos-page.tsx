@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { useCreateSaleInvoice, usePosProducts } from "@/hooks/usePos"
 import type { PosProduct } from "@/services/pos-service"
@@ -18,6 +19,7 @@ import { PosProductsSection } from "@/view/components/pos/pos-products-section"
 import type { CartItem } from "@/view/components/pos/types"
 
 export function PosPage() {
+  const { t } = useTranslation(["common", "pages"])
   const [search, setSearch] = useState("")
   const [customerId, setCustomerId] = useState("")
   const [amountPaid, setAmountPaid] = useState("")
@@ -208,19 +210,21 @@ export function PosPage() {
   }
 
   return (
-    <main className="space-y-6" dir="rtl">
+    <main className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-[var(--erp-text)]">
-            نقطة البيع
+            {t("pages:pos.title")}
           </h1>
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            إنشاء فاتورة بيع من المنتجات المتوفرة في المخزون.
+            {t("pages:pos.subtitle")}
           </p>
         </div>
 
         <div className="rounded-2xl bg-[var(--erp-card)] px-5 py-3 shadow-[var(--erp-shadow)]">
-          <p className="text-sm text-[var(--erp-muted)]">إجمالي السلة</p>
+          <p className="text-sm text-[var(--erp-muted)]">
+            {t("common:cartTotal")}
+          </p>
           <p
             dir="ltr"
             className="mt-1 text-left text-xl font-bold text-[var(--erp-text)]"

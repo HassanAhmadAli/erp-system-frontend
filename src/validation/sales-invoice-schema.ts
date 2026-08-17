@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import { parseFiniteNumber, parsePositiveInteger } from "./helpers"
 
 export const SALES_INVOICE_STATUS_OPTIONS = [
@@ -35,7 +36,7 @@ export const salesInvoiceSchema = z
     if (customerId == null) {
       ctx.addIssue({
         code: "custom",
-        message: "أدخل رقم العميل بشكل صحيح",
+        message: i18n.t("validation:salesInvoice.customerIdInvalid"),
         path: ["customerId"],
       })
     }
@@ -47,7 +48,7 @@ export const salesInvoiceSchema = z
     ) {
       ctx.addIssue({
         code: "custom",
-        message: "أدخل رقم الخصم بشكل صحيح أو اتركه فارغًا",
+        message: i18n.t("validation:salesInvoice.discountIdInvalid"),
         path: ["discountId"],
       })
     }
@@ -57,13 +58,13 @@ export const salesInvoiceSchema = z
     if (amountPaid == null) {
       ctx.addIssue({
         code: "custom",
-        message: "أدخل المبلغ المدفوع بشكل صحيح",
+        message: i18n.t("validation:salesInvoice.amountPaidInvalid"),
         path: ["amountPaid"],
       })
     } else if (amountPaid < 0) {
       ctx.addIssue({
         code: "custom",
-        message: "المبلغ المدفوع يجب ألا يكون أقل من الصفر",
+        message: i18n.t("validation:salesInvoice.amountPaidNonNegative"),
         path: ["amountPaid"],
       })
     }
@@ -71,7 +72,7 @@ export const salesInvoiceSchema = z
     if (values.items.length === 0) {
       ctx.addIssue({
         code: "custom",
-        message: "أضف منتجًا واحدًا على الأقل إلى الفاتورة",
+        message: i18n.t("validation:salesInvoice.itemsRequired"),
         path: ["items"],
       })
     }
@@ -85,13 +86,13 @@ export const salesInvoiceSchema = z
       if (productId == null) {
         ctx.addIssue({
           code: "custom",
-          message: "رقم المنتج يجب أن يكون رقمًا صحيحًا أكبر من الصفر",
+          message: i18n.t("validation:salesInvoice.productIdInvalid"),
           path: ["items", index, "productId"],
         })
       } else if (productIds.has(productId)) {
         ctx.addIssue({
           code: "custom",
-          message: "لا يمكن تكرار نفس المنتج في الفاتورة",
+          message: i18n.t("validation:shared.duplicateProductInInvoice"),
           path: ["items"],
         })
       } else {
@@ -101,7 +102,7 @@ export const salesInvoiceSchema = z
       if (quantity == null) {
         ctx.addIssue({
           code: "custom",
-          message: "الكمية يجب أن تكون رقمًا صحيحًا أكبر من الصفر",
+          message: i18n.t("validation:salesInvoice.quantityInvalid"),
           path: ["items", index, "quantity"],
         })
       }

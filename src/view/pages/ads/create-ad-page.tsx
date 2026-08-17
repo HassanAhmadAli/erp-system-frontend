@@ -1,6 +1,7 @@
 import { ArrowRight, Save } from "lucide-react"
 import { useState, type FormEvent } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useCreateAd } from "@/hooks/useAds"
 import {
@@ -18,18 +19,15 @@ const inputClass =
 
 const dateInputClass = `${inputClass} text-left [direction:ltr]`
 
-const placementLabels: Record<AdPlacement, string> = {
-  HOME: "الصفحة الرئيسية",
-  CHECKOUT: "صفحة الدفع",
-  SIDEBAR: "الشريط الجانبي",
-}
-
 export function CreateAdPage() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const createAdMutation = useCreateAd()
 
   const [title, setTitle] = useState("")
+  const [titleAr, setTitleAr] = useState("")
   const [description, setDescription] = useState("")
+  const [descriptionAr, setDescriptionAr] = useState("")
   const [imageUrl, setImageUrl] = useState("")
   const [linkUrl, setLinkUrl] = useState("")
   const [placement, setPlacement] = useState<AdPlacement>("HOME")
@@ -46,7 +44,9 @@ export function CreateAdPage() {
 
     const validation = adSchema.safeParse({
       title,
+      titleAr,
       description,
+      descriptionAr,
       imageUrl,
       linkUrl,
       placement,
@@ -65,21 +65,21 @@ export function CreateAdPage() {
         navigate("/ads")
       },
       onError: () => {
-        setFormError("حدث خطأ أثناء إنشاء الإعلان.")
+        setFormError(t("ads.createFailed", { ns: "pages" }))
       },
     })
   }
 
   return (
-    <main className="space-y-6 text-[var(--erp-text)]" dir="rtl">
+    <main className="space-y-6 text-[var(--erp-text)]">
       <section className="flex items-center justify-between gap-4">
-        <div className="text-right">
+        <div className="text-start">
           <h1 className="text-2xl font-bold text-[var(--erp-text)]">
-            إضافة إعلان
+            {t("ads.create", { ns: "pages" })}
           </h1>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            أنشئ إعلانًا جديدًا ليظهر داخل النظام.
+            {t("ads.createSubtitle", { ns: "pages" })}
           </p>
         </div>
 
@@ -90,7 +90,7 @@ export function CreateAdPage() {
           onClick={() => navigate("/ads")}
         >
           <ArrowRight className="size-4" />
-          رجوع
+          {t("back")}
         </Button>
       </section>
 
@@ -101,13 +101,13 @@ export function CreateAdPage() {
         <div className="grid gap-5 md:grid-cols-2">
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-medium text-[var(--erp-text)]">
-              عنوان الإعلان
+              {t("ads.adTitle", { ns: "pages" })}
             </label>
 
             <input
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="مثال: عرض الصيف"
+              placeholder={t("ads.titlePlaceholder", { ns: "pages" })}
               className={inputClass}
             />
 
@@ -120,13 +120,31 @@ export function CreateAdPage() {
 
           <div className="space-y-2 md:col-span-2">
             <label className="text-sm font-medium text-[var(--erp-text)]">
-              الوصف
+              {t("titleAr")}
+            </label>
+
+            <input
+              value={titleAr}
+              onChange={(event) => setTitleAr(event.target.value)}
+              className={inputClass}
+            />
+
+            {formErrors.titleAr && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.titleAr}
+              </p>
+            )}
+          </div>
+
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-medium text-[var(--erp-text)]">
+              {t("description")}
             </label>
 
             <textarea
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="اكتب وصف الإعلان هنا..."
+              placeholder={t("ads.descriptionPlaceholder", { ns: "pages" })}
               rows={4}
               className={`${inputClass} resize-none`}
             />
@@ -138,9 +156,28 @@ export function CreateAdPage() {
             )}
           </div>
 
+          <div className="space-y-2 md:col-span-2">
+            <label className="text-sm font-medium text-[var(--erp-text)]">
+              {t("descriptionAr")}
+            </label>
+
+            <textarea
+              value={descriptionAr}
+              onChange={(event) => setDescriptionAr(event.target.value)}
+              rows={4}
+              className={`${inputClass} resize-none`}
+            />
+
+            {formErrors.descriptionAr && (
+              <p className="text-sm text-red-500 dark:text-red-300">
+                {formErrors.descriptionAr}
+              </p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--erp-text)]">
-              رابط الصورة
+              {t("ads.imageUrl", { ns: "pages" })}
             </label>
 
             <input
@@ -159,7 +196,7 @@ export function CreateAdPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--erp-text)]">
-              رابط الإعلان
+              {t("ads.linkUrl", { ns: "pages" })}
             </label>
 
             <input
@@ -178,7 +215,7 @@ export function CreateAdPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--erp-text)]">
-              مكان الظهور
+              {t("ads.placement", { ns: "pages" })}
             </label>
 
             <select
@@ -190,7 +227,7 @@ export function CreateAdPage() {
             >
               {AD_PLACEMENTS.map((placementOption) => (
                 <option key={placementOption} value={placementOption}>
-                  {placementLabels[placementOption]}
+                  {t(`ads.placements.${placementOption}`, { ns: "pages" })}
                 </option>
               ))}
             </select>
@@ -204,7 +241,7 @@ export function CreateAdPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--erp-text)]">
-              الحالة
+              {t("status")}
             </label>
 
             <select
@@ -212,8 +249,8 @@ export function CreateAdPage() {
               onChange={(event) => setIsActive(event.target.value === "active")}
               className={inputClass}
             >
-              <option value="active">نشط</option>
-              <option value="inactive">غير نشط</option>
+              <option value="active">{t("active")}</option>
+              <option value="inactive">{t("inactive")}</option>
             </select>
 
             {formErrors.isActive && (
@@ -225,7 +262,7 @@ export function CreateAdPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--erp-text)]">
-              تاريخ البداية
+              {t("startDate")}
             </label>
 
             <input
@@ -244,7 +281,7 @@ export function CreateAdPage() {
 
           <div className="space-y-2">
             <label className="text-sm font-medium text-[var(--erp-text)]">
-              تاريخ النهاية
+              {t("endDate")}
             </label>
 
             <input
@@ -274,7 +311,7 @@ export function CreateAdPage() {
             variant="outline"
             onClick={() => navigate("/ads")}
           >
-            إلغاء
+            {t("cancel")}
           </Button>
 
           <Button
@@ -283,7 +320,7 @@ export function CreateAdPage() {
             disabled={createAdMutation.isPending}
           >
             <Save className="size-4" />
-            {createAdMutation.isPending ? "جاري الحفظ..." : "حفظ الإعلان"}
+            {createAdMutation.isPending ? t("saving") : t("saveAd")}
           </Button>
         </div>
       </form>

@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 
@@ -18,6 +20,8 @@ export function PaginationControls({
   onPrevious,
   onNext,
 }: PaginationControlsProps) {
+  const { t } = useTranslation("common")
+
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
       <Button
@@ -26,12 +30,12 @@ export function PaginationControls({
         disabled={page <= 1 || isLoading}
         onClick={onPrevious}
       >
-        السابق
+        {t("previous")}
       </Button>
 
       <span className="text-center text-sm text-[var(--erp-muted)]">
-        صفحة {formatNumber(page)}
-        {total != null ? ` · الإجمالي ${formatNumber(total)}` : ""}
+        {t("page")} {formatNumber(page)}
+        {total != null ? ` · ${t("total")} ${formatNumber(total)}` : ""}
       </span>
 
       <Button
@@ -40,7 +44,7 @@ export function PaginationControls({
         disabled={isFinalPage || isLoading}
         onClick={onNext}
       >
-        التالي
+        {t("next")}
       </Button>
     </div>
   )

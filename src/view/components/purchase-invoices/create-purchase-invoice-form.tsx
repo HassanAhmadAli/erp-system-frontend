@@ -1,7 +1,14 @@
 import { type FormEvent, useState } from "react"
 import { Loader2, Plus, Trash2 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
+import { useProductsBySupplier } from "@/hooks/Products/useProductsBySupplier"
+import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
 import { useCreatePurchaseInvoice } from "@/hooks/usePurchaseInvoices"
+import { useLocale } from "@/i18n/locale-provider"
+import { localizedFullName, localizedName } from "@/lib/localized"
+import { formatId } from "@/utils/number-formatters"
+import { isValidId } from "@/validation/helpers"
 import {
   purchaseInvoiceSchema,
   purchaseInvoiceValuesToPayload,
@@ -9,7 +16,6 @@ import {
   type PurchaseInvoiceFormErrors,
 } from "@/validation/purchase-invoice-schema"
 import { getTodayDateTimeInputValue } from "./purchase-invoice-format"
-
 type InvoiceFormItem = {
   productId: string
   quantity: string
@@ -50,9 +56,21 @@ function getEmptyItem(): InvoiceFormItem {
 export function CreatePurchaseInvoiceForm({
   onCreated,
 }: CreatePurchaseInvoiceFormProps) {
+  const { t } = useTranslation(["common", "pages"])
+  const { language } = useLocale()
   const createMutation = useCreatePurchaseInvoice()
-
+  const { data: suppliersData, isLoading: suppliersLoading } = useSuppliers({
+    limit: 100,
+  })
+  const suppliers = suppliersData?.data ?? []
   const [supplierId, setSupplierId] = useState("")
+
+  const selectedSupplierId = Number(supplierId)
+  const hasSupplier = isValidId(selectedSupplierId)
+  const { data: productsData, isLoading: productsLoading } =
+    useProductsBySupplier(hasSupplier ? selectedSupplierId : 0, { limit: 100 })
+  const products = hasSupplier ? (productsData?.data ?? []) : []
+
   const [invoiceDate, setInvoiceDate] = useState(getTodayDateTimeInputValue())
   const [receive, setReceive] = useState(false)
   const [errors, setErrors] = useState<PurchaseInvoiceFormErrors>({})
@@ -68,7 +86,15 @@ export function CreatePurchaseInvoiceForm({
 
   function updateSupplierId(value: string) {
     setSupplierId(value)
-    setErrors((currentErrors) => ({ ...currentErrors, supplierId: undefined }))
+    // Products are supplier-scoped, so previously picked ones no longer apply.
+    setItems((currentItems) =>
+      currentItems.map((item) => ({ ...item, productId: "" }))
+    )
+    setErrors((currentErrors) => ({
+      ...currentErrors,
+      supplierId: undefined,
+      items: undefined,
+    }))
   }
 
   function updateInvoiceDate(value: string) {
@@ -137,14 +163,13 @@ export function CreatePurchaseInvoiceForm({
     <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <form className="space-y-5" onSubmit={handleCreateInvoice}>
         <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="text-right">
+          <div className="text-start">
             <h2 className="text-lg font-bold text-[var(--erp-text)]">
-              إنشاء فاتورة شراء
+              {t("pages:purchaseInvoices.createTitle")}
             </h2>
 
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              البيانات المطلوبة: المورد، تاريخ الفاتورة، المنتجات، تكلفة الوحدة،
-              وخيار الاستلام. تاريخ انتهاء المنتج اختياري.
+              {t("pages:purchaseInvoices.createHint")}
             </p>
           </div>
 
@@ -153,29 +178,39 @@ export function CreatePurchaseInvoiceForm({
             onClick={resetCreateForm}
             className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
-            تفريغ الحقول
+            {t("common:clearFields")}
           </button>
         </div>
 
         <div className="grid gap-4 md:grid-cols-3">
-          <label className="space-y-2 text-right">
+          <label className="space-y-2 text-start">
             <span className="text-sm font-medium text-[var(--erp-text)]">
-              رقم المورد
+              {t("common:supplierId")}
             </span>
-
-            <input
+            <select
               value={supplierId}
               onChange={(event) => updateSupplierId(event.target.value)}
-              placeholder="مثال: 1"
-              inputMode="numeric"
-              className={`${inputClass} text-right`}
-            />
+              disabled={suppliersLoading}
+              className={`${inputClass} text-start`}
+            >
+              <option value="">
+                {suppliersLoading
+                  ? t("common:loading")
+                  : t("common:selectSupplier")}
+              </option>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={String(supplier.id)}>
+                  #{formatId(supplier.id)} —{" "}
+                  {localizedFullName(supplier, language)}
+                </option>
+              ))}
+            </select>{" "}
             <ErrorText message={errors.supplierId} />
           </label>
 
-          <label className="space-y-2 text-right">
+          <label className="space-y-2 text-start">
             <span className="text-sm font-medium text-[var(--erp-text)]">
-              تاريخ الفاتورة
+              {t("common:invoiceDate")}
             </span>
 
             <input
@@ -189,7 +224,7 @@ export function CreatePurchaseInvoiceForm({
 
           <label className="flex items-end justify-between gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5">
             <span className="text-sm font-medium text-[var(--erp-text)]">
-              استلام المنتجات مباشرة
+              {t("pages:purchaseInvoices.receiveProductsDirectly")}
             </span>
 
             <input
@@ -204,7 +239,7 @@ export function CreatePurchaseInvoiceForm({
         <div className="space-y-3">
           <div className="flex items-center justify-between gap-3">
             <h3 className="text-sm font-bold text-[var(--erp-text)]">
-              عناصر الفاتورة
+              {t("common:invoiceItems")}
             </h3>
 
             <button
@@ -213,7 +248,7 @@ export function CreatePurchaseInvoiceForm({
               className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
             >
               <Plus className="size-4" />
-              إضافة منتج
+              {t("common:add")} {t("common:product")}
             </button>
           </div>
 
@@ -223,25 +258,37 @@ export function CreatePurchaseInvoiceForm({
                 key={index}
                 className="grid gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-3 md:grid-cols-[1fr_1fr_1fr_1fr_auto]"
               >
-                <label className="space-y-2 text-right">
+                <label className="space-y-2 text-start">
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
-                    رقم المنتج
+                    {t("common:productId")}
                   </span>
-
-                  <input
+                  <select
                     value={item.productId}
                     onChange={(event) =>
                       updateItem(index, "productId", event.target.value)
                     }
-                    placeholder="مثال: 1"
-                    inputMode="numeric"
-                    className={`${smallInputClass} text-right`}
-                  />
+                    disabled={!hasSupplier || productsLoading}
+                    className={`${smallInputClass} text-start`}
+                  >
+                    <option value="">
+                      {!hasSupplier
+                        ? t("pages:purchaseInvoices.selectSupplierFirst")
+                        : productsLoading
+                          ? t("common:loading")
+                          : t("common:selectProduct")}
+                    </option>
+                    {products.map((product) => (
+                      <option key={product.id} value={String(product.id)}>
+                        #{formatId(product.id)} —{" "}
+                        {localizedName(product, language)}
+                      </option>
+                    ))}
+                  </select>{" "}
                 </label>
 
-                <label className="space-y-2 text-right">
+                <label className="space-y-2 text-start">
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
-                    الكمية
+                    {t("common:quantity")}
                   </span>
 
                   <input
@@ -251,13 +298,13 @@ export function CreatePurchaseInvoiceForm({
                     }
                     placeholder="1"
                     inputMode="numeric"
-                    className={`${smallInputClass} text-right`}
+                    className={`${smallInputClass} text-start`}
                   />
                 </label>
 
-                <label className="space-y-2 text-right">
+                <label className="space-y-2 text-start">
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
-                    تكلفة الوحدة
+                    {t("common:unitCost")}
                   </span>
 
                   <input
@@ -267,13 +314,13 @@ export function CreatePurchaseInvoiceForm({
                     }
                     placeholder="20"
                     inputMode="decimal"
-                    className={`${smallInputClass} text-right`}
+                    className={`${smallInputClass} text-start`}
                   />
                 </label>
 
-                <label className="space-y-2 text-right">
+                <label className="space-y-2 text-start">
                   <span className="text-xs font-medium text-[var(--erp-muted)]">
-                    تاريخ الانتهاء اختياري
+                    {t("pages:purchaseInvoices.optionalExpiryDate")}
                   </span>
 
                   <input
@@ -293,7 +340,7 @@ export function CreatePurchaseInvoiceForm({
                   className="inline-flex items-center justify-center gap-2 rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-40 md:self-end dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25"
                 >
                   <Trash2 className="size-4" />
-                  حذف
+                  {t("common:delete")}
                 </button>
               </div>
             ))}
@@ -304,8 +351,7 @@ export function CreatePurchaseInvoiceForm({
 
         {createMutation.isError && (
           <p className="rounded-2xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
-            حدث خطأ أثناء إنشاء فاتورة الشراء. تأكد من الصلاحيات ومن صحة أرقام
-            المورد والمنتجات.
+            {t("pages:purchaseInvoices.createFailed")}
           </p>
         )}
 
@@ -318,7 +364,7 @@ export function CreatePurchaseInvoiceForm({
             {createMutation.isPending && (
               <Loader2 className="size-4 animate-spin" />
             )}
-            إنشاء الفاتورة
+            {t("common:createInvoice")}
           </button>
         </div>
       </form>

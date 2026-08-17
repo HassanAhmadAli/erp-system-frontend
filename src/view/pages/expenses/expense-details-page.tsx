@@ -10,6 +10,7 @@ import {
   Wallet,
 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useExpenseById } from "@/hooks/Expenses/useExpenses"
 import { formatExpenseAmount } from "@/services/expense-service"
@@ -47,25 +48,38 @@ function formatAmount(amount: number | string) {
 }
 
 export function ExpenseDetailsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { id } = useParams()
   const expenseId = Number(id)
 
   const { data: expense, isLoading, isError } = useExpenseById(expenseId)
 
   if (!Number.isFinite(expenseId)) {
-    return <ErrorMessage message="رقم المصروف غير صالح." />
+    return (
+      <ErrorMessage
+        message={t("expenses.invalidExpenseId", { ns: "pages" })}
+        backLabel={t("expenses.backToExpenses", { ns: "pages" })}
+      />
+    )
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
-        <p className="text-[var(--erp-muted)]">جاري تحميل بيانات المصروف...</p>
+      <div className="space-y-6 text-start text-[var(--erp-text)]">
+        <p className="text-[var(--erp-muted)]">
+          {t("expenses.loadingExpense", { ns: "pages" })}
+        </p>
       </div>
     )
   }
 
   if (isError || !expense) {
-    return <ErrorMessage message="تعذر تحميل بيانات المصروف." />
+    return (
+      <ErrorMessage
+        message={t("expenses.loadExpenseFailed", { ns: "pages" })}
+        backLabel={t("expenses.backToExpenses", { ns: "pages" })}
+      />
+    )
   }
 
   const recordedByName =
@@ -73,7 +87,7 @@ export function ExpenseDetailsPage() {
     (expense.recordedById ? `#${formatId(expense.recordedById)}` : "—")
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[var(--erp-text)]">
@@ -89,7 +103,7 @@ export function ExpenseDetailsPage() {
           <Link to={`/expenses/${expenseId}/edit`}>
             <Button className="gap-2">
               <Pencil className="size-4" />
-              تعديل المصروف
+              {t("expenses.updateExpense", { ns: "pages" })}
             </Button>
           </Link>
 
@@ -98,58 +112,67 @@ export function ExpenseDetailsPage() {
             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             <ArrowRight className="size-4" />
-            العودة إلى المصروفات
+            {t("expenses.backToExpenses", { ns: "pages" })}
           </Link>
         </div>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <SummaryCard
-          label="المبلغ"
+          label={t("amount")}
           value={formatAmount(expense.amount)}
           icon={<Wallet className="size-5" />}
         />
 
         <SummaryCard
-          label="الفئة"
+          label={t("expenses.expenseCategory", { ns: "pages" })}
           value={expense.category}
           icon={<FolderOpen className="size-5" />}
         />
 
         <SummaryCard
-          label="رقم المصروف"
+          label={t("expenses.expenseId", { ns: "pages" })}
           value={formatId(expense.id)}
           icon={<Hash className="size-5" />}
         />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <CustomerInfoCard title="معلومات المصروف">
-          <CustomerInfoRow label="الوصف" value={expense.description} />
-          <CustomerInfoRow label="الفئة" value={expense.category} />
+        <CustomerInfoCard title={t("expenses.expenseInfo", { ns: "pages" })}>
           <CustomerInfoRow
-            label="المبلغ"
+            label={t("description")}
+            value={expense.description}
+          />
+          <CustomerInfoRow
+            label={t("expenses.expenseCategory", { ns: "pages" })}
+            value={expense.category}
+          />
+          <CustomerInfoRow
+            label={t("amount")}
             value={formatAmount(expense.amount)}
           />
           <CustomerInfoRow
-            label="تاريخ المصروف"
+            label={t("expenses.expenseDate", { ns: "pages" })}
             value={formatDate(expense.expenseDate)}
           />
-          <CustomerInfoRow label="رقم المصروف" value={formatId(expense.id)} />
+          <CustomerInfoRow
+            label={t("expenses.expenseId", { ns: "pages" })}
+            value={formatId(expense.id)}
+          />
         </CustomerInfoCard>
 
-        <CustomerInfoCard title="معلومات التسجيل">
-          <CustomerInfoRow label="سجّله" value={recordedByName} />
+        <CustomerInfoCard title={t("registrationInfo")}>
+          <CustomerInfoRow label={t("recordedBy")} value={recordedByName} />
           <CustomerInfoRow
-            label="البريد الإلكتروني"
+            label={t("email")}
             value={expense.recordedBy?.email ?? "—"}
           />
           <CustomerInfoRow
-            label="تاريخ الإنشاء"
+            label={t("createdAt")}
             value={formatDateTime(expense.createdAt)}
           />
           <CustomerInfoRow
-            label="آخر تحديث"
+            label={t("updatedAt")}
             value={formatDateTime(expense.updatedAt)}
           />
         </CustomerInfoCard>
@@ -158,7 +181,7 @@ export function ExpenseDetailsPage() {
       <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <div className="mb-4 flex items-center justify-end gap-2">
           <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-            ملخص سريع
+            {t("quickSummary")}
           </h2>
 
           <Receipt className="size-5 text-[var(--erp-brand-solid)]" />
@@ -166,32 +189,32 @@ export function ExpenseDetailsPage() {
 
         <div className="grid gap-4 sm:grid-cols-2">
           <InfoRow
-            label="الوصف"
+            label={t("description")}
             value={expense.description}
             icon={<Receipt className="size-4" />}
           />
 
           <InfoRow
-            label="المبلغ"
+            label={t("amount")}
             value={formatAmount(expense.amount)}
             icon={<Wallet className="size-4" />}
           />
 
           <InfoRow
-            label="الفئة"
+            label={t("expenses.expenseCategory", { ns: "pages" })}
             value={expense.category}
             icon={<FolderOpen className="size-4" />}
           />
 
           <InfoRow
-            label="التاريخ"
+            label={t("date")}
             value={formatDate(expense.expenseDate)}
             icon={<Calendar className="size-4" />}
           />
 
           {expense.recordedBy && (
             <InfoRow
-              label="المسجّل"
+              label={t("recordedBy")}
               value={expense.recordedBy.fullName ?? "—"}
               icon={<User className="size-4" />}
             />
@@ -247,9 +270,15 @@ function InfoRow({
   )
 }
 
-function ErrorMessage({ message }: { message: string }) {
+function ErrorMessage({
+  message,
+  backLabel,
+}: {
+  message: string
+  backLabel: string
+}) {
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <p className="text-red-500 dark:text-red-300">{message}</p>
 
       <Link
@@ -257,7 +286,7 @@ function ErrorMessage({ message }: { message: string }) {
         className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
         <ArrowRight className="size-4" />
-        العودة إلى المصروفات
+        {backLabel}
       </Link>
     </div>
   )

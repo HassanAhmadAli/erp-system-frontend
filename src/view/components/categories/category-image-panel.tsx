@@ -6,6 +6,7 @@ import {
   Trash2,
   UploadCloud,
 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import {
   useDeleteCategoryImage,
@@ -40,6 +41,7 @@ export function CategoryImagePanel({
   storedFileId,
   readOnly = false,
 }: CategoryImagePanelProps) {
+  const { t } = useTranslation(["common", "pages"])
   const uploadMutation = useUploadCategoryImage()
   const deleteMutation = useDeleteCategoryImage()
 
@@ -69,13 +71,13 @@ export function CategoryImagePanel({
 
     if (!isAllowedFileType(file, ALLOWED_IMAGE_TYPES)) {
       setMessageTone("error")
-      setMessage("يرجى اختيار ملف صورة صالح (JPG, PNG, WEBP, GIF)")
+      setMessage(t("common:invalidImageFile"))
       return
     }
 
     if (!isWithinMaxFileSize(file, MAX_IMAGE_BYTES)) {
       setMessageTone("error")
-      setMessage("حجم الصورة يجب ألا يتجاوز 5 ميجابايت")
+      setMessage(t("common:imageTooLarge"))
       return
     }
 
@@ -89,7 +91,7 @@ export function CategoryImagePanel({
 
     if (!selectedFile) {
       setMessageTone("error")
-      setMessage("يرجى اختيار صورة أولاً")
+      setMessage(t("common:selectImageFirst"))
       return
     }
 
@@ -102,11 +104,15 @@ export function CategoryImagePanel({
       clearSelection()
       setMessageTone("success")
       setMessage(
-        hasImage ? "تم استبدال صورة التصنيف بنجاح" : "تم رفع صورة التصنيف بنجاح"
+        hasImage
+          ? t("pages:categories.imageReplaced")
+          : t("pages:categories.imageUploaded")
       )
     } catch (error: unknown) {
       setMessageTone("error")
-      setMessage(error instanceof Error ? error.message : "فشل رفع الصورة")
+      setMessage(
+        error instanceof Error ? error.message : t("common:imageUploadFailed")
+      )
     }
   }
 
@@ -115,26 +121,28 @@ export function CategoryImagePanel({
       onSuccess: () => {
         setConfirmDelete(false)
         setMessageTone("success")
-        setMessage("تم حذف صورة التصنيف بنجاح")
+        setMessage(t("pages:categories.imageDeleted"))
       },
       onError: (error: unknown) => {
         setMessageTone("error")
-        setMessage(error instanceof Error ? error.message : "فشل حذف الصورة")
+        setMessage(
+          error instanceof Error ? error.message : t("common:imageUploadFailed")
+        )
       },
     })
   }
 
   return (
-    <section className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
+    <section className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <div className="flex items-center justify-end gap-2">
         <div>
           <h3 className="text-xl font-semibold text-[var(--erp-text)]">
-            صورة التصنيف
+            {t("pages:categories.categoryImage")}
           </h3>
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
             {readOnly
-              ? "عرض صورة التصنيف المرتبطة."
-              : "يمكنك رفع صورة واحدة للتصنيف أو استبدالها أو حذفها."}
+              ? t("pages:categories.categoryImageViewHint")
+              : t("pages:categories.categoryImageManageHint")}
           </p>
         </div>
         <ImageIcon className="size-5 text-[var(--erp-brand-solid)]" />
@@ -145,14 +153,14 @@ export function CategoryImagePanel({
           {previewUrl || currentImageSrc ? (
             <img
               src={previewUrl ?? currentImageSrc!}
-              alt="صورة التصنيف"
+              alt={t("pages:categories.categoryImage")}
               className="max-h-56 w-full rounded-xl object-contain"
             />
           ) : (
             <div className="text-center">
               <ImageIcon className="mx-auto size-12 text-[var(--erp-muted)]" />
               <p className="mt-3 text-sm text-[var(--erp-muted)]">
-                لا توجد صورة لهذا التصنيف
+                {t("pages:categories.noCategoryImage")}
               </p>
             </div>
           )}
@@ -168,10 +176,10 @@ export function CategoryImagePanel({
             >
               <UploadCloud className="mb-3 size-8 text-[var(--erp-brand-solid)]" />
               <span className="text-sm font-medium text-[var(--erp-text)]">
-                انقر لاختيار صورة
+                {t("common:clickToSelectImage")}
               </span>
               <span className="mt-1 text-xs text-[var(--erp-muted)]">
-                JPG, PNG, WEBP, GIF — حتى 5MB
+                {t("common:imageFormats")}
               </span>
               <span
                 dir="ltr"
@@ -179,7 +187,7 @@ export function CategoryImagePanel({
               >
                 {selectedFile?.name
                   ? toEnglishDigits(selectedFile.name)
-                  : "No file selected"}
+                  : t("common:noFileSelected")}
               </span>
               <input
                 id={`category-image-upload-${categoryId}`}
@@ -204,12 +212,14 @@ export function CategoryImagePanel({
                 {uploadMutation.isPending ? (
                   <>
                     <Loader2 className="size-4 animate-spin" />
-                    جاري الرفع...
+                    {t("common:uploading")}
                   </>
                 ) : (
                   <>
                     <UploadCloud className="size-4" />
-                    {hasImage ? "استبدال الصورة" : "رفع الصورة"}
+                    {hasImage
+                      ? t("common:replaceImage")
+                      : t("common:uploadImage")}
                   </>
                 )}
               </Button>
@@ -225,7 +235,7 @@ export function CategoryImagePanel({
                   onClick={() => setConfirmDelete(true)}
                 >
                   <Trash2 className="size-4" />
-                  حذف الصورة
+                  {t("common:deleteImage")}
                 </Button>
               )}
             </div>
@@ -250,10 +260,10 @@ export function CategoryImagePanel({
 
       <ConfirmDialog
         open={confirmDelete}
-        title="حذف صورة التصنيف"
-        description="هل أنت متأكد من حذف صورة هذا التصنيف؟ لا يمكن التراجع عن هذه العملية."
-        confirmLabel="حذف الصورة"
-        cancelLabel="إلغاء"
+        title={t("pages:categories.deleteCategoryImage")}
+        description={t("pages:categories.deleteCategoryImageConfirm")}
+        confirmLabel={t("common:deleteImage")}
+        cancelLabel={t("common:cancel")}
         isLoading={deleteMutation.isPending}
         onClose={() => setConfirmDelete(false)}
         onConfirm={handleConfirmDelete}

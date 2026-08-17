@@ -2,39 +2,24 @@ import { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 import { Percent, Plus } from "lucide-react"
 import { useQuery } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 
 import {
   deleteDiscount,
   getDiscounts,
   toggleDiscount,
-  type DiscountScope,
-  type DiscountType,
 } from "@/services/discount-service"
+import { useLocale } from "@/i18n/locale-provider"
+import { localizedName } from "@/lib/localized"
+import {
+  formatDiscountValue,
+  getDiscountScopeLabel,
+  getDiscountTypeLabel,
+} from "@/lib/discount-labels"
 import { cn } from "@/lib/utils"
-import { formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
-
-function getDiscountTypeLabel(type: DiscountType) {
-  return type === "PERCENTAGE" ? "نسبة مئوية" : "مبلغ ثابت"
-}
-
-function getDiscountScopeLabel(scope: DiscountScope) {
-  const labels: Record<DiscountScope, string> = {
-    GLOBAL: "عام",
-    CATEGORY: "تصنيف",
-    PRODUCT: "منتج",
-  }
-
-  return labels[scope]
-}
-
-function formatDiscountValue(type: DiscountType, value: string) {
-  const formattedValue = formatNumber(value)
-
-  return type === "PERCENTAGE" ? `${formattedValue}%` : `${formattedValue} SYP`
-}
 
 function statusBadgeClass(isActive: boolean) {
   return isActive
@@ -43,6 +28,8 @@ function statusBadgeClass(isActive: boolean) {
 }
 
 export function DiscountsPage() {
+  const { t } = useTranslation(["common", "pages"])
+  const { language } = useLocale()
   const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const [typeFilter, setTypeFilter] = useState("")
@@ -84,7 +71,7 @@ export function DiscountsPage() {
       refetch()
     } catch (err) {
       console.error(err)
-      setActionError("فشل حذف الخصم")
+      setActionError(t("pages:discounts.deleteFailed"))
     } finally {
       setIsDeleting(false)
     }
@@ -97,43 +84,43 @@ export function DiscountsPage() {
       refetch()
     } catch (err) {
       console.error(err)
-      setActionError("فشل تغيير حالة الخصم")
+      setActionError(t("pages:discounts.toggleFailed"))
     }
   }
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-              إدارة الخصومات
+              {t("pages:discounts.manageTitle")}
             </h1>
             <Percent className="size-7 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            إدارة الخصومات، تفعيلها، حساب قيمتها، ومراجعة الخصومات المناسبة.
+            {t("pages:discounts.manageSubtitle")}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <Link to="/discounts/active">
-            <Button variant="outline">الخصومات الفعالة</Button>
+            <Button variant="outline">{t("pages:discounts.active")}</Button>
           </Link>
 
           <Link to="/discounts/best">
-            <Button variant="outline">أفضل خصم</Button>
+            <Button variant="outline">{t("pages:discounts.best")}</Button>
           </Link>
 
           <Link to="/discounts/calculate">
-            <Button variant="outline">حساب الخصم</Button>
+            <Button variant="outline">{t("pages:discounts.calculate")}</Button>
           </Link>
 
           <Link to="/discounts/create">
             <Button className="gap-2">
               <Plus className="size-4" />
-              إضافة خصم
+              {t("pages:discounts.create")}
             </Button>
           </Link>
         </div>
@@ -143,10 +130,10 @@ export function DiscountsPage() {
         <div className="mb-5 grid gap-3 md:grid-cols-3">
           <input
             type="text"
-            placeholder="بحث باسم الخصم..."
+            placeholder={t("pages:discounts.searchPlaceholder")}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+            className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
           />
 
           <select
@@ -154,9 +141,9 @@ export function DiscountsPage() {
             onChange={(event) => setTypeFilter(event.target.value)}
             className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
           >
-            <option value="">كل الأنواع</option>
-            <option value="PERCENTAGE">نسبة مئوية</option>
-            <option value="FIXED_AMOUNT">مبلغ ثابت</option>
+            <option value="">{t("common:allTypes")}</option>
+            <option value="PERCENTAGE">{t("common:percentage")}</option>
+            <option value="FIXED_AMOUNT">{t("common:fixedAmount")}</option>
           </select>
 
           <select
@@ -164,10 +151,10 @@ export function DiscountsPage() {
             onChange={(event) => setScopeFilter(event.target.value)}
             className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-sm text-[var(--erp-text)] transition outline-none focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
           >
-            <option value="">كل النطاقات</option>
-            <option value="GLOBAL">عام</option>
-            <option value="CATEGORY">تصنيف</option>
-            <option value="PRODUCT">منتج</option>
+            <option value="">{t("common:allScopes")}</option>
+            <option value="GLOBAL">{t("common:global")}</option>
+            <option value="CATEGORY">{t("common:scopeCategoryShort")}</option>
+            <option value="PRODUCT">{t("common:scopeProductShort")}</option>
           </select>
         </div>
 
@@ -179,27 +166,27 @@ export function DiscountsPage() {
 
         {isLoading && (
           <p className="text-sm text-[var(--erp-muted)]">
-            جاري تحميل الخصومات...
+            {t("pages:discounts.loading")}
           </p>
         )}
 
         {error && (
           <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
-            حدث خطأ أثناء تحميل الخصومات.
+            {t("pages:discounts.loadFailed")}
           </p>
         )}
 
         {!isLoading && !error && discounts.length === 0 && (
           <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-center">
             <p className="text-sm text-[var(--erp-muted)]">
-              لا توجد خصومات مطابقة.
+              {t("pages:discounts.noMatching")}
             </p>
           </div>
         )}
 
         {!isLoading && !error && discounts.length > 0 && (
           <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-            <table className="w-full min-w-[860px] table-fixed text-right text-sm">
+            <table className="w-full min-w-[860px] table-fixed text-start text-sm">
               <colgroup>
                 <col className="w-[22%]" />
                 <col className="w-[15%]" />
@@ -211,13 +198,15 @@ export function DiscountsPage() {
 
               <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
                 <tr>
-                  <th className="px-3 py-3 font-medium">الاسم</th>
-                  <th className="px-3 py-3 font-medium">النوع</th>
-                  <th className="px-3 py-3 font-medium">القيمة</th>
-                  <th className="px-3 py-3 font-medium">النطاق</th>
-                  <th className="px-3 py-3 text-center font-medium">الحالة</th>
+                  <th className="px-3 py-3 font-medium">{t("common:name")}</th>
+                  <th className="px-3 py-3 font-medium">{t("common:type")}</th>
+                  <th className="px-3 py-3 font-medium">{t("common:value")}</th>
+                  <th className="px-3 py-3 font-medium">{t("common:scope")}</th>
                   <th className="px-3 py-3 text-center font-medium">
-                    العمليات
+                    {t("common:status")}
+                  </th>
+                  <th className="px-3 py-3 text-center font-medium">
+                    {t("common:operations")}
                   </th>
                 </tr>
               </thead>
@@ -229,11 +218,13 @@ export function DiscountsPage() {
                     className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
                   >
                     <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
-                      <span className="block truncate">{discount.name}</span>
+                      <span className="block truncate">
+                        {localizedName(discount, language)}
+                      </span>
                     </td>
 
                     <td className="px-3 py-3 text-[var(--erp-muted)]">
-                      {getDiscountTypeLabel(discount.type)}
+                      {getDiscountTypeLabel(discount.type, t)}
                     </td>
 
                     <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
@@ -241,7 +232,7 @@ export function DiscountsPage() {
                     </td>
 
                     <td className="px-3 py-3 text-[var(--erp-muted)]">
-                      {getDiscountScopeLabel(discount.scope)}
+                      {getDiscountScopeLabel(discount.scope, t)}
                     </td>
 
                     <td className="px-3 py-3">
@@ -252,7 +243,9 @@ export function DiscountsPage() {
                             statusBadgeClass(discount.isActive)
                           )}
                         >
-                          {discount.isActive ? "مفعل" : "معطل"}
+                          {discount.isActive
+                            ? t("common:enabledLabel")
+                            : t("common:disabledLabel")}
                         </span>
                       </div>
                     </td>
@@ -261,13 +254,13 @@ export function DiscountsPage() {
                       <div className="flex flex-wrap justify-center gap-1.5">
                         <Link to={`/discounts/${discount.id}`}>
                           <Button variant="outline" size="xs">
-                            عرض
+                            {t("common:view")}
                           </Button>
                         </Link>
 
                         <Link to={`/discounts/${discount.id}/edit`}>
                           <Button variant="outline" size="xs">
-                            تعديل
+                            {t("common:edit")}
                           </Button>
                         </Link>
 
@@ -280,7 +273,9 @@ export function DiscountsPage() {
                             handleToggle(discount.id, discount.isActive)
                           }
                         >
-                          {discount.isActive ? "تعطيل" : "تفعيل"}
+                          {discount.isActive
+                            ? t("common:disable")
+                            : t("common:enable")}
                         </Button>
 
                         <Button
@@ -288,7 +283,7 @@ export function DiscountsPage() {
                           size="xs"
                           onClick={() => setDeleteId(discount.id)}
                         >
-                          حذف
+                          {t("common:delete")}
                         </Button>
                       </div>
                     </td>
@@ -313,10 +308,10 @@ export function DiscountsPage() {
 
       <ConfirmDialog
         open={!!deleteId}
-        title="حذف الخصم"
-        description="هل أنت متأكد من حذف هذا الخصم؟ لا يمكن التراجع عن هذه العملية."
-        confirmLabel="حذف"
-        cancelLabel="إلغاء"
+        title={t("pages:discounts.confirmDeleteTitle")}
+        description={t("pages:discounts.confirmDeleteDesc")}
+        confirmLabel={t("common:delete")}
+        cancelLabel={t("common:cancel")}
         isLoading={isDeleting}
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}

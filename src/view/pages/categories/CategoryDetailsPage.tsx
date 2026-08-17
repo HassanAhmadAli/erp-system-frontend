@@ -9,6 +9,7 @@ import {
   Tag,
 } from "lucide-react"
 import { Link, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 import { useQuery } from "@tanstack/react-query"
 
 import { getCategoryById } from "@/services/category-service"
@@ -24,6 +25,7 @@ import { Button } from "@/view/components/ui/button"
 import { CategoryImagePanel } from "@/view/components/categories/category-image-panel"
 
 export function CategoryDetailsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { id } = useParams()
   const categoryId = Number(id)
 
@@ -34,19 +36,21 @@ export function CategoryDetailsPage() {
   })
 
   if (!isValidId(categoryId)) {
-    return <ErrorMessage message="رقم التصنيف غير صالح." />
+    return <ErrorMessage message={t("pages:categories.invalidCategoryId")} />
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
-        <p className="text-[var(--erp-muted)]">جاري تحميل بيانات التصنيف...</p>
+      <div className="space-y-6 text-start text-[var(--erp-text)]">
+        <p className="text-[var(--erp-muted)]">
+          {t("pages:categories.loadingCategory")}
+        </p>
       </div>
     )
   }
 
   if (isError || !data) {
-    return <ErrorMessage message="تعذر تحميل بيانات التصنيف." />
+    return <ErrorMessage message={t("pages:categories.loadCategoryFailed")} />
   }
 
   const products = data.products ?? []
@@ -59,7 +63,7 @@ export function CategoryDetailsPage() {
     productCount > 0 ? Math.round(totalStock / productCount) : 0
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-[var(--erp-text)]">
@@ -67,7 +71,7 @@ export function CategoryDetailsPage() {
           </h1>
 
           <p className="mt-2 text-[var(--erp-muted)]">
-            {data.description || "لا يوجد وصف لهذا التصنيف."}
+            {data.description || t("pages:categories.noDescription")}
           </p>
         </div>
 
@@ -75,7 +79,7 @@ export function CategoryDetailsPage() {
           <Link to={`/categories/${categoryId}/edit`}>
             <Button className="gap-2">
               <Pencil className="size-4" />
-              تعديل التصنيف
+              {t("pages:categories.edit")}
             </Button>
           </Link>
 
@@ -84,41 +88,47 @@ export function CategoryDetailsPage() {
             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             <ArrowRight className="size-4" />
-            العودة إلى التصنيفات
+            {t("pages:categories.backToCategories")}
           </Link>
         </div>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         <SummaryCard
-          label="عدد المنتجات"
+          label={t("pages:categories.productCount")}
           value={formatNumber(productCount)}
           icon={<Package className="size-5" />}
         />
 
         <SummaryCard
-          label="إجمالي الكمية في المخزون"
+          label={t("pages:categories.totalStockQuantity")}
           value={formatNumber(totalStock)}
           icon={<Tag className="size-5" />}
         />
 
         <SummaryCard
-          label="رقم التصنيف"
+          label={t("common:categoryId")}
           value={`#${formatId(data.id)}`}
           icon={<Hash className="size-5" />}
         />
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <CustomerInfoCard title="معلومات التصنيف">
-          <CustomerInfoRow label="اسم التصنيف" value={data.name} />
-          <CustomerInfoRow label="الوصف" value={data.description || "—"} />
+        <CustomerInfoCard title={t("pages:categories.categoryInfo")}>
           <CustomerInfoRow
-            label="رقم التصنيف"
+            label={t("pages:categories.categoryName")}
+            value={data.name}
+          />
+          <CustomerInfoRow
+            label={t("common:description")}
+            value={data.description || t("common:notAvailable")}
+          />
+          <CustomerInfoRow
+            label={t("common:categoryId")}
             value={`#${formatId(data.id)}`}
           />
           <CustomerInfoRow
-            label="عدد المنتجات"
+            label={t("pages:categories.productCount")}
             value={formatNumber(productCount)}
           />
         </CustomerInfoCard>
@@ -126,7 +136,7 @@ export function CategoryDetailsPage() {
         <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
           <div className="mb-4 flex items-center justify-end gap-2">
             <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-              ملخص المخزون
+              {t("pages:categories.stockSummary")}
             </h2>
 
             <FolderOpen className="size-5 text-[var(--erp-brand-solid)]" />
@@ -134,14 +144,17 @@ export function CategoryDetailsPage() {
 
           <div className="space-y-3 text-sm">
             <InfoLine
-              label="المنتجات المرتبطة"
+              label={t("pages:categories.linkedProducts")}
               value={formatNumber(productCount)}
             />
 
-            <InfoLine label="إجمالي الوحدات" value={formatNumber(totalStock)} />
+            <InfoLine
+              label={t("pages:categories.totalUnits")}
+              value={formatNumber(totalStock)}
+            />
 
             <InfoLine
-              label="متوسط الكمية لكل منتج"
+              label={t("pages:categories.avgQuantityPerProduct")}
               value={formatNumber(averageStock)}
             />
           </div>
@@ -157,21 +170,23 @@ export function CategoryDetailsPage() {
       <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <div className="mb-4 flex items-center justify-between gap-3">
           <span className="text-sm text-[var(--erp-muted)]">
-            {formatNumber(productCount)} منتج
+            {t("pages:categories.productCountLabel", {
+              count: formatNumber(productCount),
+            })}
           </span>
 
           <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-            المنتجات في هذا التصنيف
+            {t("pages:categories.productsInCategory")}
           </h2>
         </div>
 
         {products.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-center text-[var(--erp-muted)]">
-            لا توجد منتجات مرتبطة بهذا التصنيف حالياً.
+            {t("pages:categories.noProductsInCategory")}
           </div>
         ) : (
           <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-            <table className="w-full min-w-[800px] table-fixed text-right text-sm">
+            <table className="w-full min-w-[800px] table-fixed text-start text-sm">
               <colgroup>
                 <col className="w-[10%]" />
                 <col className="w-[25%]" />
@@ -184,12 +199,20 @@ export function CategoryDetailsPage() {
               <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
                 <tr>
                   <th className="px-3 py-3 font-medium">#</th>
-                  <th className="px-3 py-3 font-medium">اسم المنتج</th>
-                  <th className="px-3 py-3 font-medium">الباركود</th>
-                  <th className="px-3 py-3 font-medium">سعر البيع</th>
-                  <th className="px-3 py-3 font-medium">الكمية</th>
+                  <th className="px-3 py-3 font-medium">
+                    {t("pages:products.productName")}
+                  </th>
+                  <th className="px-3 py-3 font-medium">
+                    {t("common:barcode")}
+                  </th>
+                  <th className="px-3 py-3 font-medium">
+                    {t("pages:products.sellingPrice")}
+                  </th>
+                  <th className="px-3 py-3 font-medium">
+                    {t("common:quantity")}
+                  </th>
                   <th className="px-3 py-3 text-center font-medium">
-                    العمليات
+                    {t("common:operations")}
                   </th>
                 </tr>
               </thead>
@@ -229,7 +252,7 @@ export function CategoryDetailsPage() {
                     <td className="px-3 py-3 text-center">
                       <Link to={`/products/${product.id}`}>
                         <Button variant="outline" size="sm">
-                          عرض المنتج
+                          {t("pages:categories.viewProduct")}
                         </Button>
                       </Link>
                     </td>
@@ -278,8 +301,10 @@ function InfoLine({ label, value }: { label: string; value: string | number }) {
 }
 
 function ErrorMessage({ message }: { message: string }) {
+  const { t } = useTranslation(["common", "pages"])
+
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <p className="text-red-500 dark:text-red-300">{message}</p>
 
       <Link
@@ -287,7 +312,7 @@ function ErrorMessage({ message }: { message: string }) {
         className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
         <ArrowRight className="size-4" />
-        العودة إلى التصنيفات
+        {t("pages:categories.backToCategories")}
       </Link>
     </div>
   )

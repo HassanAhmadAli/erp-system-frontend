@@ -1,12 +1,13 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import {
   normalizeText,
   optionalText,
   parsePositiveInteger,
   parsePositiveNumber,
 } from "./helpers"
-import { requiredText } from "./zod-helpers"
+import { optionalTrimmedText, requiredText } from "./zod-helpers"
 
 const numericValueSchema = z.union([z.string(), z.number()])
 
@@ -14,29 +15,29 @@ export const LOYALTY_DISCOUNT_TYPES = ["PERCENTAGE", "FIXED_AMOUNT"] as const
 
 export type LoyaltyDiscountType = (typeof LOYALTY_DISCOUNT_TYPES)[number]
 
-export const LOYALTY_DISCOUNT_TYPE_LABELS: Record<LoyaltyDiscountType, string> =
-  {
-    PERCENTAGE: "نسبة مئوية",
-    FIXED_AMOUNT: "مبلغ ثابت",
-  }
+export function getLoyaltyDiscountTypeLabel(type: LoyaltyDiscountType): string {
+  return type === "PERCENTAGE"
+    ? i18n.t("validation:loyalty.discountTypePercentage")
+    : i18n.t("validation:loyalty.discountTypeFixedAmount")
+}
 
-function positiveNumberField(message: string) {
+function positiveNumberField(message: () => string) {
   return numericValueSchema.superRefine((value, ctx) => {
     if (parsePositiveNumber(value) == null) {
       ctx.addIssue({
         code: "custom",
-        message,
+        message: message(),
       })
     }
   })
 }
 
-function positiveIntegerField(message: string) {
+function positiveIntegerField(message: () => string) {
   return numericValueSchema.superRefine((value, ctx) => {
     if (parsePositiveInteger(value) == null) {
       ctx.addIssue({
         code: "custom",
-        message,
+        message: message(),
       })
     }
   })
@@ -44,30 +45,38 @@ function positiveIntegerField(message: string) {
 
 export const loyaltyRewardSchema = z.object({
   name: requiredText({
-    requiredMessage: "اسم المكافأة مطلوب.",
+    requiredMessage: () => i18n.t("validation:loyalty.nameRequired"),
     min: 2,
-    minMessage: "اسم المكافأة يجب أن يكون حرفين على الأقل.",
+    minMessage: () => i18n.t("validation:loyalty.nameMin"),
     max: 120,
-    maxMessage: "اسم المكافأة يجب ألا يتجاوز 120 حرفًا.",
+    maxMessage: () => i18n.t("validation:loyalty.nameMax"),
+  }),
+  nameAr: optionalTrimmedText({
+    max: 120,
+    maxMessage: () => i18n.t("validation:shared.nameArMax100"),
   }),
   description: z.union([z.string(), z.null(), z.undefined()]).optional(),
-  pointsCost: positiveIntegerField(
-    "تكلفة النقاط يجب أن تكون رقمًا صحيحًا أكبر من صفر."
+  descriptionAr: optionalTrimmedText({
+    max: 500,
+    maxMessage: () => i18n.t("validation:loyalty.descriptionArMax"),
+  }),
+  pointsCost: positiveIntegerField(() =>
+    i18n.t("validation:loyalty.pointsCostInvalid")
   ),
   discountType: z.enum(LOYALTY_DISCOUNT_TYPES, {
-    error: "نوع الخصم غير صالح.",
+    error: () => i18n.t("validation:loyalty.discountTypeInvalid"),
   }),
-  discountValue: positiveNumberField(
-    "قيمة الخصم يجب أن تكون رقمًا أكبر من صفر."
+  discountValue: positiveNumberField(() =>
+    i18n.t("validation:loyalty.discountValueInvalid")
   ),
-  maxUses: positiveIntegerField(
-    "الحد الأقصى للاستخدام يجب أن يكون رقمًا صحيحًا أكبر من صفر."
+  maxUses: positiveIntegerField(() =>
+    i18n.t("validation:loyalty.maxUsesInvalid")
   ),
-  validityDays: positiveIntegerField(
-    "مدة الصلاحية بالأيام يجب أن تكون رقمًا صحيحًا أكبر من صفر."
+  validityDays: positiveIntegerField(() =>
+    i18n.t("validation:loyalty.validityDaysInvalid")
   ),
   isActive: z.boolean({
-    error: "حالة المكافأة غير صالحة.",
+    error: () => i18n.t("validation:loyalty.statusInvalid"),
   }),
 })
 
@@ -75,7 +84,9 @@ export type LoyaltyRewardFormValues = z.input<typeof loyaltyRewardSchema>
 
 export type LoyaltyRewardPayload = {
   name: string
+  nameAr?: string
   description?: string
+  descriptionAr?: string
   pointsCost: number
   discountType: LoyaltyDiscountType
   discountValue: number
@@ -96,7 +107,9 @@ export function loyaltyRewardZodErrorToFormErrors(error: z.ZodError) {
 
     if (
       field !== "name" &&
+      field !== "nameAr" &&
       field !== "description" &&
+      field !== "descriptionAr" &&
       field !== "pointsCost" &&
       field !== "discountType" &&
       field !== "discountValue" &&
@@ -137,11 +150,15 @@ export function loyaltyRewardValuesToPayload(
     throw new Error("Invalid loyalty reward validityDays")
   }
 
+  const nameAr = optionalText(values.nameAr)
   const description = optionalText(values.description ?? undefined)
+  const descriptionAr = optionalText(values.descriptionAr)
 
   return {
     name: normalizeText(values.name),
+    ...(nameAr ? { nameAr } : {}),
     ...(description ? { description } : {}),
+    ...(descriptionAr ? { descriptionAr } : {}),
     pointsCost,
     discountType: values.discountType,
     discountValue,

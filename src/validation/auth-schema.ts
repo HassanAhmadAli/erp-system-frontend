@@ -1,11 +1,16 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import { normalizeText } from "./helpers"
-import { requiredText } from "./zod-helpers"
 
 export const loginSchema = z.object({
-  userType: requiredText({
-    requiredMessage: "نوع المستخدم مطلوب",
+  userType: z.string().superRefine((value, ctx) => {
+    if (!normalizeText(value)) {
+      ctx.addIssue({
+        code: "custom",
+        message: i18n.t("validation:userTypeRequired"),
+      })
+    }
   }),
   email: z.string().superRefine((value, ctx) => {
     const normalized = normalizeText(value)
@@ -13,7 +18,7 @@ export const loginSchema = z.object({
     if (!normalized) {
       ctx.addIssue({
         code: "custom",
-        message: "البريد الإلكتروني مطلوب",
+        message: i18n.t("validation:emailRequired"),
       })
       return
     }
@@ -23,13 +28,17 @@ export const loginSchema = z.object({
     if (!emailValidation.success) {
       ctx.addIssue({
         code: "custom",
-        message: "أدخل بريدًا إلكترونيًا صالحًا",
+        message: i18n.t("validation:invalidEmail"),
       })
     }
   }),
-  password: requiredText({
-    min: 1,
-    requiredMessage: "كلمة المرور مطلوبة",
+  password: z.string().superRefine((value, ctx) => {
+    if (!normalizeText(value)) {
+      ctx.addIssue({
+        code: "custom",
+        message: i18n.t("validation:passwordRequired"),
+      })
+    }
   }),
 })
 

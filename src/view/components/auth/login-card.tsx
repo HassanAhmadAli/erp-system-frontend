@@ -1,6 +1,7 @@
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 
 import { getDefaultRouteForRole } from "@/auth/permissions"
 import {
@@ -11,16 +12,12 @@ import {
 import { getCurrentUser } from "@/services/user-service"
 import { saveTokens } from "@/utils/auth-storage"
 import { loginSchema } from "@/validation/auth-schema"
-
-const USER_TYPE_LABELS: Record<AuthUserType, string> = {
-  "store-manager": "مدير متجر",
-  manager: "مدير",
-  accountant: "محاسب",
-  "warehouse-worker": "عامل مستودع",
-  cashier: "كاشير",
-}
+import { useLocale } from "@/i18n/locale-provider"
+import { isAppLanguage } from "@/i18n/types"
 
 export function LoginCard() {
+  const { t } = useTranslation(["auth", "common"])
+  const { setLanguage } = useLocale()
   const [userType, setUserType] = useState<AuthUserType>("warehouse-worker")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -44,7 +41,8 @@ export function LoginCard() {
 
       if (!validationResult.success) {
         setLoginMessage(
-          validationResult.error.issues[0]?.message || "فشل التحقق"
+          validationResult.error.issues[0]?.message ||
+            t("common:validationFailed")
         )
         return
       }
@@ -56,13 +54,16 @@ export function LoginCard() {
       )
       saveTokens(result.access_token, result.refresh_token)
       const user = await getCurrentUser()
+      if (isAppLanguage(user.language)) {
+        setLanguage(user.language)
+      }
       await queryClient.invalidateQueries({ queryKey: ["currentUser"] })
-      setLoginMessage("تم تسجيل الدخول بنجاح")
+      setLoginMessage(t("auth:loginSuccess"))
       navigate(getDefaultRouteForRole(user.role), { replace: true })
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "فشل تسجيل الدخول"
-      setLoginMessage(message || "فشل تسجيل الدخول")
+        error instanceof Error ? error.message : t("auth:loginFailed")
+      setLoginMessage(message || t("auth:loginFailed"))
     } finally {
       setIsSubmitting(false)
     }
@@ -72,9 +73,9 @@ export function LoginCard() {
     <section className="w-full max-w-md rounded-[24px] bg-[var(--erp-card)] p-8 shadow-[var(--erp-shadow)]">
       <div className="mb-6 flex flex-col items-center gap-3">
         <div className="text-center">
-          <h1 className="text-2xl font-bold">مرحبًا بعودتك</h1>
+          <h1 className="text-2xl font-bold">{t("auth:welcomeBack")}</h1>
           <p className="text-sm text-[var(--erp-muted)]">
-            سجّل دخولك لمتابعة إدارة النظام
+            {t("auth:signInSubtitle")}
           </p>
         </div>
         <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--erp-top-bar)] text-white">
@@ -90,7 +91,9 @@ export function LoginCard() {
         }}
       >
         <label className="block">
-          <span className="mb-2 block text-right text-sm">نوع المستخدم</span>
+          <span className="mb-2 block text-start text-sm">
+            {t("auth:userType")}
+          </span>
           <select
             className="h-11 w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[color-mix(in_srgb,var(--erp-sidebar)_82%,white)] px-3 dark:bg-[color-mix(in_srgb,var(--erp-card)_70%,#000)]"
             value={userType}
@@ -99,22 +102,22 @@ export function LoginCard() {
           >
             {AUTH_USER_TYPES.map((type) => (
               <option key={type} value={type}>
-                {USER_TYPE_LABELS[type]}
+                {t(`auth:userTypes.${type}`)}
               </option>
             ))}
           </select>
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-right text-sm">
-            البريد الالكتروني
+          <span className="mb-2 block text-start text-sm">
+            {t("auth:email")}
           </span>
           <div className="flex items-center rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[color-mix(in_srgb,var(--erp-sidebar)_82%,white)] px-3 dark:bg-[color-mix(in_srgb,var(--erp-card)_70%,#000)]">
             <input
               type="email"
               autoComplete="email"
-              className="h-11 w-full bg-transparent text-right outline-none placeholder:text-[var(--erp-muted)]"
-              placeholder="أدخل البريد الالكتروني"
+              className="h-11 w-full bg-transparent text-start outline-none placeholder:text-[var(--erp-muted)]"
+              placeholder={t("auth:emailPlaceholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={isSubmitting}
@@ -123,13 +126,15 @@ export function LoginCard() {
         </label>
 
         <label className="block">
-          <span className="mb-2 block text-right text-sm">كلمة المرور</span>
+          <span className="mb-2 block text-start text-sm">
+            {t("auth:password")}
+          </span>
           <div className="flex items-center rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[color-mix(in_srgb,var(--erp-sidebar)_82%,white)] px-3 dark:bg-[color-mix(in_srgb,var(--erp-card)_70%,#000)]">
             <input
               type="password"
               autoComplete="current-password"
-              className="h-11 w-full bg-transparent text-right outline-none placeholder:text-[var(--erp-muted)]"
-              placeholder="•••"
+              className="h-11 w-full bg-transparent text-start outline-none placeholder:text-[var(--erp-muted)]"
+              placeholder={t("auth:passwordPlaceholder")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isSubmitting}
@@ -142,7 +147,7 @@ export function LoginCard() {
           disabled={isSubmitting}
           className="h-11 w-full rounded-2xl bg-[var(--erp-top-bar)] text-base text-white hover:bg-[color-mix(in_srgb,var(--erp-top-bar)_88%,#000)] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isSubmitting ? "جاري تسجيل الدخول..." : "تسجيل الدخول"}
+          {isSubmitting ? t("auth:signingIn") : t("auth:signIn")}
         </button>
       </form>
 
@@ -154,16 +159,6 @@ export function LoginCard() {
           {loginMessage}
         </p>
       )}
-
-      <p className="mt-4 text-center text-sm text-[var(--erp-muted)]">
-        للدخول السريع للتصميم:{" "}
-        <Link
-          to="/categories"
-          className="font-semibold text-[var(--erp-brand)]"
-        >
-          متابعة بدون تسجيل
-        </Link>
-      </p>
     </section>
   )
 }

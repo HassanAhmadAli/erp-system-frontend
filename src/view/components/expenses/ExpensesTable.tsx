@@ -1,7 +1,10 @@
 import { Link, useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { formatExpenseAmount, type Expense } from "@/services/expense-service"
 import { PERMISSIONS } from "@/auth/permissions"
+import { useLocale } from "@/i18n/locale-provider"
+import { localized, localizedDescription } from "@/lib/localized"
 import { Can } from "@/view/components/auth/can"
 import {
   formatId,
@@ -52,12 +55,14 @@ export function ExpensesTable({
   onPrevious,
   onNext,
 }: ExpensesTableProps) {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
+  const { language } = useLocale()
 
   if (isLoading) {
     return (
       <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-muted)] shadow-[var(--erp-shadow)]">
-        جاري تحميل المصروفات...
+        {t("expenses.loadingExpenses", { ns: "pages" })}
       </section>
     )
   }
@@ -65,7 +70,7 @@ export function ExpensesTable({
   if (isError) {
     return (
       <section className="rounded-3xl border border-red-500/20 bg-red-500/10 p-6 text-red-700 shadow-[var(--erp-shadow)] dark:bg-red-500/15 dark:text-red-300">
-        حدث خطأ أثناء تحميل المصروفات
+        {t("expenses.loadExpensesFailed", { ns: "pages" })}
       </section>
     )
   }
@@ -75,25 +80,31 @@ export function ExpensesTable({
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-            قائمة المصروفات
+            {t("expenses.expenseList", { ns: "pages" })}
           </h2>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            عدد النتائج: {formatNumber(expenses.length)}
-            {total != null ? ` · الإجمالي ${formatNumber(total)}` : ""}
+            {total != null
+              ? t("resultCountTotal", {
+                  count: formatNumber(expenses.length),
+                  total: formatNumber(total),
+                })
+              : t("resultCount", {
+                  count: formatNumber(expenses.length),
+                })}
           </p>
         </div>
 
         <input
-          placeholder="بحث بالوصف أو الفئة في الصفحة الحالية..."
+          placeholder={t("expenses.searchPlaceholder", { ns: "pages" })}
           value={search}
           onChange={(event) => onSearchChange(event.target.value)}
-          className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 md:max-w-sm"
+          className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 md:max-w-sm"
         />
       </div>
 
       <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
-        <table className="w-full min-w-[800px] table-fixed text-right text-sm">
+        <table className="w-full min-w-[800px] table-fixed text-start text-sm">
           <colgroup>
             <col className="w-[8%]" />
             <col className="w-[25%]" />
@@ -106,11 +117,15 @@ export function ExpensesTable({
           <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
             <tr>
               <th className="px-3 py-3 font-medium">#</th>
-              <th className="px-3 py-3 font-medium">الوصف</th>
-              <th className="px-3 py-3 font-medium">الفئة</th>
-              <th className="px-3 py-3 font-medium">المبلغ</th>
-              <th className="px-3 py-3 font-medium">التاريخ</th>
-              <th className="px-3 py-3 text-center font-medium">الإجراءات</th>
+              <th className="px-3 py-3 font-medium">{t("description")}</th>
+              <th className="px-3 py-3 font-medium">
+                {t("expenses.expenseCategory", { ns: "pages" })}
+              </th>
+              <th className="px-3 py-3 font-medium">{t("amount")}</th>
+              <th className="px-3 py-3 font-medium">{t("date")}</th>
+              <th className="px-3 py-3 text-center font-medium">
+                {t("actions")}
+              </th>
             </tr>
           </thead>
 
@@ -125,11 +140,15 @@ export function ExpensesTable({
                 </td>
 
                 <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
-                  <span className="block truncate">{expense.description}</span>
+                  <span className="block truncate">
+                    {localizedDescription(expense, language)}
+                  </span>
                 </td>
 
                 <td className="px-3 py-3 text-[var(--erp-muted)]">
-                  <span className="block truncate">{expense.category}</span>
+                  <span className="block truncate">
+                    {localized(expense.category, expense.categoryAr, language)}
+                  </span>
                 </td>
 
                 <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
@@ -146,7 +165,7 @@ export function ExpensesTable({
                   <div className="flex flex-wrap justify-center gap-1.5">
                     <Link to={`/expenses/${expense.id}`}>
                       <Button variant="outline" size="sm">
-                        عرض
+                        {t("view")}
                       </Button>
                     </Link>
 
@@ -156,7 +175,7 @@ export function ExpensesTable({
                         size="sm"
                         onClick={() => navigate(`/expenses/${expense.id}/edit`)}
                       >
-                        تعديل
+                        {t("edit")}
                       </Button>
                     </Can>
                   </div>
@@ -170,7 +189,7 @@ export function ExpensesTable({
                   colSpan={6}
                   className="px-4 py-8 text-center text-sm text-[var(--erp-muted)]"
                 >
-                  لا توجد مصروفات
+                  {t("expenses.noExpenses", { ns: "pages" })}
                 </td>
               </tr>
             )}

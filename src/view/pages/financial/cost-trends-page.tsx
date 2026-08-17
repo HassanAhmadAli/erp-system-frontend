@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { useCostTrends } from "@/hooks/Financial/useFinancial"
 import { extractTimeSeries } from "@/lib/report-chart-data"
@@ -8,6 +9,7 @@ import { ReportLayout } from "@/view/components/reports/report-layout"
 import { ReportTable } from "@/view/components/reports/report-table"
 
 export function CostTrendsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const [productId, setProductId] = useState("")
 
   const params = productId ? { productId: Number(productId) } : undefined
@@ -18,22 +20,22 @@ export function CostTrendsPage() {
 
   return (
     <ReportLayout
-      title="اتجاهات التكلفة"
-      description="تغير التكلفة عبر الزمن — مخطط خطي مرتب زمنياً"
+      title={t("financial.costTrends", { ns: "pages" })}
+      description={t("financial.costTrendsReportDesc", { ns: "pages" })}
       backTo="/financial"
-      backLabel="التحليل المالي"
+      backLabel={t("financial.title", { ns: "pages" })}
       loading={isLoading}
       error={isError}
       filters={
         <div className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-4 shadow-[var(--erp-shadow)]">
           <label className="flex max-w-xs flex-col gap-1.5 text-sm">
             <span className="font-medium text-[var(--erp-muted)]">
-              معرف المنتج (اختياري)
+              {t("financial.productIdOptional", { ns: "pages" })}
             </span>
             <input
               type="number"
-              className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-3 py-2 text-right text-sm text-[var(--erp-text)] transition outline-none focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
-              placeholder="مثال: 1"
+              className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-3 py-2 text-start text-sm text-[var(--erp-text)] transition outline-none focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+              placeholder={t("financial.productIdPlaceholder", { ns: "pages" })}
               value={productId}
               onChange={(e) => setProductId(e.target.value)}
             />
@@ -41,8 +43,15 @@ export function CostTrendsPage() {
         </div>
       }
     >
-      <LineChart title="اتجاه التكلفة" data={timeSeries} unit="SP" />
-      <ReportTable title="سجل التكاليف" rows={rows} />
+      <LineChart
+        title={t("financial.costTrend", { ns: "pages" })}
+        data={timeSeries}
+        unit="SP"
+      />
+      <ReportTable
+        title={t("financial.costLog", { ns: "pages" })}
+        rows={rows}
+      />
     </ReportLayout>
   )
 }

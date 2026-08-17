@@ -1,12 +1,9 @@
 import { type FormEvent, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useCreateStaff } from "@/hooks/Staff/useCreateStaff"
-import {
-  STAFF_ROLE_LABELS,
-  STAFF_ROLES,
-  type StaffRole,
-} from "@/services/staff-service"
+import { STAFF_ROLES, type StaffRole } from "@/services/staff-service"
 import {
   createStaffFormValuesToPayload,
   createStaffSchema,
@@ -17,18 +14,20 @@ import {
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
-  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
 const EMPTY_FORM: CreateStaffFormValues = {
   fullName: "",
+  fullNameAr: "",
   email: "",
   phoneNumber: "",
   password: "",
   nationalId: "",
   role: "CASHIER",
   jobTitle: "",
+  jobTitleAr: "",
 }
 
 function ErrorText({ message }: { message?: string }) {
@@ -40,6 +39,7 @@ function ErrorText({ message }: { message?: string }) {
 }
 
 export function CreateStaffForm() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const mutation = useCreateStaff()
 
@@ -76,7 +76,7 @@ export function CreateStaffForm() {
       navigate("/staff")
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "حدث خطأ أثناء إنشاء الموظف"
+        error instanceof Error ? error.message : t("pages:staff.createFailed")
       setErrorMessage(message)
     }
   }
@@ -84,18 +84,18 @@ export function CreateStaffForm() {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
+      className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
     >
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label htmlFor="staff-fullName" className={labelClass}>
-            الاسم الكامل
+            {t("common:fullName")}
           </label>
           <input
             id="staff-fullName"
             value={form.fullName}
             onChange={(event) => setField("fullName", event.target.value)}
-            placeholder="أدخل اسم الموظف"
+            placeholder={t("pages:staff.namePlaceholder")}
             className={inputClass}
             autoComplete="name"
           />
@@ -103,15 +103,28 @@ export function CreateStaffForm() {
         </div>
 
         <div>
+          <label htmlFor="staff-fullNameAr" className={labelClass}>
+            {t("fullNameAr")}
+          </label>
+          <input
+            id="staff-fullNameAr"
+            value={form.fullNameAr ?? ""}
+            onChange={(event) => setField("fullNameAr", event.target.value)}
+            className={inputClass}
+          />
+          <ErrorText message={errors.fullNameAr} />
+        </div>
+
+        <div>
           <label htmlFor="staff-email" className={labelClass}>
-            البريد الإلكتروني
+            {t("common:email")}
           </label>
           <input
             id="staff-email"
             type="email"
             value={form.email}
             onChange={(event) => setField("email", event.target.value)}
-            placeholder="أدخل البريد الإلكتروني"
+            placeholder={t("common:emailPlaceholder")}
             className={inputClass}
             autoComplete="email"
           />
@@ -120,13 +133,13 @@ export function CreateStaffForm() {
 
         <div>
           <label htmlFor="staff-phoneNumber" className={labelClass}>
-            رقم الهاتف
+            {t("common:phoneNumber")}
           </label>
           <input
             id="staff-phoneNumber"
             value={form.phoneNumber}
             onChange={(event) => setField("phoneNumber", event.target.value)}
-            placeholder="أدخل رقم الهاتف"
+            placeholder={t("common:phonePlaceholder")}
             className={inputClass}
             autoComplete="tel"
           />
@@ -135,13 +148,13 @@ export function CreateStaffForm() {
 
         <div>
           <label htmlFor="staff-nationalId" className={labelClass}>
-            الرقم القومي
+            {t("common:nationalId")}
           </label>
           <input
             id="staff-nationalId"
             value={form.nationalId}
             onChange={(event) => setField("nationalId", event.target.value)}
-            placeholder="أدخل الرقم القومي"
+            placeholder={t("pages:staff.nationalIdPlaceholder")}
             className={inputClass}
           />
           <ErrorText message={errors.nationalId} />
@@ -149,7 +162,7 @@ export function CreateStaffForm() {
 
         <div>
           <label htmlFor="staff-role" className={labelClass}>
-            الدور
+            {t("common:role")}
           </label>
           <select
             id="staff-role"
@@ -161,7 +174,7 @@ export function CreateStaffForm() {
           >
             {STAFF_ROLES.map((role) => (
               <option key={role} value={role}>
-                {STAFF_ROLE_LABELS[role]}
+                {t(`roles.${role}`, { ns: "common" })}
               </option>
             ))}
           </select>
@@ -170,28 +183,41 @@ export function CreateStaffForm() {
 
         <div>
           <label htmlFor="staff-jobTitle" className={labelClass}>
-            المسمى الوظيفي
+            {t("pages:staff.jobTitle")}
           </label>
           <input
             id="staff-jobTitle"
             value={form.jobTitle}
             onChange={(event) => setField("jobTitle", event.target.value)}
-            placeholder="اختياري"
+            placeholder={t("common:optional")}
             className={inputClass}
           />
           <ErrorText message={errors.jobTitle} />
         </div>
 
+        <div>
+          <label htmlFor="staff-jobTitleAr" className={labelClass}>
+            {t("pages:staff.jobTitleAr")}
+          </label>
+          <input
+            id="staff-jobTitleAr"
+            value={form.jobTitleAr ?? ""}
+            onChange={(event) => setField("jobTitleAr", event.target.value)}
+            className={inputClass}
+          />
+          <ErrorText message={errors.jobTitleAr} />
+        </div>
+
         <div className="md:col-span-2">
           <label htmlFor="staff-password" className={labelClass}>
-            كلمة المرور
+            {t("common:password")}
           </label>
           <input
             id="staff-password"
             type="password"
             value={form.password}
             onChange={(event) => setField("password", event.target.value)}
-            placeholder="8 أحرف على الأقل"
+            placeholder={t("common:passwordPlaceholder")}
             className={inputClass}
             autoComplete="new-password"
           />
@@ -207,7 +233,7 @@ export function CreateStaffForm() {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
         <Button type="submit" disabled={mutation.isPending}>
-          {mutation.isPending ? "جاري الحفظ..." : "إضافة الموظف"}
+          {mutation.isPending ? t("common:saving") : t("pages:staff.create")}
         </Button>
 
         <Button
@@ -215,7 +241,7 @@ export function CreateStaffForm() {
           variant="outline"
           onClick={() => navigate("/staff")}
         >
-          إلغاء
+          {t("common:cancel")}
         </Button>
       </div>
     </form>

@@ -1,4 +1,5 @@
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
 
 import { useSalesInvoices } from "@/hooks/useSalesInvoices"
 import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
@@ -23,6 +24,7 @@ type NormalizedSalesInvoice = {
 }
 
 export function ReportSalesPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { from, to, setFrom, setTo, range } = useReportDateRange()
   const { data, isLoading, isError } = useSalesInvoices({ limit: 100 })
 
@@ -36,9 +38,9 @@ export function ReportSalesPage() {
         invoiceDate: inv.createdAt,
         totalAmount:
           inv.finalAmount ?? inv.totalAmount ?? inv.subtotal ?? inv.amountPaid,
-        customer: inv.customer?.user?.fullName ?? "زبون نقدي",
+        customer: inv.customer?.user?.fullName ?? t("cashCustomerLabel"),
       })),
-    [invoices]
+    [invoices, t]
   )
 
   const filtered = useMemo<NormalizedSalesInvoice[]>(() => {
@@ -75,10 +77,10 @@ export function ReportSalesPage() {
 
   return (
     <ReportLayout
-      title="تقرير المبيعات"
-      description="اتجاه الإيرادات وأعلى الفواتير وتوزيعها حسب الحالة"
+      title={t("reports.sales", { ns: "pages" })}
+      description={t("reports.salesReportDesc", { ns: "pages" })}
       backTo="/reports"
-      backLabel="كل التقارير"
+      backLabel={t("reports.allReports", { ns: "pages" })}
       loading={isLoading}
       error={isError}
       filters={
@@ -90,28 +92,51 @@ export function ReportSalesPage() {
         />
       }
       actions={
-        <ExportReportButton type="sales" label="تصدير CSV" params={range} />
+        <ExportReportButton
+          type="sales"
+          label={t("exportCsv")}
+          params={range}
+        />
       }
     >
       <ReportMetrics
         metrics={[
-          { key: "count", label: "عدد الفواتير", value: filtered.length },
-          { key: "totalSales", label: "إجمالي المبيعات", value: totalSales },
+          {
+            key: "count",
+            label: t("reports.invoiceCount", { ns: "pages" }),
+            value: filtered.length,
+          },
+          {
+            key: "totalSales",
+            label: t("reports.totalSales", { ns: "pages" }),
+            value: totalSales,
+          },
         ]}
       />
 
-      <LineChart title="اتجاه المبيعات عبر الزمن" data={timeSeries} unit="SP" />
+      <LineChart
+        title={t("reports.salesTrend", { ns: "pages" })}
+        data={timeSeries}
+        unit="SP"
+      />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <BarChart title="أعلى الفواتير قيمةً" data={topByAmount} unit="SP" />
+        <BarChart
+          title={t("reports.topInvoices", { ns: "pages" })}
+          data={topByAmount}
+          unit="SP"
+        />
         <DonutChart
-          title="توزيع المبيعات حسب الحالة"
+          title={t("reports.salesByStatus", { ns: "pages" })}
           data={statusByAmount}
           unit="SP"
         />
       </div>
 
-      <ReportTable title="فواتير المبيعات" rows={tableRows} />
+      <ReportTable
+        title={t("reports.salesInvoices", { ns: "pages" })}
+        rows={tableRows}
+      />
     </ReportLayout>
   )
 }

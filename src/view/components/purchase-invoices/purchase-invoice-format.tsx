@@ -1,3 +1,4 @@
+import { localized } from "@/lib/localized"
 import { cn } from "@/lib/utils"
 import type {
   PurchaseInvoice,
@@ -10,12 +11,14 @@ import {
   formatNumber as formatGlobalNumber,
   toEnglishDigits,
 } from "@/utils/number-formatters"
+import { useTranslation } from "react-i18next"
+import type { TFunction } from "i18next"
 
-export const purchaseInvoiceStatusLabels: Record<string, string> = {
-  PENDING: "معلقة",
-  COMPLETED: "مكتملة",
-  CANCELLED: "ملغاة",
-  REFUNDED: "مستردة",
+export const PURCHASE_INVOICE_STATUS_KEYS: Record<string, string> = {
+  PENDING: "statuses.onHold",
+  COMPLETED: "statuses.completed",
+  CANCELLED: "statuses.cancelled",
+  REFUNDED: "statuses.refunded",
 }
 
 const purchaseInvoiceStatusStyles: Record<string, string> = {
@@ -27,6 +30,12 @@ const purchaseInvoiceStatusStyles: Record<string, string> = {
     "bg-rose-500/10 text-rose-700 ring-rose-500/20 dark:bg-rose-500/15 dark:text-rose-300",
   REFUNDED:
     "bg-sky-500/10 text-sky-700 ring-sky-500/20 dark:bg-sky-500/15 dark:text-sky-300",
+}
+
+export function getPurchaseInvoiceStatusLabel(status: string, t: TFunction) {
+  const safeStatus = String(status ?? "PENDING").toUpperCase()
+  const key = PURCHASE_INVOICE_STATUS_KEYS[safeStatus]
+  return key ? t(`common:${key}`) : safeStatus
 }
 
 export function formatNumber(value?: string | number | null) {
@@ -41,11 +50,6 @@ export function formatMoney(value?: string | number | null) {
   return formatCurrency(value)
 }
 
-/**
- * Uses the global formatter.
- * Because formatDateTime does not pass a fixed timeZone,
- * the browser automatically displays the time using the local PC timezone.
- */
 export function formatDate(value?: string | Date | null) {
   return formatDateTime(value)
 }
@@ -65,13 +69,18 @@ export function getNextYearDateInputValue() {
   return date.toISOString().slice(0, 10)
 }
 
-export function getSupplierName(invoice: PurchaseInvoice) {
+export function getSupplierName(invoice: PurchaseInvoice, t: TFunction) {
+  const supplier = invoice.supplier
+
   return (
-    invoice.supplier?.name ||
-    invoice.supplier?.companyName ||
-    invoice.supplier?.user?.fullName ||
-    invoice.supplier?.user?.email ||
-    `مورد #${formatId(invoice.supplierId ?? "—")}`
+    localized(supplier?.fullName, supplier?.fullNameAr) ||
+    supplier?.name ||
+    supplier?.companyName ||
+    supplier?.user?.fullName ||
+    supplier?.user?.email ||
+    t("common:supplierFallback", {
+      id: formatId(invoice.supplierId ?? "—"),
+    })
   )
 }
 
@@ -107,6 +116,7 @@ export function NumberText({ value }: { value: string | number }) {
 }
 
 export function PurchaseInvoiceStatusBadge({ status }: { status?: string }) {
+  const { t } = useTranslation("common")
   const safeStatus = String(status ?? "PENDING").toUpperCase()
 
   return (
@@ -117,7 +127,7 @@ export function PurchaseInvoiceStatusBadge({ status }: { status?: string }) {
           "bg-slate-500/10 text-slate-700 ring-slate-500/20 dark:text-slate-300"
       )}
     >
-      {purchaseInvoiceStatusLabels[safeStatus] ?? safeStatus}
+      {getPurchaseInvoiceStatusLabel(safeStatus, t)}
     </span>
   )
 }

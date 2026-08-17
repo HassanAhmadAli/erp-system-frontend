@@ -1,22 +1,24 @@
 import { FileUp, PackagePlus } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { ProductsTable } from "@/view/components/products/products-table"
 import { Button } from "@/view/components/ui/button"
 
 export function ProductsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
 
   return (
-    <main className="space-y-6 text-[var(--erp-text)]" dir="rtl">
+    <main className="space-y-6 text-[var(--erp-text)]">
       <section className="flex flex-col gap-4 rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)] sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-right">
+        <div className="text-start">
           <h1 className="text-2xl font-bold text-[var(--erp-text)]">
-            المنتجات
+            {t("pages:products.title")}
           </h1>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            إدارة المنتجات وتحديث المخزون
+            {t("pages:products.subtitle")}
           </p>
         </div>
 
@@ -28,7 +30,7 @@ export function ProductsPage() {
             onClick={() => navigate("/products/import")}
           >
             <FileUp className="size-4" />
-            استيراد CSV
+            {t("pages:products.importCsv")}
           </Button>
 
           <Button
@@ -37,7 +39,7 @@ export function ProductsPage() {
             onClick={() => navigate("/products/create")}
           >
             <PackagePlus className="size-4" />
-            إضافة منتج
+            {t("pages:products.create")}
           </Button>
         </div>
       </section>
