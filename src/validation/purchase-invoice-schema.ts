@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import {
   dateInputToIsoString,
   isValidDateInputValue,
@@ -61,7 +62,7 @@ export const purchaseInvoiceSchema = z
     if (parsePositiveInteger(values.supplierId) == null) {
       ctx.addIssue({
         code: "custom",
-        message: "أدخل رقم المورد بشكل صحيح",
+        message: i18n.t("validation:purchaseInvoice.supplierIdInvalid"),
         path: ["supplierId"],
       })
     }
@@ -69,7 +70,7 @@ export const purchaseInvoiceSchema = z
     if (!isValidDateTimeInputValue(values.invoiceDate)) {
       ctx.addIssue({
         code: "custom",
-        message: "أدخل تاريخ الفاتورة بشكل صحيح",
+        message: i18n.t("validation:purchaseInvoice.invoiceDateInvalid"),
         path: ["invoiceDate"],
       })
     }
@@ -77,7 +78,7 @@ export const purchaseInvoiceSchema = z
     if (values.items.length === 0) {
       ctx.addIssue({
         code: "custom",
-        message: "أضف منتجًا واحدًا على الأقل إلى الفاتورة",
+        message: i18n.t("validation:purchaseInvoice.itemsRequired"),
         path: ["items"],
       })
     }
@@ -92,13 +93,13 @@ export const purchaseInvoiceSchema = z
       if (productId == null) {
         ctx.addIssue({
           code: "custom",
-          message: "رقم المنتج يجب أن يكون رقمًا صحيحًا أكبر من الصفر",
+          message: i18n.t("validation:purchaseInvoice.productIdInvalid"),
           path: ["items", index, "productId"],
         })
       } else if (productIds.has(productId)) {
         ctx.addIssue({
           code: "custom",
-          message: "لا يمكن تكرار نفس المنتج في الفاتورة",
+          message: i18n.t("validation:shared.duplicateProductInInvoice"),
           path: ["items"],
         })
       } else {
@@ -108,7 +109,7 @@ export const purchaseInvoiceSchema = z
       if (quantity == null) {
         ctx.addIssue({
           code: "custom",
-          message: "الكمية يجب أن تكون رقمًا صحيحًا أكبر من الصفر",
+          message: i18n.t("validation:purchaseInvoice.quantityInvalid"),
           path: ["items", index, "quantity"],
         })
       }
@@ -116,7 +117,7 @@ export const purchaseInvoiceSchema = z
       if (unitCost == null) {
         ctx.addIssue({
           code: "custom",
-          message: "تكلفة الوحدة يجب أن تكون رقمًا أكبر من الصفر",
+          message: i18n.t("validation:purchaseInvoice.unitCostInvalid"),
           path: ["items", index, "unitCost"],
         })
       }
@@ -127,7 +128,7 @@ export const purchaseInvoiceSchema = z
       ) {
         ctx.addIssue({
           code: "custom",
-          message: "أدخل تاريخ الانتهاء بشكل صحيح",
+          message: i18n.t("validation:purchaseInvoice.expiryDateInvalid"),
           path: ["items", index, "expiryDate"],
         })
       }
@@ -168,7 +169,11 @@ export function purchaseInvoiceZodErrorToFormErrors(error: z.ZodError) {
   for (const issue of error.issues) {
     const field = issue.path[0]
 
-    if (field !== "supplierId" && field !== "invoiceDate" && field !== "items") {
+    if (
+      field !== "supplierId" &&
+      field !== "invoiceDate" &&
+      field !== "items"
+    ) {
       continue
     }
 
@@ -205,9 +210,7 @@ export function purchaseInvoiceValuesToPayload(
         productId,
         quantity,
         unitCost,
-        ...(expiryDate
-          ? { expiryDate: dateInputToIsoString(expiryDate) }
-          : {}),
+        ...(expiryDate ? { expiryDate: dateInputToIsoString(expiryDate) } : {}),
       }
     }),
   }

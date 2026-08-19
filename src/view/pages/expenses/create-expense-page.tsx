@@ -1,6 +1,7 @@
 import { type FormEvent, useState } from "react"
 import { ArrowRight, Receipt } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useCreateExpense } from "@/hooks/Expenses/useExpenses"
 import {
@@ -13,7 +14,7 @@ import {
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
-  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
@@ -23,7 +24,9 @@ function getTodayDateInputValue() {
 
 const EMPTY_FORM: ExpenseFormValues = {
   description: "",
+  descriptionAr: "",
   category: "",
+  categoryAr: "",
   amount: "",
   expenseDate: getTodayDateInputValue(),
 }
@@ -37,6 +40,7 @@ function ErrorText({ message }: { message?: string }) {
 }
 
 export function CreateExpensePage() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const createMutation = useCreateExpense()
 
@@ -69,27 +73,24 @@ export function CreateExpensePage() {
 
       navigate("/expenses")
     } catch {
-      setErrorMessage("فشل إنشاء المصروف، حاول مرة أخرى")
+      setErrorMessage(t("expenses.createFailed", { ns: "pages" }))
     }
   }
 
   return (
-    <div
-      className="mx-auto max-w-3xl space-y-6 text-right text-[var(--erp-text)]"
-      dir="rtl"
-    >
+    <div className="mx-auto max-w-3xl space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-              إضافة مصروف
+              {t("expenses.create", { ns: "pages" })}
             </h1>
 
             <Receipt className="size-7 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            أدخل بيانات المصروف ثم اضغط حفظ.
+            {t("expenses.createSubtitle", { ns: "pages" })}
           </p>
         </div>
 
@@ -98,39 +99,57 @@ export function CreateExpensePage() {
           className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
         >
           <ArrowRight className="size-4" />
-          العودة إلى المصروفات
+          {t("expenses.backToExpenses", { ns: "pages" })}
         </Link>
       </header>
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
+        className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
       >
         <div className="grid gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <label htmlFor="expense-description" className={labelClass}>
-              الوصف
+              {t("description")}
             </label>
 
             <input
               id="expense-description"
               className={inputClass}
-              placeholder="أدخل وصف المصروف"
+              placeholder={t("expenses.descriptionPlaceholder", {
+                ns: "pages",
+              })}
               value={form.description}
               onChange={(event) => setField("description", event.target.value)}
             />
             <ErrorText message={errors.description} />
           </div>
 
+          <div className="md:col-span-2">
+            <label htmlFor="expense-description-ar" className={labelClass}>
+              {t("descriptionAr")}
+            </label>
+
+            <input
+              id="expense-description-ar"
+              className={inputClass}
+              value={form.descriptionAr ?? ""}
+              onChange={(event) =>
+                setField("descriptionAr", event.target.value)
+              }
+            />
+            <ErrorText message={errors.descriptionAr} />
+          </div>
+
           <div>
             <label htmlFor="expense-category" className={labelClass}>
-              الفئة
+              {t("expenses.expenseCategory", { ns: "pages" })}
             </label>
 
             <input
               id="expense-category"
               className={inputClass}
-              placeholder="مثال: إيجار، رواتب، كهرباء"
+              placeholder={t("expenses.categoryPlaceholder", { ns: "pages" })}
               value={form.category}
               onChange={(event) => setField("category", event.target.value)}
             />
@@ -138,8 +157,22 @@ export function CreateExpensePage() {
           </div>
 
           <div>
+            <label htmlFor="expense-category-ar" className={labelClass}>
+              {t("categoryAr")}
+            </label>
+
+            <input
+              id="expense-category-ar"
+              className={inputClass}
+              value={form.categoryAr ?? ""}
+              onChange={(event) => setField("categoryAr", event.target.value)}
+            />
+            <ErrorText message={errors.categoryAr} />
+          </div>
+
+          <div>
             <label htmlFor="expense-amount" className={labelClass}>
-              المبلغ
+              {t("amount")}
             </label>
 
             <input
@@ -148,7 +181,7 @@ export function CreateExpensePage() {
               step="0.01"
               min="0"
               className={inputClass}
-              placeholder="أدخل المبلغ"
+              placeholder={t("expenses.amountPlaceholder", { ns: "pages" })}
               value={form.amount}
               onChange={(event) => setField("amount", event.target.value)}
             />
@@ -157,7 +190,7 @@ export function CreateExpensePage() {
 
           <div className="md:col-span-2">
             <label htmlFor="expense-date" className={labelClass}>
-              تاريخ المصروف
+              {t("expenses.expenseDate", { ns: "pages" })}
             </label>
 
             <input
@@ -179,7 +212,9 @@ export function CreateExpensePage() {
 
         <div className="flex flex-col gap-2 border-t border-[var(--erp-border)] pt-4 sm:flex-row sm:justify-end">
           <Button type="submit" disabled={createMutation.isPending}>
-            {createMutation.isPending ? "جاري الحفظ..." : "إضافة المصروف"}
+            {createMutation.isPending
+              ? t("saving")
+              : t("expenses.addExpenseButton", { ns: "pages" })}
           </Button>
 
           <Button
@@ -187,7 +222,7 @@ export function CreateExpensePage() {
             variant="outline"
             onClick={() => navigate("/expenses")}
           >
-            إلغاء
+            {t("cancel")}
           </Button>
         </div>
       </form>

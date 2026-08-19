@@ -1,0 +1,29 @@
+{
+  "overview": "نظرة عامة",
+  "accountantOverview": "لوحة المحاسب",
+  "pos": "نقطة البيع",
+  "customers": "العملاء",
+  "staff": "الموظفون",
+  "orders": "الطلبات",
+  "salesInvoices": "فواتير المبيعات",
+  "purchaseInvoices": "فواتير الشراء",
+  "notifications": "الإشعارات",
+  "ads": "الإعلانات",
+  "auditLogs": "سجل النشاطات",
+  "inventory": "المخزون",
+  "categories": "التصنيفات",
+  "products": "المنتجات",
+  "suppliers": "الموردون",
+  "discounts": "الخصومات",
+  "expenses": "المصروفات",
+  "reports": "التقارير",
+  "financial": "التحليل المالي",
+  "loyaltyRewards": "مكافآت الولاء",
+  "settings": "الإعدادات",
+  "roles": {
+    "STORE_MANAGER": "مدير المتجر",
+    "CASHIER": "الكاشير",
+    "WAREHOUSE_WORKER": "مدير المخزون",
+    "ACCOUNTANT": "المحاسب"
+  }
+}

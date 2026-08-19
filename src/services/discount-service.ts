@@ -1,4 +1,5 @@
 import { apiRequest } from "@/api/client"
+import { toPaginationQuery } from "@/lib/pagination"
 import {
   discountFormValuesToPayload,
   discountScopeSchema,
@@ -20,6 +21,7 @@ export type { DiscountScope, DiscountType }
 export type Discount = {
   id: number
   name: string
+  nameAr?: string | null
   type: DiscountType
   value: string
   scope: DiscountScope
@@ -42,6 +44,7 @@ export type Discount = {
   createdBy?: {
     id: number
     fullName: string
+    fullNameAr?: string | null
   }
 }
 
@@ -82,6 +85,7 @@ export type CalculateDiscountResponse = {
 export type GetDiscountsParams = {
   page?: number
   limit?: number
+  offset?: number
   search?: string
   type?: DiscountType
   scope?: DiscountScope
@@ -99,39 +103,20 @@ function isDiscountScope(value: unknown): value is DiscountScope {
 }
 
 function buildDiscountQuery(params?: GetDiscountsParams) {
+  const { limit, offset, search } = toPaginationQuery(params)
   const query = new URLSearchParams()
 
-  if (params?.page != null) {
-    query.append("page", String(params.page))
+  query.append("limit", String(limit))
+  query.append("offset", String(offset))
+
+  if (search) {
+    query.append("search", search)
   }
 
-  if (params?.limit != null) {
-    query.append("limit", String(params.limit))
-  }
+  // type/scope are not supported by the backend list endpoint;
+  // callers should filter those client-side when needed.
 
-  if (params?.search?.trim()) {
-    query.append("search", params.search.trim())
-  }
-
-  if (params?.type != null) {
-    if (!isDiscountType(params.type)) {
-      throw new Error("Invalid discount type")
-    }
-
-    query.append("type", params.type)
-  }
-
-  if (params?.scope != null) {
-    if (!isDiscountScope(params.scope)) {
-      throw new Error("Invalid discount scope")
-    }
-
-    query.append("scope", params.scope)
-  }
-
-  const queryString = query.toString()
-
-  return queryString ? `?${queryString}` : ""
+  return `?${query.toString()}`
 }
 
 function normalizeBestDiscountPayload(params: BestDiscountParams) {

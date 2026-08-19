@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import {
   compareDateInputValues,
   isHttpUrl,
@@ -12,27 +13,43 @@ import {
   parsePositiveNumber,
 } from "./helpers"
 
-const REQUIRED_MESSAGE = "هذا الحقل مطلوب"
-const INVALID_NUMBER_MESSAGE = "أدخل رقمًا صالحًا"
-const INVALID_INTEGER_MESSAGE = "أدخل رقمًا صحيحًا"
-const INVALID_DATE_MESSAGE = "أدخل تاريخًا صالحًا"
-const INVALID_URL_MESSAGE = "أدخل رابطًا صالحًا يبدأ بـ http أو https"
+const REQUIRED_MESSAGE = () => i18n.t("validation:required")
+const INVALID_NUMBER_MESSAGE = () => i18n.t("validation:mustBeNumber")
+const INVALID_INTEGER_MESSAGE = () => i18n.t("validation:mustBeInteger")
+const INVALID_DATE_MESSAGE = () => i18n.t("validation:mustBeDate")
+const INVALID_URL_MESSAGE = () => i18n.t("validation:mustBeUrl")
+const POSITIVE_NUMBER_MESSAGE = () => i18n.t("validation:mustBePositiveNumber")
+const NON_NEGATIVE_NUMBER_MESSAGE = () =>
+  i18n.t("validation:mustBeNonNegativeNumber")
+const POSITIVE_INTEGER_MESSAGE = () =>
+  i18n.t("validation:mustBePositiveInteger")
+const END_AFTER_START_MESSAGE = () => i18n.t("validation:endAfterStart")
+
+export type MessageInput = string | (() => string)
+
+function resolveMessage(
+  message: MessageInput | undefined,
+  fallback: () => string
+) {
+  if (message == null) return fallback()
+  return typeof message === "function" ? message() : message
+}
 
 export type TextOptions = {
-  requiredMessage?: string
+  requiredMessage?: MessageInput
   min?: number
-  minMessage?: string
+  minMessage?: MessageInput
   max?: number
-  maxMessage?: string
+  maxMessage?: MessageInput
 }
 
 export type NumberTextOptions = {
-  requiredMessage?: string
-  invalidMessage?: string
+  requiredMessage?: MessageInput
+  invalidMessage?: MessageInput
   min?: number
-  minMessage?: string
+  minMessage?: MessageInput
   max?: number
-  maxMessage?: string
+  maxMessage?: MessageInput
 }
 
 export function requiredText(options: TextOptions = {}) {
@@ -42,7 +59,7 @@ export function requiredText(options: TextOptions = {}) {
     if (!normalized) {
       ctx.addIssue({
         code: "custom",
-        message: options.requiredMessage ?? REQUIRED_MESSAGE,
+        message: resolveMessage(options.requiredMessage, REQUIRED_MESSAGE),
       })
       return
     }
@@ -50,42 +67,51 @@ export function requiredText(options: TextOptions = {}) {
     if (options.min != null && normalized.length < options.min) {
       ctx.addIssue({
         code: "custom",
-        message:
-          options.minMessage ?? `يجب أن يكون على الأقل ${options.min} أحرف`,
+        message: resolveMessage(options.minMessage, () =>
+          i18n.t("validation:stringMin", { min: options.min })
+        ),
       })
     }
 
     if (options.max != null && normalized.length > options.max) {
       ctx.addIssue({
         code: "custom",
-        message:
-          options.maxMessage ?? `يجب ألا يتجاوز ${options.max} حرفًا`,
+        message: resolveMessage(options.maxMessage, () =>
+          i18n.t("validation:stringMax", { max: options.max })
+        ),
       })
     }
   })
 }
 
-export function optionalTrimmedText(options: Omit<TextOptions, "requiredMessage"> = {}) {
-  return z.string().optional().superRefine((value, ctx) => {
-    const normalized = normalizeText(value ?? "")
-    if (!normalized) return
+export function optionalTrimmedText(
+  options: Omit<TextOptions, "requiredMessage"> = {}
+) {
+  return z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      const normalized = normalizeText(value ?? "")
+      if (!normalized) return
 
-    if (options.min != null && normalized.length < options.min) {
-      ctx.addIssue({
-        code: "custom",
-        message:
-          options.minMessage ?? `يجب أن يكون على الأقل ${options.min} أحرف`,
-      })
-    }
+      if (options.min != null && normalized.length < options.min) {
+        ctx.addIssue({
+          code: "custom",
+          message: resolveMessage(options.minMessage, () =>
+            i18n.t("validation:stringMin", { min: options.min })
+          ),
+        })
+      }
 
-    if (options.max != null && normalized.length > options.max) {
-      ctx.addIssue({
-        code: "custom",
-        message:
-          options.maxMessage ?? `يجب ألا يتجاوز ${options.max} حرفًا`,
-      })
-    }
-  })
+      if (options.max != null && normalized.length > options.max) {
+        ctx.addIssue({
+          code: "custom",
+          message: resolveMessage(options.maxMessage, () =>
+            i18n.t("validation:stringMax", { max: options.max })
+          ),
+        })
+      }
+    })
 }
 
 function validateNumberBounds(
@@ -96,14 +122,18 @@ function validateNumberBounds(
   if (options.min != null && value < options.min) {
     ctx.addIssue({
       code: "custom",
-      message: options.minMessage ?? `يجب أن يكون الرقم ${options.min} أو أكثر`,
+      message: resolveMessage(options.minMessage, () =>
+        i18n.t("validation:mustBePositive")
+      ),
     })
   }
 
   if (options.max != null && value > options.max) {
     ctx.addIssue({
       code: "custom",
-      message: options.maxMessage ?? `يجب ألا يتجاوز الرقم ${options.max}`,
+      message: resolveMessage(options.maxMessage, () =>
+        i18n.t("validation:stringMax", { max: options.max })
+      ),
     })
   }
 }
@@ -113,7 +143,7 @@ export function finiteNumberText(options: NumberTextOptions = {}) {
     if (!value.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: options.requiredMessage ?? REQUIRED_MESSAGE,
+        message: resolveMessage(options.requiredMessage, REQUIRED_MESSAGE),
       })
       return
     }
@@ -122,7 +152,7 @@ export function finiteNumberText(options: NumberTextOptions = {}) {
     if (parsed == null) {
       ctx.addIssue({
         code: "custom",
-        message: options.invalidMessage ?? INVALID_NUMBER_MESSAGE,
+        message: resolveMessage(options.invalidMessage, INVALID_NUMBER_MESSAGE),
       })
       return
     }
@@ -132,20 +162,26 @@ export function finiteNumberText(options: NumberTextOptions = {}) {
 }
 
 export function optionalFiniteNumberText(options: NumberTextOptions = {}) {
-  return z.string().optional().superRefine((value, ctx) => {
-    if (!value?.trim()) return
+  return z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      if (!value?.trim()) return
 
-    const parsed = parseFiniteNumber(value)
-    if (parsed == null) {
-      ctx.addIssue({
-        code: "custom",
-        message: options.invalidMessage ?? INVALID_NUMBER_MESSAGE,
-      })
-      return
-    }
+      const parsed = parseFiniteNumber(value)
+      if (parsed == null) {
+        ctx.addIssue({
+          code: "custom",
+          message: resolveMessage(
+            options.invalidMessage,
+            INVALID_NUMBER_MESSAGE
+          ),
+        })
+        return
+      }
 
-    validateNumberBounds(parsed, ctx, options)
-  })
+      validateNumberBounds(parsed, ctx, options)
+    })
 }
 
 export function positiveNumberText(options: NumberTextOptions = {}) {
@@ -153,7 +189,7 @@ export function positiveNumberText(options: NumberTextOptions = {}) {
     if (!value.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: options.requiredMessage ?? REQUIRED_MESSAGE,
+        message: resolveMessage(options.requiredMessage, REQUIRED_MESSAGE),
       })
       return
     }
@@ -162,7 +198,10 @@ export function positiveNumberText(options: NumberTextOptions = {}) {
     if (parsed == null) {
       ctx.addIssue({
         code: "custom",
-        message: options.invalidMessage ?? "أدخل رقمًا أكبر من الصفر",
+        message: resolveMessage(
+          options.invalidMessage,
+          POSITIVE_NUMBER_MESSAGE
+        ),
       })
       return
     }
@@ -172,20 +211,26 @@ export function positiveNumberText(options: NumberTextOptions = {}) {
 }
 
 export function optionalPositiveNumberText(options: NumberTextOptions = {}) {
-  return z.string().optional().superRefine((value, ctx) => {
-    if (!value?.trim()) return
+  return z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      if (!value?.trim()) return
 
-    const parsed = parsePositiveNumber(value)
-    if (parsed == null) {
-      ctx.addIssue({
-        code: "custom",
-        message: options.invalidMessage ?? "أدخل رقمًا أكبر من الصفر",
-      })
-      return
-    }
+      const parsed = parsePositiveNumber(value)
+      if (parsed == null) {
+        ctx.addIssue({
+          code: "custom",
+          message: resolveMessage(
+            options.invalidMessage,
+            POSITIVE_NUMBER_MESSAGE
+          ),
+        })
+        return
+      }
 
-    validateNumberBounds(parsed, ctx, options)
-  })
+      validateNumberBounds(parsed, ctx, options)
+    })
 }
 
 export function nonNegativeNumberText(options: NumberTextOptions = {}) {
@@ -193,7 +238,7 @@ export function nonNegativeNumberText(options: NumberTextOptions = {}) {
     if (!value.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: options.requiredMessage ?? REQUIRED_MESSAGE,
+        message: resolveMessage(options.requiredMessage, REQUIRED_MESSAGE),
       })
       return
     }
@@ -202,7 +247,10 @@ export function nonNegativeNumberText(options: NumberTextOptions = {}) {
     if (parsed == null) {
       ctx.addIssue({
         code: "custom",
-        message: options.invalidMessage ?? "أدخل رقمًا لا يقل عن الصفر",
+        message: resolveMessage(
+          options.invalidMessage,
+          NON_NEGATIVE_NUMBER_MESSAGE
+        ),
       })
       return
     }
@@ -216,7 +264,7 @@ export function positiveIntegerText(options: NumberTextOptions = {}) {
     if (!value.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: options.requiredMessage ?? REQUIRED_MESSAGE,
+        message: resolveMessage(options.requiredMessage, REQUIRED_MESSAGE),
       })
       return
     }
@@ -225,7 +273,10 @@ export function positiveIntegerText(options: NumberTextOptions = {}) {
     if (parsed == null) {
       ctx.addIssue({
         code: "custom",
-        message: options.invalidMessage ?? "أدخل رقمًا صحيحًا أكبر من الصفر",
+        message: resolveMessage(
+          options.invalidMessage,
+          POSITIVE_INTEGER_MESSAGE
+        ),
       })
       return
     }
@@ -235,20 +286,26 @@ export function positiveIntegerText(options: NumberTextOptions = {}) {
 }
 
 export function optionalPositiveIntegerText(options: NumberTextOptions = {}) {
-  return z.string().optional().superRefine((value, ctx) => {
-    if (!value?.trim()) return
+  return z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      if (!value?.trim()) return
 
-    const parsed = parsePositiveInteger(value)
-    if (parsed == null) {
-      ctx.addIssue({
-        code: "custom",
-        message: options.invalidMessage ?? "أدخل رقمًا صحيحًا أكبر من الصفر",
-      })
-      return
-    }
+      const parsed = parsePositiveInteger(value)
+      if (parsed == null) {
+        ctx.addIssue({
+          code: "custom",
+          message: resolveMessage(
+            options.invalidMessage,
+            POSITIVE_INTEGER_MESSAGE
+          ),
+        })
+        return
+      }
 
-    validateNumberBounds(parsed, ctx, options)
-  })
+      validateNumberBounds(parsed, ctx, options)
+    })
 }
 
 export function nonNegativeIntegerText(options: NumberTextOptions = {}) {
@@ -256,7 +313,7 @@ export function nonNegativeIntegerText(options: NumberTextOptions = {}) {
     if (!value.trim()) {
       ctx.addIssue({
         code: "custom",
-        message: options.requiredMessage ?? REQUIRED_MESSAGE,
+        message: resolveMessage(options.requiredMessage, REQUIRED_MESSAGE),
       })
       return
     }
@@ -265,7 +322,10 @@ export function nonNegativeIntegerText(options: NumberTextOptions = {}) {
     if (parsed == null) {
       ctx.addIssue({
         code: "custom",
-        message: options.invalidMessage ?? INVALID_INTEGER_MESSAGE,
+        message: resolveMessage(
+          options.invalidMessage,
+          INVALID_INTEGER_MESSAGE
+        ),
       })
       return
     }
@@ -274,37 +334,57 @@ export function nonNegativeIntegerText(options: NumberTextOptions = {}) {
   })
 }
 
-export function dateInputText(requiredMessage = REQUIRED_MESSAGE) {
+export function dateInputText(
+  requiredMessage: MessageInput = REQUIRED_MESSAGE
+) {
   return z.string().superRefine((value, ctx) => {
     if (!value.trim()) {
-      ctx.addIssue({ code: "custom", message: requiredMessage })
+      ctx.addIssue({
+        code: "custom",
+        message: resolveMessage(requiredMessage, REQUIRED_MESSAGE),
+      })
       return
     }
 
     if (!isValidDateInputValue(value)) {
-      ctx.addIssue({ code: "custom", message: INVALID_DATE_MESSAGE })
+      ctx.addIssue({
+        code: "custom",
+        message: INVALID_DATE_MESSAGE(),
+      })
     }
   })
 }
 
 export function optionalDateInputText() {
-  return z.string().optional().superRefine((value, ctx) => {
-    if (!value?.trim()) return
+  return z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      if (!value?.trim()) return
 
-    if (!isValidDateInputValue(value)) {
-      ctx.addIssue({ code: "custom", message: INVALID_DATE_MESSAGE })
-    }
-  })
+      if (!isValidDateInputValue(value)) {
+        ctx.addIssue({
+          code: "custom",
+          message: INVALID_DATE_MESSAGE(),
+        })
+      }
+    })
 }
 
 export function optionalHttpUrlText() {
-  return z.string().optional().superRefine((value, ctx) => {
-    if (!value?.trim()) return
+  return z
+    .string()
+    .optional()
+    .superRefine((value, ctx) => {
+      if (!value?.trim()) return
 
-    if (!isHttpUrl(value)) {
-      ctx.addIssue({ code: "custom", message: INVALID_URL_MESSAGE })
-    }
-  })
+      if (!isHttpUrl(value)) {
+        ctx.addIssue({
+          code: "custom",
+          message: INVALID_URL_MESSAGE(),
+        })
+      }
+    })
 }
 
 export function validateDateRange(
@@ -312,7 +392,7 @@ export function validateDateRange(
   startDate: string,
   endDate: string | undefined,
   endDatePath: string,
-  message = "تاريخ النهاية يجب أن يكون بعد تاريخ البداية"
+  message: MessageInput = END_AFTER_START_MESSAGE
 ) {
   if (!endDate?.trim()) return
 
@@ -321,7 +401,7 @@ export function validateDateRange(
 
   ctx.addIssue({
     code: "custom",
-    message,
+    message: resolveMessage(message, END_AFTER_START_MESSAGE),
     path: [endDatePath],
   })
 }

@@ -1,10 +1,17 @@
-import { apiRequest, BASE_URL } from "@/api/client"
+import { apiRequest, BASE_URL, buildQuery } from "@/api/client"
+import {
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
 import { getAccessToken } from "@/utils/auth-storage"
 
 export type Product = {
   id: number
   name: string
+  nameAr?: string | null
   description?: string | null
+  descriptionAr?: string | null
   barcode: string
   purchasePrice?: number | string
   sellingPrice?: number | string
@@ -17,35 +24,57 @@ export type Product = {
   updatedAt?: string
 
   // Some backend responses may include nested objects; we keep it optional.
-  category?: { id: number; name: string; description?: string | null } | null
+  category?: {
+    id: number
+    name: string
+    nameAr?: string | null
+    description?: string | null
+    descriptionAr?: string | null
+  } | null
   supplier?: {
     id: number
     fullName: string
+    fullNameAr?: string | null
     phone?: string
     email?: string
     address?: string
+    addressAr?: string | null
   } | null
 }
 
 export type ProductListResponse =
   | {
-    data: Product[]
-    total?: number
-  }
+      data: Product[]
+      total?: number
+      limit?: number
+      offset?: number
+      isFinalPage?: boolean
+    }
   | Product[]
 
+export type ProductsQuery = PaginationParams
+
 export type ProductPhoto = {
-  id: number | string
-  // Backend might return fileName or url; keep optional.
-  url?: string
-  fileName?: string
+  id: number
+  productId?: number
+  storedFileId?: string
+  storedFile?: {
+    id: string
+    originalname?: string
+    mimetype?: string
+    path?: string
+    size?: number
+  } | null
+  /** Legacy/compat fields some responses may include */
+  url?: string | null
+  fileName?: string | null
 }
 
 export type ProductPhotoListResponse =
   | {
-    data: ProductPhoto[]
-    total?: number
-  }
+      data: ProductPhoto[]
+      total?: number
+    }
   | ProductPhoto[]
 
 export type ImportJob = {
@@ -60,14 +89,16 @@ export type ImportJob = {
 
 export type ImportJobListResponse =
   | {
-    data: ImportJob[]
-    total?: number
-  }
+      data: ImportJob[]
+      total?: number
+    }
   | ImportJob[]
 
 export type CreateProductInput = {
   name: string
+  nameAr?: string
   description?: string
+  descriptionAr?: string
   barcode: string
   purchasePrice: number
   sellingPrice: number
@@ -98,28 +129,105 @@ export function normalizeProducts(response: unknown): Product[] {
   return asArray<Product>(response)
 }
 
+export function normalizeProductList(
+  response: unknown,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+) {
+  return normalizePaginatedResponse(
+    response as ProductListResponse,
+    fallbackLimit,
+    fallbackOffset
+  )
+}
+
 export function normalizeProductPhotos(response: unknown): ProductPhoto[] {
   return asArray<ProductPhoto>(response)
+}
+
+/**
+ * Builds an absolute URL for a product's primary image.
+ * Backend stores relative paths like `/product-photo/download/{storedFileId}` on `product.imageUrl`.
+ */
+export function getProductImageSrc(imageUrl?: string | null) {
+  if (!imageUrl?.trim()) return null
+
+  const trimmed = imageUrl.trim()
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`
+  return `${BASE_URL}/${trimmed}`
+}
+
+export function getProductPhotoStoredFileId(photo: ProductPhoto) {
+  const fromField = photo.storedFileId?.trim()
+  if (fromField) return fromField
+
+  const fromNested = photo.storedFile?.id?.trim()
+  if (fromNested) return fromNested
+
+  return null
+}
+
+export function getProductPhotoFileName(photo: ProductPhoto) {
+  return (
+    photo.storedFile?.originalname?.trim() || photo.fileName?.trim() || null
+  )
+}
+
+/**
+ * Builds an absolute URL for a product photo.
+ * Download endpoint is public and keyed by storedFileId (UUID), not photo id.
+ */
+export function getProductPhotoSrc(photo: ProductPhoto) {
+  if (photo.url?.trim()) {
+    const trimmed = photo.url.trim()
+    if (/^https?:\/\//i.test(trimmed)) return trimmed
+    if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`
+    return `${BASE_URL}/${trimmed}`
+  }
+
+  const storedFileId = getProductPhotoStoredFileId(photo)
+  if (storedFileId) {
+    return `${BASE_URL}/product-photo/download/${storedFileId}`
+  }
+
+  return null
 }
 
 export function normalizeImportJobs(response: unknown): ImportJob[] {
   return asArray<ImportJob>(response)
 }
 
-export function getProducts() {
-  return apiRequest<ProductListResponse>("/product")
+export function getProducts(params?: ProductsQuery) {
+  const query = toPaginationQuery(params)
+  return apiRequest<ProductListResponse>(`/product${buildQuery(query)}`)
 }
 
-export function getProductsByCategory(categoryId: number) {
-  return apiRequest<ProductListResponse>(`/product/category/${categoryId}`)
+export function getProductsByCategory(
+  categoryId: number,
+  params?: ProductsQuery
+) {
+  const query = toPaginationQuery(params)
+  return apiRequest<ProductListResponse>(
+    `/product/category/${categoryId}${buildQuery(query)}`
+  )
 }
 
-export function getProductsBySupplier(supplierId: number) {
-  return apiRequest<ProductListResponse>(`/product/supplier/${supplierId}`)
+export function getProductsBySupplier(
+  supplierId: number,
+  params?: ProductsQuery
+) {
+  const query = toPaginationQuery(params)
+  return apiRequest<ProductListResponse>(
+    `/product/supplier/${supplierId}${buildQuery(query)}`
+  )
 }
 
-export function getLowStockProducts() {
-  return apiRequest<ProductListResponse>("/product/low-stock")
+export function getLowStockProducts(params?: ProductsQuery) {
+  const query = toPaginationQuery(params)
+  return apiRequest<ProductListResponse>(
+    `/product/low-stock${buildQuery(query)}`
+  )
 }
 
 export function getProductById(id: number) {
@@ -216,10 +324,11 @@ export async function deleteProductPhoto(photoId: number | string) {
   })
 }
 
-// Returns a Blob so the UI can render a thumbnail or trigger a download.
-export async function downloadProductPhoto(photoId: number | string) {
-  const response = await authorizedFetch(
-    `${BASE_URL}/product-photo/download/${photoId}`,
+// Returns a Blob so the UI can trigger a download.
+// Backend download is public and expects storedFileId (UUID), not photo id.
+export async function downloadProductPhoto(storedFileId: string) {
+  const response = await fetch(
+    `${BASE_URL}/product-photo/download/${storedFileId}`,
     { method: "GET" }
   )
 

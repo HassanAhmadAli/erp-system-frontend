@@ -1,35 +1,42 @@
 import { useMemo, useState } from "react"
 import { Loader2, Search, Users } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { useUsers } from "@/hooks/useUsers"
 import type { UserProfile, UserRole } from "@/services/user-service"
 import { toEnglishDigits } from "@/utils/number-formatters"
-import { targetRoleLabels } from "@/view/components/notifications/notification-target-labels"
-
-const userRoleLabels: Record<UserRole, string> = {
-  ...targetRoleLabels,
-  CUSTOMER: "عميل",
-}
+import { getTargetRoleLabel } from "@/view/components/notifications/notification-target-labels"
 
 type NotificationUserPickerProps = {
   selectedUserIds: number[]
   onChange: (userIds: number[]) => void
 }
 
-function formatUserRole(role: UserRole) {
-  return userRoleLabels[role] ?? role
+function formatUserRole(role: UserRole, t: (key: string) => string) {
+  if (role === "CUSTOMER") {
+    return t("roles.CUSTOMER")
+  }
+
+  return getTargetRoleLabel(role)
 }
 
 export function NotificationUserPicker({
   selectedUserIds,
   onChange,
 }: NotificationUserPickerProps) {
+  const { t } = useTranslation(["common", "pages"])
   const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState<UserRole | "ALL">("ALL")
 
   const { data: users = [], isLoading, isError } = useUsers({ limit: 100 })
 
   const selectedCount = toEnglishDigits(String(selectedUserIds.length))
+
+  const userRoles = useMemo(
+    () =>
+      Array.from(new Set(users.map((user) => user.role))).sort() as UserRole[],
+    [users]
+  )
 
   const filteredUsers = useMemo(() => {
     const query = toEnglishDigits(search).trim().toLowerCase()
@@ -73,25 +80,19 @@ export function NotificationUserPicker({
   return (
     <div className="space-y-3 rounded-2xl border border-[var(--erp-border)] bg-[color-mix(in_srgb,var(--erp-card)_96%,var(--erp-text))] p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-right">
+        <div className="flex items-center gap-2 text-start">
           <Users className="h-4 w-4 text-[var(--erp-accent)]" />
 
           <div>
             <p className="text-sm font-semibold text-[var(--erp-text)]">
-              اختيار المستخدمين
+              {t("selectUsers")}
             </p>
 
             <p className="text-xs text-[var(--erp-text)]/65">
               {selectedUserIds.length > 0 ? (
-                <>
-                  تم اختيار{" "}
-                  <span dir="ltr" className="font-semibold">
-                    {selectedCount}
-                  </span>{" "}
-                  مستخدم
-                </>
+                <>{t("usersSelected", { count: selectedCount })}</>
               ) : (
-                "اختر مستخدم واحد أو أكثر من القائمة"
+                t("selectUsersHint")
               )}
             </p>
           </div>
@@ -103,7 +104,7 @@ export function NotificationUserPicker({
             onClick={selectAllVisible}
             className="rounded-xl border border-[var(--erp-border)] px-3 py-1.5 text-xs text-[var(--erp-text)]/80 hover:bg-[var(--erp-nav-active-bg)]"
           >
-            تحديد المعروض
+            {t("selectAllShown")}
           </button>
 
           <button
@@ -111,7 +112,7 @@ export function NotificationUserPicker({
             onClick={clearSelection}
             className="rounded-xl border border-[var(--erp-border)] px-3 py-1.5 text-xs text-[var(--erp-text)]/80 hover:bg-[var(--erp-nav-active-bg)]"
           >
-            إلغاء التحديد
+            {t("deselectAll")}
           </button>
         </div>
       </div>
@@ -122,11 +123,11 @@ export function NotificationUserPicker({
 
           <input
             type="search"
-            placeholder="بحث بالاسم أو البريد الإلكتروني أو رقم المستخدم..."
+            placeholder={t("notifications.searchUsersPlaceholder", {
+              ns: "pages",
+            })}
             value={search}
-            onChange={(event) =>
-              setSearch(toEnglishDigits(event.target.value))
-            }
+            onChange={(event) => setSearch(toEnglishDigits(event.target.value))}
             className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent py-2.5 ps-10 pe-4 text-sm outline-none"
           />
         </label>
@@ -138,11 +139,11 @@ export function NotificationUserPicker({
           }
           className="rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-2.5 text-sm outline-none"
         >
-          <option value="ALL">كل الأدوار</option>
+          <option value="ALL">{t("allRoles")}</option>
 
-          {(Object.keys(userRoleLabels) as UserRole[]).map((role) => (
+          {userRoles.map((role) => (
             <option key={role} value={role}>
-              {userRoleLabels[role]}
+              {formatUserRole(role, t)}
             </option>
           ))}
         </select>
@@ -153,12 +154,10 @@ export function NotificationUserPicker({
           <Loader2 className="h-6 w-6 animate-spin text-[var(--erp-accent)]" />
         </div>
       ) : isError ? (
-        <p className="text-sm text-red-500">
-          تعذر تحميل قائمة المستخدمين. تأكد من صلاحياتك.
-        </p>
+        <p className="text-sm text-red-500">{t("loadUsersFailed")}</p>
       ) : filteredUsers.length === 0 ? (
         <p className="py-8 text-center text-sm text-[var(--erp-text)]/65">
-          لا يوجد مستخدمون مطابقون للبحث.
+          {t("noMatchingUsers")}
         </p>
       ) : (
         <div className="max-h-[320px] space-y-2 overflow-y-auto pe-1">
@@ -183,6 +182,8 @@ type UserPickerRowProps = {
 }
 
 function UserPickerRow({ user, selected, onToggle }: UserPickerRowProps) {
+  const { t } = useTranslation("common")
+
   return (
     <label
       className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl border px-3 py-3 transition-colors ${
@@ -191,7 +192,7 @@ function UserPickerRow({ user, selected, onToggle }: UserPickerRowProps) {
           : "border-[var(--erp-border)] hover:bg-[var(--erp-nav-active-bg)]"
       }`}
     >
-      <div className="min-w-0 flex-1 text-right">
+      <div className="min-w-0 flex-1 text-start">
         <p className="truncate font-medium text-[var(--erp-text)]">
           {user.fullName.trim()}
         </p>
@@ -207,7 +208,7 @@ function UserPickerRow({ user, selected, onToggle }: UserPickerRowProps) {
 
       <div className="flex shrink-0 items-center gap-3">
         <span className="rounded-full bg-[var(--erp-accent)]/10 px-2.5 py-0.5 text-xs font-medium text-[var(--erp-accent)]">
-          {formatUserRole(user.role)}
+          {formatUserRole(user.role, t)}
         </span>
 
         <input

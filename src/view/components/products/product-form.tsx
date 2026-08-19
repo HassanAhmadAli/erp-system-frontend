@@ -1,10 +1,17 @@
 import { useEffect, useState } from "react"
+import { UploadCloud } from "lucide-react"
+import { useTranslation } from "react-i18next"
+import { useNavigate } from "react-router-dom"
+import { useQueryClient } from "@tanstack/react-query"
 
 import type { Product, UpdateProductInput } from "@/services/product-service"
+import { uploadProductPhoto } from "@/services/product-service"
 import { useCreateProduct } from "@/hooks/Products/useCreateProduct"
 import { useUpdateProduct } from "@/hooks/Products/useUpdateProduct"
 import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
 import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
+import { useLocale } from "@/i18n/locale-provider"
+import { localizedFullName, localizedName } from "@/lib/localized"
 import {
   productFormValuesToPayload,
   productSchema,
@@ -12,6 +19,8 @@ import {
   type ProductFormErrors,
   type ProductFormValues,
 } from "@/validation/product-schema"
+import { isAllowedFileType, isWithinMaxFileSize } from "@/validation/helpers"
+import { toEnglishDigits } from "@/utils/number-formatters"
 
 import { Button } from "@/view/components/ui/button"
 
@@ -22,9 +31,21 @@ type Props = {
   onSuccess?: () => void
 }
 
+const ALLOWED_IMAGE_TYPES = [
+  "image/jpeg",
+  "image/jpg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+] as const
+
+const MAX_IMAGE_BYTES = 5 * 1024 * 1024
+
 const EMPTY_FORM: ProductFormValues = {
   name: "",
+  nameAr: "",
   description: "",
+  descriptionAr: "",
   barcode: "",
   purchasePrice: "",
   sellingPrice: "",
@@ -39,7 +60,9 @@ function toFormState(product?: Product): ProductFormValues {
 
   return {
     name: product.name ?? "",
+    nameAr: product.nameAr ?? "",
     description: product.description ?? "",
+    descriptionAr: product.descriptionAr ?? "",
     barcode: product.barcode ?? "",
     purchasePrice:
       product.purchasePrice != null ? String(product.purchasePrice) : "",
@@ -64,10 +87,10 @@ function toFormState(product?: Product): ProductFormValues {
 }
 
 const inputClass =
-  "h-11 w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-3 text-right outline-none"
+  "h-11 w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-3 text-start outline-none"
 
 const textareaClass =
-  "min-h-[88px] w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-3 py-2 text-right outline-none"
+  "min-h-[88px] w-full rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-3 py-2 text-start outline-none"
 
 function ErrorText({ message }: { message?: string }) {
   if (!message) return null
@@ -85,11 +108,16 @@ export function ProductForm({
   initialValues,
   onSuccess,
 }: Props) {
+  const { t } = useTranslation(["common", "pages"])
+  const { language } = useLocale()
+  const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [form, setForm] = useState<ProductFormValues>(() =>
     toFormState(initialValues)
   )
   const [errors, setErrors] = useState<ProductFormErrors>({})
   const [submitError, setSubmitError] = useState("")
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   useEffect(() => {
     if (mode === "edit") setForm(toFormState(initialValues))
@@ -118,6 +146,25 @@ export function ProductForm({
     setErrors((prev) => ({ ...prev, [key]: undefined }))
   }
 
+  function handleFileChange(file: File | null) {
+    setSelectedFile(null)
+    setSubmitError("")
+
+    if (!file) return
+
+    if (!isAllowedFileType(file, ALLOWED_IMAGE_TYPES)) {
+      setSubmitError(t("common:invalidImageFile"))
+      return
+    }
+
+    if (!isWithinMaxFileSize(file, MAX_IMAGE_BYTES)) {
+      setSubmitError(t("common:imageTooLarge"))
+      return
+    }
+
+    setSelectedFile(file)
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setSubmitError("")
@@ -135,21 +182,46 @@ export function ProductForm({
 
     try {
       if (mode === "create") {
-        await createMutation.mutateAsync(payload)
+        const created = await createMutation.mutateAsync(payload)
+
+        if (selectedFile && isValidId(created?.id)) {
+          try {
+            await uploadProductPhoto(created.id, selectedFile)
+            void queryClient.invalidateQueries({ queryKey: ["products"] })
+            void queryClient.invalidateQueries({
+              queryKey: ["product-photos", created.id],
+            })
+            void queryClient.invalidateQueries({
+              queryKey: ["product", created.id],
+            })
+          } catch (error: unknown) {
+            setSubmitError(
+              error instanceof Error
+                ? t("pages:products.createdImageUploadFailedWithError", {
+                    error: error.message,
+                  })
+                : t("pages:products.createdImageUploadFailed")
+            )
+            navigate(`/products/${created.id}/edit`, { replace: true })
+            return
+          }
+        }
+
+        setSelectedFile(null)
       } else if (isValidId(productId)) {
         await updateMutation.mutateAsync({
           id: productId,
           data: payload as UpdateProductInput,
         })
       } else {
-        setSubmitError("معرف المنتج غير صالح")
+        setSubmitError(t("pages:products.invalidProductId"))
         return
       }
 
       onSuccess?.()
     } catch (err) {
       setSubmitError(
-        err instanceof Error ? err.message : "حدث خطأ أثناء حفظ المنتج"
+        err instanceof Error ? err.message : t("pages:products.saveFailed")
       )
     }
   }
@@ -157,11 +229,13 @@ export function ProductForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-6 rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-6 text-right"
+      className="space-y-6 rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-6 text-start"
     >
       <div className="grid gap-5 md:grid-cols-2">
         <div className="md:col-span-2">
-          <label className="mb-2 block text-sm font-medium">اسم المنتج</label>
+          <label className="mb-2 block text-sm font-medium">
+            {t("pages:products.productName")}
+          </label>
           <input
             className={inputClass}
             value={form.name}
@@ -171,7 +245,21 @@ export function ProductForm({
         </div>
 
         <div className="md:col-span-2">
-          <label className="mb-2 block text-sm font-medium">الوصف</label>
+          <label className="mb-2 block text-sm font-medium">
+            {t("nameAr")}
+          </label>
+          <input
+            className={inputClass}
+            value={form.nameAr ?? ""}
+            onChange={(e) => setField("nameAr", e.target.value)}
+          />
+          <ErrorText message={errors.nameAr} />
+        </div>
+
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium">
+            {t("common:description")}
+          </label>
           <textarea
             className={textareaClass}
             value={form.description}
@@ -180,8 +268,22 @@ export function ProductForm({
           <ErrorText message={errors.description} />
         </div>
 
+        <div className="md:col-span-2">
+          <label className="mb-2 block text-sm font-medium">
+            {t("descriptionAr")}
+          </label>
+          <textarea
+            className={textareaClass}
+            value={form.descriptionAr ?? ""}
+            onChange={(e) => setField("descriptionAr", e.target.value)}
+          />
+          <ErrorText message={errors.descriptionAr} />
+        </div>
+
         <div>
-          <label className="mb-2 block text-sm font-medium">الباركود</label>
+          <label className="mb-2 block text-sm font-medium">
+            {t("common:barcode")}
+          </label>
           <input
             className={inputClass}
             value={form.barcode}
@@ -191,7 +293,9 @@ export function ProductForm({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">التصنيف</label>
+          <label className="mb-2 block text-sm font-medium">
+            {t("common:category")}
+          </label>
           <select
             className={inputClass}
             value={form.categoryId}
@@ -199,22 +303,28 @@ export function ProductForm({
             disabled={categoriesLoading}
           >
             <option value="">
-              {categoriesLoading ? "جاري التحميل..." : "اختر التصنيف"}
+              {categoriesLoading
+                ? t("common:loading")
+                : t("common:selectCategory")}
             </option>
             {categories.map((category) => (
               <option key={category.id} value={String(category.id)}>
-                {category.name}
+                {localizedName(category, language)}
               </option>
             ))}
           </select>
           {categoriesError && (
-            <p className="mt-1 text-sm text-red-500">فشل تحميل التصنيفات</p>
+            <p className="mt-1 text-sm text-red-500">
+              {t("pages:products.loadCategoriesFailed")}
+            </p>
           )}
           <ErrorText message={errors.categoryId} />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">المورد</label>
+          <label className="mb-2 block text-sm font-medium">
+            {t("common:supplier")}
+          </label>
           <select
             className={inputClass}
             value={form.supplierId}
@@ -222,22 +332,28 @@ export function ProductForm({
             disabled={suppliersLoading}
           >
             <option value="">
-              {suppliersLoading ? "جاري التحميل..." : "اختر المورد"}
+              {suppliersLoading
+                ? t("common:loading")
+                : t("common:selectSupplier")}
             </option>
             {suppliers.map((supplier) => (
               <option key={supplier.id} value={String(supplier.id)}>
-                {supplier.fullName}
+                {localizedFullName(supplier, language)}
               </option>
             ))}
           </select>
           {suppliersError && (
-            <p className="mt-1 text-sm text-red-500">فشل تحميل الموردين</p>
+            <p className="mt-1 text-sm text-red-500">
+              {t("pages:products.loadSuppliersFailed")}
+            </p>
           )}
           <ErrorText message={errors.supplierId} />
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">سعر الشراء</label>
+          <label className="mb-2 block text-sm font-medium">
+            {t("pages:products.purchasePrice")}
+          </label>
           <input
             type="number"
             step="0.01"
@@ -249,7 +365,9 @@ export function ProductForm({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm font-medium">سعر البيع</label>
+          <label className="mb-2 block text-sm font-medium">
+            {t("pages:products.sellingPrice")}
+          </label>
           <input
             type="number"
             step="0.01"
@@ -262,7 +380,7 @@ export function ProductForm({
 
         <div>
           <label className="mb-2 block text-sm font-medium">
-            الكمية في المخزون
+            {t("pages:products.quantityInStock")}
           </label>
           <input
             type="number"
@@ -276,7 +394,7 @@ export function ProductForm({
 
         <div>
           <label className="mb-2 block text-sm font-medium">
-            الحد الأدنى للكمية
+            {t("pages:products.minQuantity")}
           </label>
           <input
             type="number"
@@ -289,6 +407,49 @@ export function ProductForm({
         </div>
       </div>
 
+      {mode === "create" && (
+        <div>
+          <label
+            htmlFor="product-image"
+            className="mb-2 block text-sm font-medium"
+          >
+            {t("pages:products.productImageOptional")}
+          </label>
+
+          <label
+            htmlFor="product-image"
+            className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--erp-sidebar-divider)] bg-[var(--erp-bg)] px-4 py-6 text-center transition hover:border-[var(--erp-accent)]/50 hover:bg-[var(--erp-nav-active-bg)]"
+          >
+            <UploadCloud className="mb-2 size-7 text-[var(--erp-accent)]" />
+            <span className="text-sm font-medium text-[var(--erp-text)]">
+              {t("common:clickToSelectImage")}
+            </span>
+            <span className="mt-1 text-xs text-[var(--erp-muted)]">
+              {t("common:imageFormats")}
+            </span>
+            <span
+              dir="ltr"
+              className="mt-3 max-w-full truncate rounded-full bg-[var(--erp-card)] px-3 py-1 text-xs font-medium text-[var(--erp-text)]"
+            >
+              {selectedFile?.name
+                ? toEnglishDigits(selectedFile.name)
+                : t("common:noFileSelected")}
+            </span>
+            <input
+              id="product-image"
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              className="sr-only"
+              disabled={isSaving}
+              onChange={(event) => {
+                handleFileChange(event.target.files?.[0] ?? null)
+                event.target.value = ""
+              }}
+            />
+          </label>
+        </div>
+      )}
+
       {submitError && (
         <p className="rounded-xl bg-red-100 p-3 text-sm text-red-700">
           {submitError}
@@ -298,10 +459,10 @@ export function ProductForm({
       <div className="flex justify-start gap-3">
         <Button type="submit" disabled={isSaving}>
           {isSaving
-            ? "جاري الحفظ..."
+            ? t("common:saving")
             : mode === "create"
-              ? "إضافة المنتج"
-              : "حفظ التعديلات"}
+              ? t("pages:products.create")
+              : t("common:saveChanges")}
         </Button>
       </div>
     </form>

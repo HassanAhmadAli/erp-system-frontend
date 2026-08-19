@@ -2,17 +2,27 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import {
   createExpense,
-  getAllExpenses,
   getExpenseById,
+  getExpenses,
+  normalizeExpensesList,
   updateExpense,
   type CreateExpenseInput,
+  type ExpensesQuery,
   type UpdateExpenseInput,
 } from "@/services/expense-service"
+import { toPaginationQuery } from "@/lib/pagination"
 
-export function useExpenses() {
+export function useExpenses(params?: ExpensesQuery) {
+  const query = toPaginationQuery(params)
+
   return useQuery({
-    queryKey: ["expenses"],
-    queryFn: () => getAllExpenses(),
+    queryKey: ["expenses", query, params?.category],
+    queryFn: async () =>
+      normalizeExpensesList(
+        await getExpenses({ ...params, ...query }),
+        query.limit,
+        query.offset
+      ),
   })
 }
 

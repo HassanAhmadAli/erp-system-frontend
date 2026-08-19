@@ -1,5 +1,6 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import {
   parseFiniteNumber,
   parseNonNegativeInteger,
@@ -31,7 +32,7 @@ export const posCheckoutSchema = z
     if (values.cart.length === 0) {
       ctx.addIssue({
         code: "custom",
-        message: "يرجى إضافة منتج واحد على الأقل إلى السلة.",
+        message: i18n.t("validation:pos.cartEmpty"),
         path: ["cart"],
       })
     }
@@ -49,13 +50,13 @@ export const posCheckoutSchema = z
       if (productId == null) {
         ctx.addIssue({
           code: "custom",
-          message: "تحتوي السلة على منتج غير صالح.",
+          message: i18n.t("validation:pos.invalidProduct"),
           path: ["cart", index, "productId"],
         })
       } else if (productIds.has(productId)) {
         ctx.addIssue({
           code: "custom",
-          message: "لا يمكن تكرار نفس المنتج في الفاتورة.",
+          message: i18n.t("validation:shared.duplicateProductInInvoice"),
           path: ["cart"],
         })
       } else {
@@ -65,13 +66,13 @@ export const posCheckoutSchema = z
       if (quantity == null) {
         ctx.addIssue({
           code: "custom",
-          message: "كمية المنتج يجب أن تكون رقمًا صحيحًا أكبر من الصفر.",
+          message: i18n.t("validation:pos.quantityInvalid"),
           path: ["cart", index, "quantity"],
         })
       } else if (quantityInStock != null && quantity > quantityInStock) {
         ctx.addIssue({
           code: "custom",
-          message: "كمية المنتج تتجاوز الكمية المتوفرة في المخزون.",
+          message: i18n.t("validation:pos.quantityExceedsStock"),
           path: ["cart", index, "quantity"],
         })
       }
@@ -82,13 +83,13 @@ export const posCheckoutSchema = z
     if (amountPaid == null) {
       ctx.addIssue({
         code: "custom",
-        message: "يرجى إدخال مبلغ مدفوع صحيح.",
+        message: i18n.t("validation:pos.amountPaidInvalid"),
         path: ["amountPaid"],
       })
     } else if (amountPaid < 0) {
       ctx.addIssue({
         code: "custom",
-        message: "المبلغ المدفوع يجب ألا يكون أقل من الصفر.",
+        message: i18n.t("validation:pos.amountPaidNonNegative"),
         path: ["amountPaid"],
       })
     }
@@ -99,8 +100,7 @@ export const posCheckoutSchema = z
       if (subtotal != null && amountPaid < subtotal) {
         ctx.addIssue({
           code: "custom",
-          message:
-            "المبلغ المدفوع يجب أن يكون أكبر من أو يساوي إجمالي الفاتورة.",
+          message: i18n.t("validation:pos.amountPaidBelowTotal"),
           path: ["amountPaid"],
         })
       }
@@ -113,7 +113,7 @@ export const posCheckoutSchema = z
     ) {
       ctx.addIssue({
         code: "custom",
-        message: "يرجى اختيار عميل صحيح أو ترك الحقل فارغًا.",
+        message: i18n.t("validation:pos.customerInvalid"),
         path: ["customerId"],
       })
     }
@@ -125,7 +125,7 @@ export const posCheckoutSchema = z
     ) {
       ctx.addIssue({
         code: "custom",
-        message: "رقم الخصم غير صالح.",
+        message: i18n.t("validation:pos.discountIdInvalid"),
         path: ["discountId"],
       })
     }

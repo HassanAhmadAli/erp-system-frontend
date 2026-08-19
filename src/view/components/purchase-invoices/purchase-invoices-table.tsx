@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Ban, CheckCircle2, Eye, Loader2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
 import { useUpdatePurchaseInvoiceStatus } from "@/hooks/usePurchaseInvoices"
@@ -15,6 +16,7 @@ import {
   formatMoney,
   formatNumber,
   getInvoiceTotal,
+  getPurchaseInvoiceStatusLabel,
   getSupplierName,
   NumberText,
   PurchaseInvoiceStatusBadge,
@@ -31,6 +33,7 @@ export function PurchaseInvoicesTable({
   isLoading,
   isError,
 }: PurchaseInvoicesTableProps) {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const updateStatusMutation = useUpdatePurchaseInvoiceStatus()
   const [statusError, setStatusError] = useState("")
@@ -39,12 +42,12 @@ export function PurchaseInvoicesTable({
     setStatusError("")
 
     if (!isValidId(id)) {
-      setStatusError("رقم الفاتورة غير صالح.")
+      setStatusError(t("pages:purchaseInvoices.invalidInvoiceId"))
       return
     }
 
     if (!isPurchaseInvoiceStatus(status)) {
-      setStatusError("حالة الفاتورة غير صالحة.")
+      setStatusError(t("pages:purchaseInvoices.invalidInvoiceStatus"))
       return
     }
 
@@ -55,7 +58,7 @@ export function PurchaseInvoicesTable({
     return (
       <div className="flex items-center justify-center gap-2 py-10 text-[var(--erp-muted)]">
         <Loader2 className="size-5 animate-spin" />
-        جاري تحميل فواتير الشراء...
+        {t("pages:purchaseInvoices.loadingList")}
       </div>
     )
   }
@@ -63,7 +66,7 @@ export function PurchaseInvoicesTable({
   if (isError) {
     return (
       <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-600">
-        لم يتم تحميل فواتير الشراء. تأكد من صلاحيات الحساب أو أن السيرفر يعمل.
+        {t("pages:purchaseInvoices.loadListFailed")}
       </div>
     )
   }
@@ -71,7 +74,7 @@ export function PurchaseInvoicesTable({
   if (invoices.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed p-8 text-center text-sm text-[var(--erp-muted)]">
-        لا توجد فواتير شراء حالياً.
+        {t("pages:purchaseInvoices.noInvoices")}
       </div>
     )
   }
@@ -79,16 +82,24 @@ export function PurchaseInvoicesTable({
   return (
     <>
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[1000px] border-separate border-spacing-y-2 text-right text-sm">
+        <table className="w-full min-w-[1000px] border-separate border-spacing-y-2 text-start text-sm">
           <thead>
             <tr className="text-xs text-[var(--erp-muted)]">
-              <th className="px-4 py-2 font-semibold">رقم الفاتورة</th>
-              <th className="px-4 py-2 font-semibold">المورد</th>
-              <th className="px-4 py-2 font-semibold">الحالة</th>
-              <th className="px-4 py-2 font-semibold">الإجمالي</th>
-              <th className="px-4 py-2 font-semibold">تاريخ الفاتورة</th>
-              <th className="px-4 py-2 font-semibold">تحديث الحالة</th>
-              <th className="px-4 py-2 font-semibold">الإجراءات</th>
+              <th className="px-4 py-2 font-semibold">
+                {t("common:invoiceNumber")}
+              </th>
+              <th className="px-4 py-2 font-semibold">
+                {t("common:supplier")}
+              </th>
+              <th className="px-4 py-2 font-semibold">{t("common:status")}</th>
+              <th className="px-4 py-2 font-semibold">{t("common:total")}</th>
+              <th className="px-4 py-2 font-semibold">
+                {t("common:invoiceDate")}
+              </th>
+              <th className="px-4 py-2 font-semibold">
+                {t("common:updateStatus")}
+              </th>
+              <th className="px-4 py-2 font-semibold">{t("common:actions")}</th>
             </tr>
           </thead>
 
@@ -102,12 +113,12 @@ export function PurchaseInvoicesTable({
 
               return (
                 <tr key={invoice.id}>
-                  <td className="rounded-r-2xl bg-[var(--erp-bg)] px-4 py-3 font-semibold">
+                  <td className="rounded-s-2xl bg-[var(--erp-bg)] px-4 py-3 font-semibold">
                     <NumberText value={`#${formatNumber(invoice.id)}`} />
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
-                    {getSupplierName(invoice)}
+                    {getSupplierName(invoice, t)}
                   </td>
 
                   <td className="bg-[var(--erp-bg)] px-4 py-3">
@@ -149,7 +160,7 @@ export function PurchaseInvoicesTable({
                           ) : (
                             <CheckCircle2 className="size-4" />
                           )}
-                          Complete
+                          {getPurchaseInvoiceStatusLabel("COMPLETED", t)}
                         </button>
 
                         <button
@@ -172,17 +183,17 @@ export function PurchaseInvoicesTable({
                           ) : (
                             <Ban className="size-4" />
                           )}
-                          Cancelled
+                          {getPurchaseInvoiceStatusLabel("CANCELLED", t)}
                         </button>
                       </div>
                     ) : (
                       <span className="text-xs text-[var(--erp-muted)]">
-                        لا يمكن تعديل الحالة
+                        {t("pages:purchaseInvoices.cannotEditStatus")}
                       </span>
                     )}
                   </td>
 
-                  <td className="rounded-l-2xl bg-[var(--erp-bg)] px-4 py-3">
+                  <td className="rounded-e-2xl bg-[var(--erp-bg)] px-4 py-3">
                     <button
                       type="button"
                       onClick={() =>
@@ -191,7 +202,7 @@ export function PurchaseInvoicesTable({
                       className="inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm transition hover:bg-[var(--erp-nav-active-bg)]"
                     >
                       <Eye className="size-4" />
-                      عرض
+                      {t("common:view")}
                     </button>
                   </td>
                 </tr>
@@ -203,8 +214,7 @@ export function PurchaseInvoicesTable({
 
       {updateStatusMutation.isError && (
         <p className="mt-4 rounded-2xl bg-red-50 px-4 py-3 text-sm text-red-600">
-          فشل تحديث حالة الفاتورة. الحالة يمكن تغييرها فقط من Pending إلى
-          Completed أو Cancelled.
+          {t("pages:purchaseInvoices.statusUpdateFailedRules")}
         </p>
       )}
 

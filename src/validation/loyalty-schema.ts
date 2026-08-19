@@ -1,116 +1,97 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import {
   normalizeText,
+  optionalText,
   parsePositiveInteger,
   parsePositiveNumber,
 } from "./helpers"
-import { requiredText } from "./zod-helpers"
+import { optionalTrimmedText, requiredText } from "./zod-helpers"
 
 const numericValueSchema = z.union([z.string(), z.number()])
 
-function positiveNumberField(message: string) {
+export const LOYALTY_DISCOUNT_TYPES = ["PERCENTAGE", "FIXED_AMOUNT"] as const
+
+export type LoyaltyDiscountType = (typeof LOYALTY_DISCOUNT_TYPES)[number]
+
+export function getLoyaltyDiscountTypeLabel(type: LoyaltyDiscountType): string {
+  return type === "PERCENTAGE"
+    ? i18n.t("validation:loyalty.discountTypePercentage")
+    : i18n.t("validation:loyalty.discountTypeFixedAmount")
+}
+
+function positiveNumberField(message: () => string) {
   return numericValueSchema.superRefine((value, ctx) => {
     if (parsePositiveNumber(value) == null) {
       ctx.addIssue({
         code: "custom",
-        message,
+        message: message(),
       })
     }
   })
 }
 
-function positiveIntegerField(message: string) {
+function positiveIntegerField(message: () => string) {
   return numericValueSchema.superRefine((value, ctx) => {
     if (parsePositiveInteger(value) == null) {
       ctx.addIssue({
         code: "custom",
-        message,
+        message: message(),
       })
     }
   })
 }
 
-export const loyaltyPolicySchema = z.object({
-  pointsPerCurrency: positiveNumberField(
-    "نقاط كل عملة يجب أن تكون رقمًا أكبر من صفر."
-  ),
-  currencyPerPoint: positiveNumberField(
-    "قيمة كل نقطة يجب أن تكون رقمًا أكبر من صفر."
-  ),
-})
-
-export type LoyaltyPolicyFormValues = z.input<typeof loyaltyPolicySchema>
-
-export type LoyaltyPolicyPayload = {
-  pointsPerCurrency: number
-  currencyPerPoint: number
-}
-
-export type LoyaltyPolicyFormErrors = Partial<
-  Record<keyof LoyaltyPolicyFormValues, string>
->
-
-export function loyaltyPolicyZodErrorToFormErrors(error: z.ZodError) {
-  const errors: LoyaltyPolicyFormErrors = {}
-
-  for (const issue of error.issues) {
-    const field = issue.path[0]
-    if (field !== "pointsPerCurrency" && field !== "currencyPerPoint") {
-      continue
-    }
-
-    errors[field] ??= issue.message
-  }
-
-  return errors
-}
-
-export function loyaltyPolicyValuesToPayload(
-  values: LoyaltyPolicyFormValues
-): LoyaltyPolicyPayload {
-  const pointsPerCurrency = parsePositiveNumber(values.pointsPerCurrency)
-  const currencyPerPoint = parsePositiveNumber(values.currencyPerPoint)
-
-  if (pointsPerCurrency == null) {
-    throw new Error("Invalid loyalty pointsPerCurrency")
-  }
-
-  if (currencyPerPoint == null) {
-    throw new Error("Invalid loyalty currencyPerPoint")
-  }
-
-  return {
-    pointsPerCurrency,
-    currencyPerPoint,
-  }
-}
-
 export const loyaltyRewardSchema = z.object({
-  pointsThreshold: positiveIntegerField(
-    "حد النقاط يجب أن يكون رقمًا صحيحًا أكبر من صفر."
-  ),
-  rewardDescription: requiredText({
-    requiredMessage: "وصف المكافأة مطلوب.",
+  name: requiredText({
+    requiredMessage: () => i18n.t("validation:loyalty.nameRequired"),
     min: 2,
-    minMessage: "وصف المكافأة يجب أن يكون حرفين على الأقل.",
-    max: 300,
-    maxMessage: "وصف المكافأة يجب ألا يتجاوز 300 حرف.",
+    minMessage: () => i18n.t("validation:loyalty.nameMin"),
+    max: 120,
+    maxMessage: () => i18n.t("validation:loyalty.nameMax"),
   }),
-  discountValue: positiveNumberField(
-    "قيمة الخصم يجب أن تكون رقمًا أكبر من صفر."
+  nameAr: optionalTrimmedText({
+    max: 120,
+    maxMessage: () => i18n.t("validation:shared.nameArMax100"),
+  }),
+  description: z.union([z.string(), z.null(), z.undefined()]).optional(),
+  descriptionAr: optionalTrimmedText({
+    max: 500,
+    maxMessage: () => i18n.t("validation:loyalty.descriptionArMax"),
+  }),
+  pointsCost: positiveIntegerField(() =>
+    i18n.t("validation:loyalty.pointsCostInvalid")
+  ),
+  discountType: z.enum(LOYALTY_DISCOUNT_TYPES, {
+    error: () => i18n.t("validation:loyalty.discountTypeInvalid"),
+  }),
+  discountValue: positiveNumberField(() =>
+    i18n.t("validation:loyalty.discountValueInvalid")
+  ),
+  maxUses: positiveIntegerField(() =>
+    i18n.t("validation:loyalty.maxUsesInvalid")
+  ),
+  validityDays: positiveIntegerField(() =>
+    i18n.t("validation:loyalty.validityDaysInvalid")
   ),
   isActive: z.boolean({
-    error: "حالة المكافأة غير صالحة.",
+    error: () => i18n.t("validation:loyalty.statusInvalid"),
   }),
 })
 
 export type LoyaltyRewardFormValues = z.input<typeof loyaltyRewardSchema>
 
 export type LoyaltyRewardPayload = {
-  pointsThreshold: number
-  rewardDescription: string
+  name: string
+  nameAr?: string
+  description?: string
+  descriptionAr?: string
+  pointsCost: number
+  discountType: LoyaltyDiscountType
   discountValue: number
+  maxUses: number
+  validityDays: number
   isActive: boolean
 }
 
@@ -123,10 +104,17 @@ export function loyaltyRewardZodErrorToFormErrors(error: z.ZodError) {
 
   for (const issue of error.issues) {
     const field = issue.path[0]
+
     if (
-      field !== "pointsThreshold" &&
-      field !== "rewardDescription" &&
+      field !== "name" &&
+      field !== "nameAr" &&
+      field !== "description" &&
+      field !== "descriptionAr" &&
+      field !== "pointsCost" &&
+      field !== "discountType" &&
       field !== "discountValue" &&
+      field !== "maxUses" &&
+      field !== "validityDays" &&
       field !== "isActive"
     ) {
       continue
@@ -141,21 +129,41 @@ export function loyaltyRewardZodErrorToFormErrors(error: z.ZodError) {
 export function loyaltyRewardValuesToPayload(
   values: LoyaltyRewardFormValues
 ): LoyaltyRewardPayload {
-  const pointsThreshold = parsePositiveInteger(values.pointsThreshold)
+  const pointsCost = parsePositiveInteger(values.pointsCost)
   const discountValue = parsePositiveNumber(values.discountValue)
+  const maxUses = parsePositiveInteger(values.maxUses)
+  const validityDays = parsePositiveInteger(values.validityDays)
 
-  if (pointsThreshold == null) {
-    throw new Error("Invalid loyalty reward pointsThreshold")
+  if (pointsCost == null) {
+    throw new Error("Invalid loyalty reward pointsCost")
   }
 
   if (discountValue == null) {
     throw new Error("Invalid loyalty reward discountValue")
   }
 
+  if (maxUses == null) {
+    throw new Error("Invalid loyalty reward maxUses")
+  }
+
+  if (validityDays == null) {
+    throw new Error("Invalid loyalty reward validityDays")
+  }
+
+  const nameAr = optionalText(values.nameAr)
+  const description = optionalText(values.description ?? undefined)
+  const descriptionAr = optionalText(values.descriptionAr)
+
   return {
-    pointsThreshold,
-    rewardDescription: normalizeText(values.rewardDescription),
+    name: normalizeText(values.name),
+    ...(nameAr ? { nameAr } : {}),
+    ...(description ? { description } : {}),
+    ...(descriptionAr ? { descriptionAr } : {}),
+    pointsCost,
+    discountType: values.discountType,
     discountValue,
+    maxUses,
+    validityDays,
     isActive: values.isActive,
   }
 }

@@ -5,6 +5,7 @@ import {
   toNumber,
   unwrapData,
 } from "@/lib/report-parsers"
+import i18n from "@/i18n"
 import {
   formatDate,
   formatId,
@@ -200,15 +201,15 @@ export function extractSummaryCostComposition(payload: unknown): ChartPoint[] {
 
   const mapped: ChartPoint[] = [
     {
-      label: "تكاليف الشراء",
+      label: i18n.t("pages:reports.metrics.purchasingCosts"),
       value: toNumber(obj.purchasingCosts) ?? 0,
     },
     {
-      label: "المصروفات التشغيلية",
+      label: i18n.t("pages:reports.metrics.operatingExpenses"),
       value: toNumber(obj.operatingExpenses) ?? 0,
     },
     {
-      label: "الخصومات الممنوحة",
+      label: i18n.t("pages:reports.metrics.discountsGiven"),
       value: toNumber(obj.discountsGiven) ?? 0,
     },
   ].filter((point) => point.value > 0)
@@ -361,7 +362,9 @@ export function extractProfitMarginSeries(payload: unknown): ChartPoint[] {
       const label = labelText(
         row.productName ??
           row.name ??
-          `منتج #${formatId(String(row.productId ?? row.id ?? "?"))}`
+          i18n.t("pages:reports.productLabel", {
+            id: formatId(String(row.productId ?? row.id ?? "?")),
+          })
       )
 
       return { label, value }
@@ -382,11 +385,31 @@ export function extractProfitMarginMetrics(
   const negativeCount = values.filter((value) => value < 0).length
 
   return [
-    { key: "marginPercent", label: "متوسط الهامش", value: average },
-    { key: "profitMargin", label: "أعلى هامش", value: highest },
-    { key: "margin", label: "أدنى هامش", value: lowest },
-    { key: "count", label: "عدد المنتجات", value: margins.length },
-    { key: "negativeCount", label: "منتجات بهامش سالب", value: negativeCount },
+    {
+      key: "marginPercent",
+      label: i18n.t("pages:reports.averageMargin"),
+      value: average,
+    },
+    {
+      key: "profitMargin",
+      label: i18n.t("pages:reports.highestMargin"),
+      value: highest,
+    },
+    {
+      key: "margin",
+      label: i18n.t("pages:reports.lowestMargin"),
+      value: lowest,
+    },
+    {
+      key: "count",
+      label: i18n.t("pages:reports.productCount"),
+      value: margins.length,
+    },
+    {
+      key: "negativeCount",
+      label: i18n.t("pages:reports.negativeMarginProducts"),
+      value: negativeCount,
+    },
   ]
 }
 
@@ -409,10 +432,10 @@ export function extractProfitMarginTierComposition(
   margins: ChartPoint[]
 ): ChartPoint[] {
   const tiers = [
-    { label: "هامش مرتفع (30%+)", count: 0 },
-    { label: "هامش متوسط (10–30%)", count: 0 },
-    { label: "هامش منخفض (0–10%)", count: 0 },
-    { label: "هامش سالب", count: 0 },
+    { label: i18n.t("pages:reports.marginTierHigh"), count: 0 },
+    { label: i18n.t("pages:reports.marginTierMedium"), count: 0 },
+    { label: i18n.t("pages:reports.marginTierLow"), count: 0 },
+    { label: i18n.t("pages:reports.marginNegative"), count: 0 },
   ]
 
   for (const margin of margins) {
@@ -434,24 +457,28 @@ export function extractProfitMarginHistogram(
   margins: ChartPoint[]
 ): ChartPoint[] {
   const buckets = [
-    { label: "هامش سالب", count: 0, match: (value: number) => value < 0 },
     {
-      label: "0–10%",
+      label: i18n.t("pages:reports.marginHistogramNegative"),
+      count: 0,
+      match: (value: number) => value < 0,
+    },
+    {
+      label: i18n.t("pages:reports.marginHistogram0To10"),
       count: 0,
       match: (value: number) => value >= 0 && value < 10,
     },
     {
-      label: "10–20%",
+      label: i18n.t("pages:reports.marginHistogram10To20"),
       count: 0,
       match: (value: number) => value >= 10 && value < 20,
     },
     {
-      label: "20–30%",
+      label: i18n.t("pages:reports.marginHistogram20To30"),
       count: 0,
       match: (value: number) => value >= 20 && value < 30,
     },
     {
-      label: "30% فأكثر",
+      label: i18n.t("pages:reports.marginHistogram30Plus"),
       count: 0,
       match: (value: number) => value >= 30,
     },
@@ -487,13 +514,16 @@ export function extractCostBreakdownSeries(payload: unknown): ChartPoint[] {
     if (root && typeof root === "object") {
       const obj = root as Record<string, unknown>
       const mapped: ChartPoint[] = [
-        { label: "تكاليف الشراء", value: toNumber(obj.purchasingCosts) ?? 0 },
         {
-          label: "المصروفات التشغيلية",
+          label: i18n.t("pages:reports.metrics.purchasingCosts"),
+          value: toNumber(obj.purchasingCosts) ?? 0,
+        },
+        {
+          label: i18n.t("pages:reports.metrics.operatingExpenses"),
           value: toNumber(obj.operatingExpenses) ?? 0,
         },
         {
-          label: "الخصومات الممنوحة",
+          label: i18n.t("pages:reports.metrics.discountsGiven"),
           value: toNumber(obj.discountsGiven) ?? 0,
         },
       ].filter((point) => point.value > 0)
@@ -541,7 +571,9 @@ export function extractInventoryQuantityBars(payload: unknown): ChartPoint[] {
       const label = labelText(
         row.productName ??
           row.name ??
-          `منتج #${formatId(String(row.id ?? "?"))}`
+          i18n.t("pages:reports.productLabel", {
+            id: formatId(String(row.id ?? "?")),
+          })
       )
 
       return { label, value }
@@ -564,15 +596,18 @@ export function extractInventoryStatusComposition(
   const inStock = toNumber(obj.inStockCount ?? obj.healthyStockCount)
 
   if (low !== null && low > 0) {
-    fromMetrics.push({ label: "مخزون منخفض", value: low })
+    fromMetrics.push({ label: i18n.t("pages:reports.lowStock"), value: low })
   }
 
   if (out !== null && out > 0) {
-    fromMetrics.push({ label: "نفاد المخزون", value: out })
+    fromMetrics.push({ label: i18n.t("pages:reports.outOfStock"), value: out })
   }
 
   if (inStock !== null && inStock > 0) {
-    fromMetrics.push({ label: "مخزون كافٍ", value: inStock })
+    fromMetrics.push({
+      label: i18n.t("pages:reports.sufficientStock"),
+      value: inStock,
+    })
   }
 
   if (isCompositionData(fromMetrics)) return fromMetrics
@@ -609,15 +644,36 @@ type InvoiceLike = {
 }
 
 export function buildInvoiceCharts(invoices: InvoiceLike[]) {
-  const timeSeries = [...invoices]
-    .filter((invoice) => invoice.invoiceDate)
-    .sort(
-      (a, b) =>
-        new Date(a.invoiceDate!).getTime() - new Date(b.invoiceDate!).getTime()
-    )
-    .map((invoice) => ({
-      label: formatShortDate(invoice.invoiceDate),
-      value: toNumber(invoice.totalAmount) ?? 0,
+  const dailyTotals = new Map<string, { sortKey: number; value: number }>()
+
+  for (const invoice of invoices) {
+    if (!invoice.invoiceDate) continue
+
+    const parsed = new Date(invoice.invoiceDate)
+
+    if (Number.isNaN(parsed.getTime())) continue
+
+    const isoPrefix = String(invoice.invoiceDate).match(/^(\d{4}-\d{2}-\d{2})/)
+    const dayKey =
+      isoPrefix?.[1] ??
+      `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}-${String(parsed.getDate()).padStart(2, "0")}`
+
+    const sortKey = new Date(`${dayKey}T12:00:00`).getTime()
+    const amount = toNumber(invoice.totalAmount) ?? 0
+    const existing = dailyTotals.get(dayKey)
+
+    if (existing) {
+      existing.value += amount
+    } else {
+      dailyTotals.set(dayKey, { sortKey, value: amount })
+    }
+  }
+
+  const timeSeries: ChartPoint[] = Array.from(dailyTotals.entries())
+    .sort((a, b) => a[1].sortKey - b[1].sortKey)
+    .map(([dayKey, entry]) => ({
+      label: formatShortDate(dayKey),
+      value: entry.value,
     }))
 
   const topByAmount = [...invoices]
@@ -634,7 +690,10 @@ export function buildInvoiceCharts(invoices: InvoiceLike[]) {
   const statusCounts = new Map<string, number>()
 
   for (const invoice of invoices) {
-    const status = labelText(invoice.status, "غير محدد")
+    const status = labelText(
+      invoice.status,
+      i18n.t("pages:reports.unspecified")
+    )
     const amount = toNumber(invoice.totalAmount) ?? 0
 
     statusAmounts.set(status, (statusAmounts.get(status) ?? 0) + amount)
@@ -652,20 +711,62 @@ export function buildInvoiceCharts(invoices: InvoiceLike[]) {
   return { timeSeries, topByAmount, statusByAmount, statusByCount }
 }
 
-export function extractDashboardKpis(payload: unknown): ChartPoint[] {
+/** Money-only dashboard KPIs (same unit — e.g. SP). */
+export function extractDashboardMoneyKpis(payload: unknown): ChartPoint[] {
   const root = unwrapData(payload)
 
   if (!root || typeof root !== "object") return []
 
   const obj = root as Record<string, unknown>
   const salesToday = (obj.salesToday ?? {}) as Record<string, unknown>
+  const revenue = toNumber(salesToday.revenue)
 
-  return [
-    { label: "المبيعات اليوم", value: toNumber(salesToday.revenue) ?? 0 },
-    { label: "طلبات معلقة", value: toNumber(obj.pendingOrders) ?? 0 },
-    { label: "منتجات منخفضة", value: toNumber(obj.lowStockProducts) ?? 0 },
-    { label: "عدد مبيعات اليوم", value: toNumber(salesToday.count) ?? 0 },
-  ]
+  if (revenue === null) return []
+
+  return [{ label: i18n.t("pages:reports.todaySales"), value: revenue }]
+}
+
+/** Count-only dashboard KPIs (no currency unit). */
+export function extractDashboardCountKpis(payload: unknown): ChartPoint[] {
+  const root = unwrapData(payload)
+
+  if (!root || typeof root !== "object") return []
+
+  const obj = root as Record<string, unknown>
+  const salesToday = (obj.salesToday ?? {}) as Record<string, unknown>
+  const points: ChartPoint[] = []
+
+  const salesCount = toNumber(salesToday.count)
+  const pendingOrders = toNumber(obj.pendingOrders)
+  const lowStock = toNumber(obj.lowStockProducts)
+
+  if (salesCount !== null) {
+    points.push({
+      label: i18n.t("pages:reports.todaySalesCount"),
+      value: salesCount,
+    })
+  }
+
+  if (pendingOrders !== null) {
+    points.push({
+      label: i18n.t("pages:reports.metrics.pendingOrders"),
+      value: pendingOrders,
+    })
+  }
+
+  if (lowStock !== null) {
+    points.push({
+      label: i18n.t("pages:reports.lowStockShort"),
+      value: lowStock,
+    })
+  }
+
+  return points
+}
+
+/** @deprecated Prefer extractDashboardMoneyKpis / extractDashboardCountKpis */
+export function extractDashboardKpis(payload: unknown): ChartPoint[] {
+  return extractDashboardMoneyKpis(payload)
 }
 
 export function extractDashboardMetrics(payload: unknown): MetricItem[] {

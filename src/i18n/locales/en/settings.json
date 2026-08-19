@@ -1,0 +1,11 @@
+{
+  "title": "Settings",
+  "subtitle": "Manage interface language and appearance",
+  "languageSection": "Language",
+  "languageHint": "This language is saved to your account and used for the interface and system messages",
+  "themeSection": "Theme",
+  "themeHint": "Choose light, dark, or follow system settings",
+  "savingLanguage": "Updating language...",
+  "languageUpdated": "Language updated successfully",
+  "languageUpdateFailed": "Could not update language"
+}

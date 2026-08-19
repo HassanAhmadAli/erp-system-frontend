@@ -11,6 +11,7 @@ import {
   Trash2,
 } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useAdById, useDeleteAd } from "@/hooks/useAds"
 import { PERMISSIONS } from "@/auth/permissions"
@@ -18,14 +19,10 @@ import { usePermissions } from "@/hooks/usePermissions"
 import { isValidId } from "@/validation/helpers"
 import { formatDateTime, formatId } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
-
-function getPlacementLabel(placement: string) {
-  if (placement === "HOME") return "الصفحة الرئيسية"
-
-  return placement
-}
+import type { AdPlacement } from "@/validation/ad-schema"
 
 export function AdDetailsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { id } = useParams()
   const adId = Number(id)
   const navigate = useNavigate()
@@ -35,8 +32,20 @@ export function AdDetailsPage() {
   const canManage = can(PERMISSIONS.ADS_MANAGE)
   const deleteAdMutation = useDeleteAd()
 
+  function getPlacementLabel(placement: string) {
+    if (
+      placement === "HOME" ||
+      placement === "CHECKOUT" ||
+      placement === "SIDEBAR"
+    ) {
+      return t(`ads.placements.${placement as AdPlacement}`, { ns: "pages" })
+    }
+
+    return placement
+  }
+
   function handleDelete() {
-    const confirmed = window.confirm("هل أنت متأكد من حذف هذا الإعلان؟")
+    const confirmed = window.confirm(t("ads.confirmDelete", { ns: "pages" }))
 
     if (!confirmed) return
 
@@ -48,37 +57,47 @@ export function AdDetailsPage() {
   }
 
   if (!isValidId(adId)) {
-    return <ErrorState message="رقم الإعلان غير صالح." />
+    return (
+      <ErrorState
+        message={t("ads.invalidAdId", { ns: "pages" })}
+        backLabel={t("ads.backToAds", { ns: "pages" })}
+      />
+    )
   }
 
   if (isLoading) {
     return (
-      <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+      <main className="space-y-6 text-start text-[var(--erp-text)]">
         <p className="text-sm text-[var(--erp-muted)]">
-          جاري تحميل بيانات الإعلان...
+          {t("ads.loadingAd", { ns: "pages" })}
         </p>
       </main>
     )
   }
 
   if (isError || !ad) {
-    return <ErrorState message="تعذر تحميل بيانات الإعلان." />
+    return (
+      <ErrorState
+        message={t("ads.loadAdFailed", { ns: "pages" })}
+        backLabel={t("ads.backToAds", { ns: "pages" })}
+      />
+    )
   }
 
   return (
-    <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <main className="space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-              تفاصيل الإعلان
+              {t("ads.details", { ns: "pages" })}
             </h1>
 
             <Megaphone className="size-7 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            عرض معلومات الإعلان وروابطه وفترة ظهوره.
+            {t("ads.detailsSubtitle", { ns: "pages" })}
           </p>
         </div>
 
@@ -88,7 +107,7 @@ export function AdDetailsPage() {
             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             <ArrowRight className="size-4" />
-            العودة إلى الإعلانات
+            {t("ads.backToAds", { ns: "pages" })}
           </Link>
 
           {canManage && (
@@ -100,7 +119,7 @@ export function AdDetailsPage() {
               onClick={handleDelete}
             >
               <Trash2 className="size-4" />
-              حذف الإعلان
+              {t("deleteAd")}
             </Button>
           )}
         </div>
@@ -108,25 +127,25 @@ export function AdDetailsPage() {
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <SummaryCard
-          label="رقم الإعلان"
+          label={t("adNumber")}
           value={`#${formatId(ad.id)}`}
           icon={<Hash className="size-5" />}
         />
 
         <SummaryCard
-          label="مكان الظهور"
+          label={t("ads.placement", { ns: "pages" })}
           value={getPlacementLabel(ad.placement)}
           icon={<MapPin className="size-5" />}
         />
 
         <SummaryCard
-          label="الحالة"
-          value={ad.isActive ? "نشط" : "غير نشط"}
+          label={t("status")}
+          value={ad.isActive ? t("active") : t("inactive")}
           icon={<ToggleLeft className="size-5" />}
         />
 
         <SummaryCard
-          label="تاريخ البداية"
+          label={t("startDate")}
           value={formatDateTime(ad.startDate)}
           icon={<Calendar className="size-5" />}
           ltr
@@ -137,41 +156,41 @@ export function AdDetailsPage() {
         <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
           <div className="mb-5 flex items-center justify-end gap-2">
             <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-              محتوى الإعلان
+              {t("adContent")}
             </h2>
 
             <Megaphone className="size-5 text-[var(--erp-brand-solid)]" />
           </div>
 
           <div className="space-y-4">
-            <InfoRow label="العنوان" value={ad.title} />
+            <InfoRow label={t("title")} value={ad.title} />
 
             <InfoRow
-              label="الوصف"
-              value={ad.description || "لا يوجد وصف"}
+              label={t("description")}
+              value={ad.description || t("noDescription")}
               multiline
             />
 
             <InfoRow
-              label="تاريخ البداية"
+              label={t("startDate")}
               value={formatDateTime(ad.startDate)}
               ltr
             />
 
             <InfoRow
-              label="تاريخ النهاية"
+              label={t("endDate")}
               value={formatDateTime(ad.endDate)}
               ltr
             />
 
             <InfoRow
-              label="تاريخ الإنشاء"
+              label={t("createdAt")}
               value={formatDateTime(ad.createdAt)}
               ltr
             />
 
             <InfoRow
-              label="آخر تحديث"
+              label={t("updatedAt")}
               value={formatDateTime(ad.updatedAt)}
               ltr
             />
@@ -182,7 +201,7 @@ export function AdDetailsPage() {
           <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
             <div className="mb-5 flex items-center justify-end gap-2">
               <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-                صورة الإعلان
+                {t("image")}
               </h2>
 
               <Image className="size-5 text-[var(--erp-brand-solid)]" />
@@ -202,13 +221,13 @@ export function AdDetailsPage() {
                   rel="noreferrer"
                   className="inline-flex items-center gap-2 text-sm font-medium text-[var(--erp-brand-solid)] hover:underline"
                 >
-                  فتح الصورة
+                  {t("openImage")}
                   <ExternalLink className="size-4" />
                 </a>
               </div>
             ) : (
               <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-center text-sm text-[var(--erp-muted)]">
-                لا توجد صورة لهذا الإعلان
+                {t("noImage")}
               </div>
             )}
           </section>
@@ -216,7 +235,7 @@ export function AdDetailsPage() {
           <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
             <div className="mb-5 flex items-center justify-end gap-2">
               <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-                رابط الإعلان
+                {t("ads.linkUrl", { ns: "pages" })}
               </h2>
 
               <LinkIcon className="size-5 text-[var(--erp-brand-solid)]" />
@@ -234,7 +253,7 @@ export function AdDetailsPage() {
               </a>
             ) : (
               <p className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-4 text-sm text-[var(--erp-muted)]">
-                لا يوجد رابط مرفق
+                {t("noLink")}
               </p>
             )}
           </section>
@@ -304,9 +323,15 @@ function InfoRow({
   )
 }
 
-function ErrorState({ message }: { message: string }) {
+function ErrorState({
+  message,
+  backLabel,
+}: {
+  message: string
+  backLabel: string
+}) {
   return (
-    <main className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <main className="space-y-6 text-start text-[var(--erp-text)]">
       <p className="text-red-500 dark:text-red-300">{message}</p>
 
       <Link
@@ -314,7 +339,7 @@ function ErrorState({ message }: { message: string }) {
         className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
         <ArrowRight className="size-4" />
-        العودة إلى الإعلانات
+        {backLabel}
       </Link>
     </main>
   )

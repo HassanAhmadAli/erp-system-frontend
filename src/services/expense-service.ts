@@ -1,5 +1,11 @@
 import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import {
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
 import { toNumber } from "@/lib/report-parsers"
+import { formatNumber } from "@/utils/number-formatters"
 import {
   expensePayloadToApiPayload,
   type ExpenseRequestPayload,
@@ -9,17 +15,24 @@ import { isValidId } from "@/validation/helpers"
 export type Expense = {
   id: number
   description: string
+  descriptionAr?: string | null
   category: string
+  categoryAr?: string | null
   amount: number | string
   expenseDate: string
   recordedById?: number
   recordedBy?: {
     id: number
     fullName?: string
+    fullNameAr?: string | null
     email?: string
   }
   createdAt?: string
   updatedAt?: string
+}
+
+export type ExpensesQuery = PaginationParams & {
+  category?: string
 }
 
 export type CreateExpenseInput = ExpenseRequestPayload
@@ -41,14 +54,19 @@ export function sumExpenseAmounts(expenses: Expense[]): number {
 }
 
 export function formatExpenseAmount(amount: unknown): string {
-  return parseExpenseAmount(amount).toLocaleString("ar-SY", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })
+  return formatNumber(parseExpenseAmount(amount))
+}
+
+export function normalizeExpensesList(
+  response?: PaginatedResponse<Expense> | Expense[] | null,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+) {
+  return normalizePaginatedResponse(response, fallbackLimit, fallbackOffset)
 }
 
 export async function getAllExpenses(): Promise<Expense[]> {
-  const limit = 50
+  const limit = 100
   let offset = 0
   const all: Expense[] = []
 
@@ -73,8 +91,13 @@ export async function getAllExpenses(): Promise<Expense[]> {
   return all
 }
 
-export function getExpenses() {
-  return apiRequest<PaginatedResponse<Expense> | Expense[]>("/expenses")
+export function getExpenses(params?: ExpensesQuery) {
+  const { category, ...pagination } = params ?? {}
+  const query = toPaginationQuery(pagination)
+
+  return apiRequest<PaginatedResponse<Expense> | Expense[]>(
+    `/expenses${buildQuery({ ...query, category })}`
+  )
 }
 
 export function getExpenseById(id: number) {

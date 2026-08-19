@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { formatNumber } from "@/lib/report-parsers"
 import type { ChartPoint } from "@/lib/report-parsers"
 import { isCompositionData } from "@/lib/report-chart-data"
@@ -6,7 +8,6 @@ type DonutChartProps = {
   title?: string
   data: ChartPoint[]
   unit?: string
-  /** When true, values are already percentages (0–100) — show as labels only, no slice %. */
   valuesArePercentages?: boolean
 }
 
@@ -69,11 +70,13 @@ export function DonutChart({
   unit = "",
   valuesArePercentages = false,
 }: DonutChartProps) {
+  const { t } = useTranslation("common")
+
   if (data.length === 0) {
     return (
       <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
         {title && <h3 className="mb-4 text-lg font-bold">{title}</h3>}
-        <p className="text-sm text-[var(--erp-muted)]">لا توجد بيانات للعرض</p>
+        <p className="text-sm text-[var(--erp-muted)]">{t("charts.noData")}</p>
       </section>
     )
   }
@@ -83,9 +86,7 @@ export function DonutChart({
       <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
         {title && <h3 className="mb-4 text-lg font-bold">{title}</h3>}
         <p className="text-sm text-[var(--erp-muted)]">
-          المخطط الدائري يُستخدم فقط عندما تمثل القيم أجزاءً من إجمالي واحد (مثل
-          توزيع التكاليف أو الحالات). استخدم المخطط الشريطي للمقارنة بين قيم
-          مستقلة.
+          {t("charts.donutHint")}
         </p>
       </section>
     )
@@ -115,7 +116,9 @@ export function DonutChart({
             <circle cx={100} cy={100} r={52} fill="var(--erp-card)" />
           </svg>
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-xs text-[var(--erp-muted)]">الإجمالي</span>
+            <span className="text-xs text-[var(--erp-muted)]">
+              {t("charts.total")}
+            </span>
             <span className="text-lg font-bold text-[var(--erp-text)]">
               {formatNumber(total, unit)}
             </span>

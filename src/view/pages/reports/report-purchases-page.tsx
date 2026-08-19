@@ -1,13 +1,11 @@
 import { useMemo } from "react"
+import { useTranslation } from "react-i18next"
 
 import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices"
 import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
 import { buildInvoiceCharts } from "@/lib/report-chart-data"
 import { toNumber } from "@/lib/report-parsers"
-import {
-  normalizePurchaseInvoices,
-  type PurchaseInvoice,
-} from "@/services/purchase-invoices-service"
+import { type PurchaseInvoice } from "@/services/purchase-invoices-service"
 import { BarChart } from "@/view/components/charts/bar-chart"
 import { DonutChart } from "@/view/components/charts/donut-chart"
 import { LineChart } from "@/view/components/charts/line-chart"
@@ -26,13 +24,11 @@ type NormalizedPurchaseInvoice = {
 }
 
 export function ReportPurchasesPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { from, to, setFrom, setTo, range } = useReportDateRange()
-  const { data, isLoading, isError } = usePurchaseInvoices()
+  const { data, isLoading, isError } = usePurchaseInvoices({ limit: 100 })
 
-  const invoices = useMemo<PurchaseInvoice[]>(
-    () => normalizePurchaseInvoices(data),
-    [data]
-  )
+  const invoices = useMemo<PurchaseInvoice[]>(() => data?.data ?? [], [data])
 
   const normalized = useMemo<NormalizedPurchaseInvoice[]>(
     () =>
@@ -46,9 +42,9 @@ export function ReportPurchasesPage() {
           inv.supplier?.name ??
           inv.supplier?.fullName ??
           inv.supplier?.user?.fullName ??
-          String(inv.supplierId ?? "غير محدد"),
+          String(inv.supplierId ?? t("reports.unspecified", { ns: "pages" })),
       })),
-    [invoices]
+    [invoices, t]
   )
 
   const filtered = useMemo<NormalizedPurchaseInvoice[]>(() => {
@@ -85,10 +81,10 @@ export function ReportPurchasesPage() {
 
   return (
     <ReportLayout
-      title="تقرير المشتريات"
-      description="اتجاه التوريد وأعلى فواتير الشراء وعددها حسب الحالة"
+      title={t("reports.purchases", { ns: "pages" })}
+      description={t("reports.purchasesReportDesc", { ns: "pages" })}
       backTo="/reports"
-      backLabel="كل التقارير"
+      backLabel={t("reports.allReports", { ns: "pages" })}
       loading={isLoading}
       error={isError}
       filters={
@@ -100,32 +96,50 @@ export function ReportPurchasesPage() {
         />
       }
       actions={
-        <ExportReportButton type="purchases" label="تصدير CSV" params={range} />
+        <ExportReportButton
+          type="purchases"
+          label={t("exportCsv")}
+          params={range}
+        />
       }
     >
       <ReportMetrics
         metrics={[
-          { key: "count", label: "عدد الفواتير", value: filtered.length },
+          {
+            key: "count",
+            label: t("reports.invoiceCount", { ns: "pages" }),
+            value: filtered.length,
+          },
           {
             key: "totalPurchases",
-            label: "إجمالي المشتريات",
+            label: t("reports.totalPurchases", { ns: "pages" }),
             value: totalPurchases,
           },
         ]}
       />
 
       <LineChart
-        title="اتجاه المشتريات عبر الزمن"
+        title={t("reports.purchasesTrend", { ns: "pages" })}
         data={timeSeries}
         unit="SP"
       />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <BarChart title="أعلى فواتير الشراء" data={topByAmount} unit="SP" />
-        <DonutChart title="عدد الفواتير حسب الحالة" data={statusByCount} />
+        <BarChart
+          title={t("reports.topPurchaseInvoices", { ns: "pages" })}
+          data={topByAmount}
+          unit="SP"
+        />
+        <DonutChart
+          title={t("reports.invoicesByStatus", { ns: "pages" })}
+          data={statusByCount}
+        />
       </div>
 
-      <ReportTable title="فواتير الشراء" rows={tableRows} />
+      <ReportTable
+        title={t("reports.purchaseInvoices", { ns: "pages" })}
+        rows={tableRows}
+      />
     </ReportLayout>
   )
 }

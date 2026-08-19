@@ -1,58 +1,63 @@
-import { apiRequest } from "@/api/client"
+﻿import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
 import {
-  type LoyaltyPolicyPayload,
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
+import {
+  type LoyaltyDiscountType,
   type LoyaltyRewardPayload,
 } from "@/validation/loyalty-schema"
-import { isValidId } from "@/validation/helpers"
-
-export type LoyaltyPolicy = {
-  id?: number
-  pointsPerCurrency: number | string
-  currencyPerPoint: number | string
-  updatedAt?: string
-}
+import { isValidUuid } from "@/validation/helpers"
 
 export type LoyaltyReward = {
   id: string
-  pointsThreshold: number
-  rewardDescription: string
+  name: string
+  nameAr?: string | null
+  description?: string | null
+  descriptionAr?: string | null
+  pointsCost: number
+  discountType: LoyaltyDiscountType
   discountValue: number | string
+  maxUses: number
+  validityDays: number
   isActive: boolean
   createdAt?: string
   updatedAt?: string
 }
 
-export type UpdateLoyaltyPolicyInput = LoyaltyPolicyPayload
+export type LoyaltyRewardsQuery = PaginationParams
 
 export type CreateLoyaltyRewardInput = LoyaltyRewardPayload
 
-export type UpdateLoyaltyRewardInput = Partial<CreateLoyaltyRewardInput>
-
-export function getLoyaltyPolicy() {
-  return apiRequest<LoyaltyPolicy>("/loyalty-rewards/policy")
+export type UpdateLoyaltyRewardInput = Partial<LoyaltyRewardPayload> & {
+  /** Backend update DTO currently requires pointsCost on every PATCH. */
+  pointsCost: number
 }
 
-export function updateLoyaltyPolicy(data: UpdateLoyaltyPolicyInput) {
-  return apiRequest<LoyaltyPolicy>("/loyalty-rewards/policy", {
-    method: "PATCH",
-    body: JSON.stringify(data),
-  })
+export function normalizeLoyaltyRewardsList(
+  response?: PaginatedResponse<LoyaltyReward> | LoyaltyReward[] | null,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+) {
+  return normalizePaginatedResponse(response, fallbackLimit, fallbackOffset)
 }
 
-export function getLoyaltyRewards() {
-  return apiRequest<LoyaltyReward[] | { data: LoyaltyReward[] }>(
-    "/loyalty-rewards/"
+export function getLoyaltyRewards(params?: LoyaltyRewardsQuery) {
+  const query = toPaginationQuery(params ?? { limit: 100 })
+  return apiRequest<PaginatedResponse<LoyaltyReward> | LoyaltyReward[]>(
+    `/loyalty-rewards${buildQuery(query)}`
   )
 }
 
 export function getLoyaltyRewardById(id: string) {
-  if (!isValidId(id)) throw new Error("Invalid loyalty reward id")
+  if (!isValidUuid(id)) throw new Error("Invalid loyalty reward id")
 
   return apiRequest<LoyaltyReward>(`/loyalty-rewards/${id}`)
 }
 
 export function createLoyaltyReward(data: CreateLoyaltyRewardInput) {
-  return apiRequest<LoyaltyReward>("/loyalty-rewards/", {
+  return apiRequest<LoyaltyReward>("/loyalty-rewards", {
     method: "POST",
     body: JSON.stringify(data),
   })
@@ -62,7 +67,7 @@ export function updateLoyaltyReward(
   id: string,
   data: UpdateLoyaltyRewardInput
 ) {
-  if (!isValidId(id)) throw new Error("Invalid loyalty reward id")
+  if (!isValidUuid(id)) throw new Error("Invalid loyalty reward id")
 
   return apiRequest<LoyaltyReward>(`/loyalty-rewards/${id}`, {
     method: "PATCH",
@@ -71,7 +76,7 @@ export function updateLoyaltyReward(
 }
 
 export function deleteLoyaltyReward(id: string) {
-  if (!isValidId(id)) throw new Error("Invalid loyalty reward id")
+  if (!isValidUuid(id)) throw new Error("Invalid loyalty reward id")
 
   return apiRequest<{ message: string }>(`/loyalty-rewards/${id}`, {
     method: "DELETE",

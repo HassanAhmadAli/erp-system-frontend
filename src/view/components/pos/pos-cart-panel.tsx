@@ -1,4 +1,5 @@
 import { Loader2, Receipt, ShoppingCart } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { Button } from "@/view/components/ui/button"
 import { formatCurrency, toEnglishDigits } from "@/utils/number-formatters"
@@ -48,12 +49,14 @@ export function PosCartPanel({
   onQuantityChange,
   onRemoveFromCart,
 }: PosCartPanelProps) {
+  const { t } = useTranslation(["common", "pages"])
+
   return (
-    <aside className="rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
+    <aside className="rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)] lg:sticky lg:top-4 lg:self-start">
       <div className="mb-5 flex items-center gap-2">
         <ShoppingCart className="h-5 w-5 text-[var(--erp-accent)]" />
         <h2 className="text-lg font-semibold text-[var(--erp-text)]">
-          سلة البيع
+          {t("pages:pos.salesCart")}
         </h2>
       </div>
 
@@ -65,17 +68,17 @@ export function PosCartPanel({
           </p>
         )}
 
-        <div className="max-h-[340px] space-y-3 overflow-y-auto pr-1">
+        <div className="max-h-[340px] space-y-3 overflow-y-auto pe-1">
           {cart.length === 0 ? (
             <div className="flex min-h-[180px] flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--erp-border)] text-center">
               <Receipt className="h-10 w-10 text-[var(--erp-muted)]" />
 
               <p className="mt-3 text-sm font-medium text-[var(--erp-text)]">
-                السلة فارغة
+                {t("pages:pos.emptyCart")}
               </p>
 
               <p className="mt-1 text-xs text-[var(--erp-muted)]">
-                أضف منتجات من القائمة لإنشاء الفاتورة.
+                {t("pages:pos.emptyCartHint")}
               </p>
             </div>
           ) : (
@@ -99,7 +102,9 @@ export function PosCartPanel({
 
         <div className="border-t border-[var(--erp-border)] pt-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-[var(--erp-muted)]">المجموع</span>
+            <span className="text-[var(--erp-muted)]">
+              {t("common:subtotal")}
+            </span>
 
             <span
               dir="ltr"
@@ -111,7 +116,7 @@ export function PosCartPanel({
 
           <label className="mt-4 block">
             <span className="mb-2 block text-sm text-[var(--erp-muted)]">
-              المبلغ المدفوع
+              {t("common:paidAmount")}
             </span>
 
             <input
@@ -122,11 +127,11 @@ export function PosCartPanel({
               type="text"
               inputMode="decimal"
               dir="ltr"
-              placeholder="Enter paid amount"
+              placeholder={t("pages:pos.paidAmountPlaceholder")}
               className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-3 text-left text-sm text-[var(--erp-text)] outline-none placeholder:text-[var(--erp-muted)]"
             />
             {errors.amountPaid && (
-              <p className="mt-1 text-right text-xs text-red-500 dark:text-red-300">
+              <p className="mt-1 text-start text-xs text-red-500 dark:text-red-300">
                 {errors.amountPaid}
               </p>
             )}
@@ -141,18 +146,18 @@ export function PosCartPanel({
               type="checkbox"
               className="h-4 w-4"
             />
-            إتمام الفاتورة مباشرة
+            {t("pages:pos.completeInvoiceDirectly")}
           </label>
 
           {isCreateInvoiceError && (
             <p className="mt-3 rounded-xl bg-red-500/10 p-3 text-sm text-red-500">
-              حدث خطأ أثناء إنشاء الفاتورة.
+              {t("pages:pos.createInvoiceFailed")}
             </p>
           )}
 
           {isCreateInvoiceSuccess && (
             <p className="mt-3 rounded-xl bg-green-500/10 p-3 text-sm text-green-600">
-              تم إنشاء الفاتورة بنجاح.
+              {t("pages:pos.invoiceCreatedSuccess")}
             </p>
           )}
 
@@ -162,19 +167,16 @@ export function PosCartPanel({
               disabled={cart.length === 0 || isCreatingInvoice}
               onClick={onClearCart}
             >
-              تفريغ السلة
+              {t("common:clearCart")}
             </Button>
 
-            <Button
-              disabled={isCreatingInvoice}
-              onClick={onCreateInvoice}
-            >
+            <Button disabled={isCreatingInvoice} onClick={onCreateInvoice}>
               {isCreatingInvoice ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Receipt className="h-4 w-4" />
               )}
-              إنشاء الفاتورة
+              {t("common:createInvoice")}
             </Button>
           </div>
         </div>

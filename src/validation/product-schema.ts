@@ -1,138 +1,155 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import {
-    normalizeText,
-    optionalText,
-    parsePositiveNumber,
-    requireNonNegativeInteger,
-    requirePositiveInteger,
-    requirePositiveNumber,
+  normalizeText,
+  optionalText,
+  parsePositiveNumber,
+  requireNonNegativeInteger,
+  requirePositiveInteger,
+  requirePositiveNumber,
 } from "./helpers"
 import {
-    nonNegativeIntegerText,
-    optionalTrimmedText,
-    positiveIntegerText,
-    positiveNumberText,
-    requiredText,
+  nonNegativeIntegerText,
+  optionalTrimmedText,
+  positiveIntegerText,
+  positiveNumberText,
+  requiredText,
 } from "./zod-helpers"
 
 export const productSchema = z
-    .object({
-        name: requiredText({
-            min: 2,
-            max: 100,
-            requiredMessage: "اسم المنتج مطلوب",
-            minMessage: "اسم المنتج يجب أن يكون حرفين على الأقل",
-            maxMessage: "اسم المنتج يجب ألا يتجاوز 100 حرف",
-        }),
+  .object({
+    name: requiredText({
+      min: 2,
+      max: 100,
+      requiredMessage: () => i18n.t("validation:product.nameRequired"),
+      minMessage: () => i18n.t("validation:product.nameMin"),
+      maxMessage: () => i18n.t("validation:product.nameMax"),
+    }),
 
-        description: optionalTrimmedText({
-            max: 500,
-            maxMessage: "الوصف يجب ألا يتجاوز 500 حرف",
-        }),
+    nameAr: optionalTrimmedText({
+      max: 100,
+      maxMessage: () => i18n.t("validation:shared.nameArMax100"),
+    }),
 
-        barcode: requiredText({
-            max: 64,
-            requiredMessage: "الباركود مطلوب",
-            maxMessage: "الباركود يجب ألا يتجاوز 64 حرفًا",
-        }),
+    description: optionalTrimmedText({
+      max: 500,
+      maxMessage: () => i18n.t("validation:shared.descriptionMax500"),
+    }),
 
-        purchasePrice: positiveNumberText({
-            requiredMessage: "سعر الشراء مطلوب",
-            invalidMessage: "سعر الشراء يجب أن يكون رقمًا أكبر من الصفر",
-        }),
+    descriptionAr: optionalTrimmedText({
+      max: 500,
+      maxMessage: () => i18n.t("validation:shared.descriptionArMax500"),
+    }),
 
-        sellingPrice: positiveNumberText({
-            requiredMessage: "سعر البيع مطلوب",
-            invalidMessage: "سعر البيع يجب أن يكون رقمًا أكبر من الصفر",
-        }),
+    barcode: requiredText({
+      max: 64,
+      requiredMessage: () => i18n.t("validation:product.barcodeRequired"),
+      maxMessage: () => i18n.t("validation:product.barcodeMax"),
+    }),
 
-        quantityInStock: nonNegativeIntegerText({
-            requiredMessage: "الكمية في المخزون مطلوبة",
-            invalidMessage: "الكمية يجب أن تكون رقمًا صحيحًا لا يقل عن الصفر",
-        }),
+    purchasePrice: positiveNumberText({
+      requiredMessage: () => i18n.t("validation:product.purchasePriceRequired"),
+      invalidMessage: () => i18n.t("validation:product.purchasePriceInvalid"),
+    }),
 
-        minQuantity: nonNegativeIntegerText({
-            requiredMessage: "الحد الأدنى للكمية مطلوب",
-            invalidMessage: "الحد الأدنى يجب أن يكون رقمًا صحيحًا لا يقل عن الصفر",
-        }),
+    sellingPrice: positiveNumberText({
+      requiredMessage: () => i18n.t("validation:product.sellingPriceRequired"),
+      invalidMessage: () => i18n.t("validation:product.sellingPriceInvalid"),
+    }),
 
-        categoryId: positiveIntegerText({
-            requiredMessage: "اختر التصنيف",
-            invalidMessage: "اختر تصنيفًا صالحًا",
-        }),
+    quantityInStock: nonNegativeIntegerText({
+      requiredMessage: () => i18n.t("validation:product.quantityRequired"),
+      invalidMessage: () => i18n.t("validation:product.quantityInvalid"),
+    }),
 
-        supplierId: positiveIntegerText({
-            requiredMessage: "اختر المورد",
-            invalidMessage: "اختر موردًا صالحًا",
-        }),
-    })
-    .superRefine((data, ctx) => {
-        const purchasePrice = parsePositiveNumber(data.purchasePrice)
-        const sellingPrice = parsePositiveNumber(data.sellingPrice)
+    minQuantity: nonNegativeIntegerText({
+      requiredMessage: () => i18n.t("validation:product.minQuantityRequired"),
+      invalidMessage: () => i18n.t("validation:product.minQuantityInvalid"),
+    }),
 
-        if (
-            purchasePrice != null &&
-            sellingPrice != null &&
-            sellingPrice < purchasePrice
-        ) {
-            ctx.addIssue({
-                code: "custom",
-                message: "سعر البيع يجب ألا يكون أقل من سعر الشراء",
-                path: ["sellingPrice"],
-            })
-        }
-    })
+    categoryId: positiveIntegerText({
+      requiredMessage: () => i18n.t("validation:product.categoryRequired"),
+      invalidMessage: () => i18n.t("validation:shared.selectCategoryValid"),
+    }),
+
+    supplierId: positiveIntegerText({
+      requiredMessage: () => i18n.t("validation:product.supplierRequired"),
+      invalidMessage: () => i18n.t("validation:product.supplierInvalid"),
+    }),
+  })
+  .superRefine((data, ctx) => {
+    const purchasePrice = parsePositiveNumber(data.purchasePrice)
+    const sellingPrice = parsePositiveNumber(data.sellingPrice)
+
+    if (
+      purchasePrice != null &&
+      sellingPrice != null &&
+      sellingPrice < purchasePrice
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: i18n.t("validation:product.sellingBelowPurchase"),
+        path: ["sellingPrice"],
+      })
+    }
+  })
 
 export type ProductFormValues = z.input<typeof productSchema>
 
 export type ProductFormErrors = Partial<Record<keyof ProductFormValues, string>>
 
 export type ProductRequestPayload = {
-    name: string
-    description?: string
-    barcode: string
-    purchasePrice: number
-    sellingPrice: number
-    quantityInStock: number
-    minQuantity: number
-    categoryId: number
-    supplierId: number
+  name: string
+  nameAr?: string
+  description?: string
+  descriptionAr?: string
+  barcode: string
+  purchasePrice: number
+  sellingPrice: number
+  quantityInStock: number
+  minQuantity: number
+  categoryId: number
+  supplierId: number
 }
 
 export function productZodErrorToFormErrors(error: z.ZodError) {
-    const errors: ProductFormErrors = {}
+  const errors: ProductFormErrors = {}
 
-    for (const issue of error.issues) {
-        const field = issue.path[0]
+  for (const issue of error.issues) {
+    const field = issue.path[0]
 
-        if (typeof field !== "string") continue
-        if (!(field in productSchema.shape)) continue
+    if (typeof field !== "string") continue
+    if (!(field in productSchema.shape)) continue
 
-        const key = field as keyof ProductFormValues
-        errors[key] ??= issue.message
-    }
+    const key = field as keyof ProductFormValues
+    errors[key] ??= issue.message
+  }
 
-    return errors
+  return errors
 }
 
 export function productFormValuesToPayload(
-    values: ProductFormValues
+  values: ProductFormValues
 ): ProductRequestPayload {
-    const description = optionalText(values.description)
+  const nameAr = optionalText(values.nameAr)
+  const description = optionalText(values.description)
+  const descriptionAr = optionalText(values.descriptionAr)
 
-    return {
-        name: normalizeText(values.name),
-        ...(description ? { description } : {}),
-        barcode: normalizeText(values.barcode),
-        purchasePrice: requirePositiveNumber(values.purchasePrice, "purchasePrice"),
-        sellingPrice: requirePositiveNumber(values.sellingPrice, "sellingPrice"),
-        quantityInStock: requireNonNegativeInteger(
-            values.quantityInStock,
-            "quantityInStock"
-        ),
-        minQuantity: requireNonNegativeInteger(values.minQuantity, "minQuantity"),
-        categoryId: requirePositiveInteger(values.categoryId, "categoryId"),
-        supplierId: requirePositiveInteger(values.supplierId, "supplierId"),
-    }
+  return {
+    name: normalizeText(values.name),
+    ...(nameAr ? { nameAr } : {}),
+    ...(description ? { description } : {}),
+    ...(descriptionAr ? { descriptionAr } : {}),
+    barcode: normalizeText(values.barcode),
+    purchasePrice: requirePositiveNumber(values.purchasePrice, "purchasePrice"),
+    sellingPrice: requirePositiveNumber(values.sellingPrice, "sellingPrice"),
+    quantityInStock: requireNonNegativeInteger(
+      values.quantityInStock,
+      "quantityInStock"
+    ),
+    minQuantity: requireNonNegativeInteger(values.minQuantity, "minQuantity"),
+    categoryId: requirePositiveInteger(values.categoryId, "categoryId"),
+    supplierId: requirePositiveInteger(values.supplierId, "supplierId"),
+  }
 }

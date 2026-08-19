@@ -1,3 +1,4 @@
+import { getCurrentLanguage } from "@/i18n"
 import { getAccessToken } from "@/utils/auth-storage"
 
 export const BASE_URL = (
@@ -41,6 +42,10 @@ function buildHeaders(options: RequestInit = {}) {
 
   if (token) {
     headers.set("Authorization", `Bearer ${token}`)
+  }
+
+  if (!headers.has("Accept-Language")) {
+    headers.set("Accept-Language", getCurrentLanguage())
   }
 
   return headers
@@ -109,10 +114,7 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     throw new Error(
-      getErrorMessage(
-        body,
-        `Request failed with status ${response.status}`
-      )
+      getErrorMessage(body, `Request failed with status ${response.status}`)
     )
   }
 
@@ -132,10 +134,7 @@ export async function apiRequestBlob(
     const body = await readResponseBody(response)
 
     throw new Error(
-      getErrorMessage(
-        body,
-        `Request failed with status ${response.status}`
-      )
+      getErrorMessage(body, `Request failed with status ${response.status}`)
     )
   }
 

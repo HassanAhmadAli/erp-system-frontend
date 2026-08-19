@@ -1,43 +1,30 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+﻿import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
-import { asList } from "@/lib/list-utils"
 import {
   createLoyaltyReward,
   deleteLoyaltyReward,
-  getLoyaltyPolicy,
   getLoyaltyRewardById,
   getLoyaltyRewards,
-  updateLoyaltyPolicy,
+  normalizeLoyaltyRewardsList,
   updateLoyaltyReward,
   type CreateLoyaltyRewardInput,
-  type UpdateLoyaltyPolicyInput,
+  type LoyaltyRewardsQuery,
   type UpdateLoyaltyRewardInput,
 } from "@/services/loyalty-rewards-service"
-import { isValidId } from "@/validation/helpers"
+import { toPaginationQuery } from "@/lib/pagination"
+import { isValidUuid } from "@/validation/helpers"
 
-export function useLoyaltyPolicy() {
+export function useLoyaltyRewards(params?: LoyaltyRewardsQuery) {
+  const query = toPaginationQuery(params ?? { limit: 100 })
+
   return useQuery({
-    queryKey: ["loyalty-policy"],
-    queryFn: getLoyaltyPolicy,
-  })
-}
-
-export function useUpdateLoyaltyPolicy() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (data: UpdateLoyaltyPolicyInput) =>
-      updateLoyaltyPolicy(data),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["loyalty-policy"] })
-    },
-  })
-}
-
-export function useLoyaltyRewards() {
-  return useQuery({
-    queryKey: ["loyalty-rewards"],
-    queryFn: async () => asList(await getLoyaltyRewards()),
+    queryKey: ["loyalty-rewards", query],
+    queryFn: async () =>
+      normalizeLoyaltyRewardsList(
+        await getLoyaltyRewards({ ...params, ...query }),
+        query.limit,
+        query.offset
+      ),
   })
 }
 
@@ -45,7 +32,7 @@ export function useLoyaltyRewardById(id: string) {
   return useQuery({
     queryKey: ["loyalty-reward", id],
     queryFn: () => getLoyaltyRewardById(id),
-    enabled: isValidId(id),
+    enabled: isValidUuid(id),
   })
 }
 
@@ -71,7 +58,7 @@ export function useUpdateLoyaltyReward() {
       id: string
       data: UpdateLoyaltyRewardInput
     }) => {
-      if (!isValidId(id)) throw new Error("Invalid loyalty reward id")
+      if (!isValidUuid(id)) throw new Error("Invalid loyalty reward id")
       return updateLoyaltyReward(id, data)
     },
     onSuccess: (_, { id }) => {
@@ -86,7 +73,7 @@ export function useDeleteLoyaltyReward() {
 
   return useMutation({
     mutationFn: (id: string) => {
-      if (!isValidId(id)) throw new Error("Invalid loyalty reward id")
+      if (!isValidUuid(id)) throw new Error("Invalid loyalty reward id")
       return deleteLoyaltyReward(id)
     },
     onSuccess: () => {

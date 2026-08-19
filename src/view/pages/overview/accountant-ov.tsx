@@ -1,9 +1,11 @@
 import { Link } from "react-router-dom"
 import { FileText, TrendingUp } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { useReportDashboard } from "@/hooks/Reports/useReports"
 import {
-  extractDashboardKpis,
+  extractDashboardCountKpis,
+  extractDashboardMoneyKpis,
   extractSummaryMetrics,
   extractTimeSeries,
 } from "@/lib/report-chart-data"
@@ -14,57 +16,81 @@ import { ReportMetrics } from "@/view/components/reports/report-metrics"
 import { Button } from "@/view/components/ui/button"
 
 export function AccountantOverviewPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { data, isLoading, isError } = useReportDashboard()
 
   const metrics = extractSummaryMetrics(data)
   const timeSeries = extractTimeSeries(data)
-  const kpiComparison = extractDashboardKpis(data)
+  const moneyKpis = extractDashboardMoneyKpis(data)
+  const countKpis = extractDashboardCountKpis(data)
 
   return (
-    <div className="space-y-6" dir="rtl">
+    <div className="space-y-6">
       <header className="flex flex-wrap items-center justify-between gap-4">
-        <div className="text-right">
-          <h1 className="text-3xl font-bold">نظرة عامة — المحاسب</h1>
+        <div className="text-start">
+          <h1 className="text-3xl font-bold">
+            {t("overview.accountantTitle", { ns: "pages" })}
+          </h1>
           <p className="text-[var(--erp-muted)]">
-            ملخص مالي سريع مع مخططات دقيقة
+            {t("overview.accountantSubtitle", { ns: "pages" })}
           </p>
         </div>
         <Link to="/reports">
           <Button variant="outline" className="gap-2">
             <FileText className="size-4" />
-            كل التقارير
+            {t("reports.allReports", { ns: "pages" })}
           </Button>
         </Link>
       </header>
 
       {isLoading ? (
-        <p className="text-[var(--erp-muted)]">جاري تحميل البيانات...</p>
+        <p className="text-[var(--erp-muted)]">{t("loading")}</p>
       ) : isError ? (
-        <p className="text-red-500">تعذر تحميل لوحة التقارير</p>
+        <p className="text-red-500">
+          {t("overview.loadDashboardFailed", { ns: "pages" })}
+        </p>
       ) : (
         <>
           {metrics.length > 0 && <ReportMetrics metrics={metrics} />}
 
           {timeSeries.length >= 2 ? (
-            <LineChart title="اتجاه الأداء" data={timeSeries} unit="SP" />
+            <LineChart
+              title={t("overview.performanceTrend", { ns: "pages" })}
+              data={timeSeries}
+              unit="SP"
+            />
           ) : (
-            <BarChart title="مؤشرات الفترة" data={kpiComparison} unit="SP" />
+            <div className="grid gap-4 lg:grid-cols-2">
+              <BarChart
+                title={t("reports.financialMetrics", { ns: "pages" })}
+                data={moneyKpis}
+                unit="SP"
+                emptyMessage={t("reports.noFinancialMetrics", { ns: "pages" })}
+              />
+              <BarChart
+                title={t("reports.numericMetrics", { ns: "pages" })}
+                data={countKpis}
+                emptyMessage={t("reports.noNumericMetrics", { ns: "pages" })}
+              />
+            </div>
           )}
         </>
       )}
 
       <section>
-        <h2 className="mb-4 text-lg font-semibold">تقارير سريعة</h2>
+        <h2 className="mb-4 text-lg font-semibold">
+          {t("overview.quickReports", { ns: "pages" })}
+        </h2>
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <ReportHubCard
-            title="ملخص مالي"
-            description="المبيعات والمشتريات والربح"
+            title={t("reports.summary", { ns: "pages" })}
+            description={t("overview.financialSummaryDesc", { ns: "pages" })}
             to="/reports/summary"
             icon={FileText}
           />
           <ReportHubCard
-            title="التحليل المالي"
-            description="هوامش الربح وتفصيل التكاليف"
+            title={t("financial.title", { ns: "pages" })}
+            description={t("overview.financialAnalysisDesc", { ns: "pages" })}
             to="/financial"
             icon={TrendingUp}
           />

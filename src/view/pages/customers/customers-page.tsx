@@ -1,6 +1,7 @@
 import type { ComponentType } from "react"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Eye, UserCheck, UserX, Users } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { Link } from "react-router-dom"
 
 import {
@@ -14,39 +15,28 @@ import {
 import { isValidId } from "@/validation/helpers"
 import { CustomerStatusBadge } from "@/view/components/customers/customer-status-badge"
 import { formatCurrency, formatNumber } from "@/utils/number-formatters"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
 
-type Customer = {
-  id: number
-  userId: number
-  address?: string
-  loyaltyPoints: number
-  totalSpent: string
-  user: {
-    id: number
-    fullName: string
-    email: string
-    phoneNumber: string
-    isActive: boolean
-  }
-}
-
-type CustomersResponse = {
-  data: Customer[]
-  total: number
-  limit: number
-  offset: number
-  isFinalPage: boolean
-}
+const PAGE_SIZE = 10
 
 export function CustomersPage() {
+  const { t } = useTranslation(["common", "pages"])
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
   const [statusError, setStatusError] = useState("")
 
-  const { data, isLoading, isError } = useCustomers()
+  const { data, isLoading, isError, isFetching } = useCustomers({
+    page,
+    limit: PAGE_SIZE,
+    search: search || undefined,
+  })
   const updateStatus = useUpdateCustomerStatus()
 
-  const response = data as CustomersResponse | undefined
-  const customers = response?.data ?? []
+  useEffect(() => {
+    setPage(1)
+  }, [search])
+
+  const customers = data?.data ?? []
 
   const activeCustomers = customers.filter((customer) => customer.user.isActive)
   const inactiveCustomers = customers.filter(
@@ -58,26 +48,16 @@ export function CustomersPage() {
     0
   )
 
-  const filteredCustomers = customers.filter((customer) => {
-    const name = customer.user.fullName
-    const email = customer.user.email
-    const phone = customer.user.phoneNumber
-
-    return `${name} ${email} ${phone}`
-      .toLowerCase()
-      .includes(search.toLowerCase())
-  })
-
   function handleStatusUpdate(id: number, status: CustomerStatus) {
     setStatusError("")
 
     if (!isValidId(id)) {
-      setStatusError("رقم العميل غير صالح.")
+      setStatusError(t("pages:customers.invalidCustomerId"))
       return
     }
 
     if (!isCustomerStatus(status)) {
-      setStatusError("حالة العميل غير صالحة.")
+      setStatusError(t("pages:customers.invalidCustomerStatus"))
       return
     }
 
@@ -85,35 +65,37 @@ export function CustomersPage() {
   }
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header>
-        <h1 className="text-3xl font-bold text-[var(--erp-text)]">العملاء</h1>
+        <h1 className="text-3xl font-bold text-[var(--erp-text)]">
+          {t("pages:customers.title")}
+        </h1>
         <p className="mt-1 text-[var(--erp-muted)]">
-          عرض وإدارة حسابات العملاء وحالتهم ونقاط الولاء الخاصة بهم.
+          {t("pages:customers.subtitle")}
         </p>
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <CustomerStatCard
-          label="إجمالي العملاء"
-          value={response?.total ?? customers.length}
+          label={t("pages:customers.totalCustomers")}
+          value={data?.total ?? customers.length}
           icon={Users}
         />
 
         <CustomerStatCard
-          label="العملاء النشطون"
+          label={t("pages:customers.activeCustomersPage")}
           value={activeCustomers.length}
           icon={UserCheck}
         />
 
         <CustomerStatCard
-          label="العملاء غير النشطين"
+          label={t("pages:customers.inactiveCustomersPage")}
           value={inactiveCustomers.length}
           icon={UserX}
         />
 
         <CustomerStatCard
-          label="نقاط الولاء"
+          label={t("pages:customers.loyaltyPointsPage")}
           value={totalLoyaltyPoints}
           icon={UserCheck}
         />
@@ -123,28 +105,37 @@ export function CustomersPage() {
         <div className="mb-5 flex flex-col gap-3 sm:flex-row-reverse sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-              قائمة العملاء
+              {t("pages:customers.customerList")}
             </h2>
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              عدد النتائج: {formatNumber(filteredCustomers.length)}
+              {data?.total != null
+                ? t("common:resultCountTotal", {
+                    count: formatNumber(customers.length),
+                    total: formatNumber(data.total),
+                  })
+                : t("common:resultCount", {
+                    count: formatNumber(customers.length),
+                  })}
             </p>
           </div>
 
           <input
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="ابحث عن عميل..."
-            className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2 text-right text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 sm:w-72"
+            placeholder={t("pages:customers.searchPlaceholder")}
+            className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2 text-start text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 sm:w-72"
           />
         </div>
 
         {isLoading && (
-          <p className="text-[var(--erp-muted)]">جاري تحميل العملاء...</p>
+          <p className="text-[var(--erp-muted)]">
+            {t("pages:customers.loadingCustomers")}
+          </p>
         )}
 
         {isError && (
           <p className="text-red-500 dark:text-red-300">
-            حدث خطأ أثناء تحميل العملاء.
+            {t("pages:customers.loadListFailed")}
           </p>
         )}
 
@@ -154,99 +145,140 @@ export function CustomersPage() {
           </p>
         )}
 
-        {!isLoading && !isError && filteredCustomers.length === 0 && (
-          <p className="text-[var(--erp-muted)]">لا يوجد عملاء لعرضهم.</p>
+        {!isLoading && !isError && customers.length === 0 && (
+          <p className="text-[var(--erp-muted)]">
+            {t("pages:customers.noCustomers")}
+          </p>
         )}
 
-        {!isLoading && !isError && filteredCustomers.length > 0 && (
-          <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[950px] text-right text-sm">
-                <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">الاسم</th>
-                    <th className="px-4 py-3 font-medium">البريد الإلكتروني</th>
-                    <th className="px-4 py-3 font-medium">الهاتف</th>
-                    <th className="px-4 py-3 font-medium">العنوان</th>
-                    <th className="px-4 py-3 font-medium">الحالة</th>
-                    <th className="px-4 py-3 font-medium">نقاط الولاء</th>
-                    <th className="px-4 py-3 font-medium">إجمالي الإنفاق</th>
-                    <th className="px-4 py-3 font-medium">الإجراءات</th>
-                  </tr>
-                </thead>
+        {!isLoading && !isError && customers.length > 0 && (
+          <>
+            <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)]">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[950px] text-start text-sm">
+                  <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
+                    <tr>
+                      <th className="px-4 py-3 font-medium">
+                        {t("common:name")}
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("common:email")}
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("common:phone")}
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("common:address")}
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("common:status")}
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("pages:customers.loyaltyPoints")}
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("pages:customers.totalSpent")}
+                      </th>
+                      <th className="px-4 py-3 font-medium">
+                        {t("common:actions")}
+                      </th>
+                    </tr>
+                  </thead>
 
-                <tbody>
-                  {filteredCustomers.map((customer) => {
-                    const isActive = customer.user.isActive
+                  <tbody>
+                    {customers.map((customer) => {
+                      const isActive = customer.user.isActive
 
-                    return (
-                      <tr
-                        key={customer.id}
-                        className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
-                      >
-                        <td className="px-4 py-3 font-medium text-[var(--erp-text)]">
-                          {customer.user.fullName}
-                        </td>
+                      return (
+                        <tr
+                          key={customer.id}
+                          className="border-b border-[var(--erp-border)] transition-colors last:border-b-0 hover:bg-[var(--erp-bg)]"
+                        >
+                          <td className="px-4 py-3 font-medium text-[var(--erp-text)]">
+                            {customer.user.fullName}
+                          </td>
 
-                        <td className="px-4 py-3 text-[var(--erp-muted)]">
-                          {customer.user.email}
-                        </td>
+                          <td className="px-4 py-3 text-[var(--erp-muted)]">
+                            {customer.user.email}
+                          </td>
 
-                        <td className="px-4 py-3 text-[var(--erp-muted)]">
-                          {customer.user.phoneNumber}
-                        </td>
+                          <td className="px-4 py-3 text-[var(--erp-muted)]">
+                            {customer.user.phoneNumber}
+                          </td>
 
-                        <td className="px-4 py-3 text-[var(--erp-muted)]">
-                          {customer.address ?? "—"}
-                        </td>
+                          <td className="px-4 py-3 text-[var(--erp-muted)]">
+                            {customer.address ?? t("common:notAvailable")}
+                          </td>
 
-                        <td className="px-4 py-3">
-                          <CustomerStatusBadge isActive={isActive} />
-                        </td>
+                          <td className="px-4 py-3">
+                            <CustomerStatusBadge isActive={isActive} />
+                          </td>
 
-                        <td className="px-4 py-3 font-medium text-[var(--erp-text)]">
-                          {formatNumber(customer.loyaltyPoints)}
-                        </td>
+                          <td
+                            dir="ltr"
+                            className="px-4 py-3 font-medium text-[var(--erp-text)] tabular-nums"
+                          >
+                            {formatNumber(customer.loyaltyPoints)}
+                          </td>
 
-                        <td className="px-4 py-3 font-medium text-[var(--erp-text)]">
-                          {formatCurrency(customer.totalSpent)}
-                        </td>
+                          <td
+                            dir="ltr"
+                            className="px-4 py-3 font-medium text-[var(--erp-text)] tabular-nums"
+                          >
+                            {formatCurrency(customer.totalSpent)}
+                          </td>
 
-                        <td className="px-4 py-3">
-                          <div className="flex justify-end gap-2">
-                            <Link
-                              to={`/customers/${customer.id}`}
-                              className="inline-flex items-center gap-1 rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-1 text-xs font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
-                            >
-                              <Eye className="size-3" />
-                              عرض
-                            </Link>
+                          <td className="px-4 py-3">
+                            <div className="flex justify-end gap-2">
+                              <Link
+                                to={`/customers/${customer.id}`}
+                                className="inline-flex items-center gap-1 rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-1 text-xs font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
+                              >
+                                <Eye className="size-3" />
+                                {t("common:view")}
+                              </Link>
 
-                            <button
-                              disabled={updateStatus.isPending}
-                              onClick={() =>
-                                handleStatusUpdate(
-                                  customer.id,
-                                  isActive ? "inactive" : "active"
-                                )
-                              }
-                              className={
-                                isActive
-                                  ? "rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25"
-                                  : "rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25"
-                              }
-                            >
-                              {isActive ? "تعطيل" : "تفعيل"}
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
+                              <button
+                                disabled={updateStatus.isPending}
+                                onClick={() =>
+                                  handleStatusUpdate(
+                                    customer.id,
+                                    isActive ? "inactive" : "active"
+                                  )
+                                }
+                                className={
+                                  isActive
+                                    ? "rounded-xl border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 transition hover:bg-red-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-red-500/15 dark:text-red-300 dark:hover:bg-red-500/25"
+                                    : "rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 transition hover:bg-emerald-500/20 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-emerald-500/15 dark:text-emerald-300 dark:hover:bg-emerald-500/25"
+                                }
+                              >
+                                {isActive
+                                  ? t("common:disable")
+                                  : t("common:enable")}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+
+            <div className="mt-4">
+              <PaginationControls
+                page={page}
+                isFinalPage={data?.isFinalPage ?? true}
+                isLoading={isFetching}
+                total={data?.total}
+                onPrevious={() =>
+                  setPage((current) => Math.max(1, current - 1))
+                }
+                onNext={() => setPage((current) => current + 1)}
+              />
+            </div>
+          </>
         )}
       </section>
     </div>
@@ -269,7 +301,10 @@ function CustomerStatCard({ label, value, icon: Icon }: CustomerStatCardProps) {
       </div>
 
       <p className="text-sm text-[var(--erp-muted)]">{label}</p>
-      <p className="mt-2 text-2xl font-bold text-[var(--erp-text)]">
+      <p
+        dir="ltr"
+        className="mt-2 text-2xl font-bold text-[var(--erp-text)] tabular-nums"
+      >
         {formatNumber(value)}
       </p>
     </div>

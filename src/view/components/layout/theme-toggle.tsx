@@ -1,5 +1,6 @@
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { useTheme } from "@/view/components/theme-provider"
 import { Button } from "@/view/components/ui/button"
@@ -16,6 +17,7 @@ export function ThemeToggle({
   tone = "purpleHeader",
   className,
 }: ThemeToggleProps) {
+  const { t } = useTranslation("common")
   const { setTheme } = useTheme()
   const [isDark, setIsDark] = React.useState(() =>
     typeof document !== "undefined"
@@ -45,7 +47,9 @@ export function ThemeToggle({
       type="button"
       variant="ghost"
       size="icon-sm"
-      aria-label={isDark ? "الوضع الفاتح" : "الوضع الداكن"}
+      aria-label={
+        isDark ? t("themeToggle.lightMode") : t("themeToggle.darkMode")
+      }
       className={cn(
         tone === "purpleHeader" ? headerClasses : pageClasses,
         className

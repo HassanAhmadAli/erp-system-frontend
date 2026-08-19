@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { normalizeImportJobs } from "@/services/product-service"
@@ -9,6 +10,7 @@ import {
 } from "@/hooks/Products/useProductImport"
 
 export function ProductImportPage() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [message, setMessage] = useState<string>("")
@@ -23,12 +25,14 @@ export function ProductImportPage() {
   const jobs = normalizeImportJobs(importJobsQuery.data)
 
   return (
-    <div className="space-y-6 text-right">
+    <div className="space-y-6 text-start">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">استيراد المنتجات</h1>
+          <h1 className="text-3xl font-bold">
+            {t("pages:products.importTitle")}
+          </h1>
           <p className="mt-1 text-[var(--erp-muted)]">
-            استيراد المنتجات من ملف CSV
+            {t("pages:products.importSubtitle")}
           </p>
         </div>
 
@@ -36,16 +40,18 @@ export function ProductImportPage() {
           onClick={() => navigate("/products")}
           className="rounded-xl bg-gray-600 px-4 py-2 text-white"
         >
-          العودة للمنتجات
+          {t("pages:products.backToProducts")}
         </button>
       </div>
 
       <section className="rounded-2xl border p-6">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-bold">استيراد منتجات CSV</h2>
+            <h2 className="text-2xl font-bold">
+              {t("pages:products.importCsvTitle")}
+            </h2>
             <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              ارفع ملف CSV ثم راقب حالة مهام الاستيراد
+              {t("pages:products.importCsvSubtitle")}
             </p>
           </div>
         </div>
@@ -53,20 +59,20 @@ export function ProductImportPage() {
         <div className="mt-4 grid gap-4 md:grid-cols-[1.1fr_0.9fr]">
           <div className="space-y-3">
             <label className="block text-sm text-[var(--erp-muted)]">
-              ملف CSV
+              {t("pages:products.csvFile")}
             </label>
 
             <label
               htmlFor="csv-upload"
-              className={`relative block cursor-pointer rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-6 text-right transition hover:border-gray-400 hover:bg-gray-50 ${
+              className={`relative block cursor-pointer rounded-2xl border border-dashed border-gray-300 bg-white px-4 py-6 text-start transition hover:border-gray-400 hover:bg-gray-50 ${
                 importMutation.isPending ? "pointer-events-none opacity-60" : ""
               }`}
             >
               <span className="block text-sm text-[var(--erp-muted)]">
-                انقر لاختيار ملف CSV أو اسحبه هنا
+                {t("pages:products.clickOrDragCsv")}
               </span>
               <span className="mt-2 block text-sm font-semibold text-gray-700">
-                {selectedFile?.name ?? "لم يتم اختيار أي ملف"}
+                {selectedFile?.name ?? t("common:noFileSelected")}
               </span>
               <input
                 id="csv-upload"
@@ -87,7 +93,7 @@ export function ProductImportPage() {
               disabled={importMutation.isPending}
               onClick={() => {
                 if (!selectedFile) {
-                  setMessage("يرجى اختيار ملف CSV")
+                  setMessage(t("pages:products.selectCsvFirst"))
                   return
                 }
                 void (async () => {
@@ -95,15 +101,21 @@ export function ProductImportPage() {
                     setMessage("")
                     await importMutation.mutateAsync(selectedFile)
                     setSelectedFile(null)
-                    setMessage("تم بدء عملية الاستيراد")
+                    setMessage(t("pages:products.importStarted"))
                   } catch (err: unknown) {
-                    setMessage(err instanceof Error ? err.message : "فشل بدء الاستيراد")
+                    setMessage(
+                      err instanceof Error
+                        ? err.message
+                        : t("pages:products.startImportFailed")
+                    )
                   }
                 })()
               }}
               className="rounded-xl bg-green-600 px-4 py-2 text-white disabled:opacity-60"
             >
-              {importMutation.isPending ? "جاري البدء..." : "بدء الاستيراد"}
+              {importMutation.isPending
+                ? t("common:starting")
+                : t("pages:products.startImport")}
             </button>
 
             {message && (
@@ -114,16 +126,18 @@ export function ProductImportPage() {
           </div>
 
           <div className="space-y-3">
-            <div className="text-sm font-semibold">مهام الاستيراد</div>
+            <div className="text-sm font-semibold">
+              {t("pages:products.importJobs")}
+            </div>
             {importJobsQuery.isLoading && (
               <p className="text-sm text-[var(--erp-muted)]">
-                جاري تحميل المهام...
+                {t("pages:products.loadingJobs")}
               </p>
             )}
 
             {importJobsQuery.error && (
               <p className="rounded-xl bg-red-100 p-3 text-sm text-red-700">
-                فشل تحميل مهام الاستيراد
+                {t("pages:products.loadJobsFailed")}
               </p>
             )}
 
@@ -136,7 +150,7 @@ export function ProductImportPage() {
                       key={String(job.id)}
                       type="button"
                       onClick={() => setSelectedJobId(job.id)}
-                      className="w-full rounded-xl border bg-white p-3 text-right hover:bg-gray-50"
+                      className="w-full rounded-xl border bg-white p-3 text-start hover:bg-gray-50"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <span className="font-semibold">#{job.id}</span>
@@ -154,7 +168,7 @@ export function ProductImportPage() {
                 </div>
               ) : (
                 <p className="text-sm text-[var(--erp-muted)]">
-                  لا توجد مهام حالياً
+                  {t("pages:products.noJobs")}
                 </p>
               ))}
           </div>
@@ -162,14 +176,16 @@ export function ProductImportPage() {
 
         {selectedJobId !== null && (
           <div className="mt-6 rounded-2xl bg-[var(--erp-page)] p-4 text-left">
-            <div className="mb-2 text-right font-semibold">تفاصيل المهمة</div>
+            <div className="mb-2 text-start font-semibold">
+              {t("pages:products.jobDetails")}
+            </div>
             {jobDetailsQuery.isLoading ? (
-              <p className="text-right text-sm text-[var(--erp-muted)]">
-                جاري تحميل التفاصيل...
+              <p className="text-start text-sm text-[var(--erp-muted)]">
+                {t("common:loadingDetails")}
               </p>
             ) : jobDetailsQuery.error ? (
-              <p className="text-right text-sm text-red-700">
-                فشل تحميل تفاصيل المهمة
+              <p className="text-start text-sm text-red-700">
+                {t("pages:products.loadJobDetailsFailed")}
               </p>
             ) : (
               <pre className="max-h-56 overflow-auto text-xs">

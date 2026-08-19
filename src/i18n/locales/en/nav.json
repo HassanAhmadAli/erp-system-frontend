@@ -1,0 +1,29 @@
+{
+  "overview": "Overview",
+  "accountantOverview": "Accountant dashboard",
+  "pos": "Point of sale",
+  "customers": "Customers",
+  "staff": "Staff",
+  "orders": "Orders",
+  "salesInvoices": "Sales invoices",
+  "purchaseInvoices": "Purchase invoices",
+  "notifications": "Notifications",
+  "ads": "Ads",
+  "auditLogs": "Audit logs",
+  "inventory": "Inventory",
+  "categories": "Categories",
+  "products": "Products",
+  "suppliers": "Suppliers",
+  "discounts": "Discounts",
+  "expenses": "Expenses",
+  "reports": "Reports",
+  "financial": "Financial",
+  "loyaltyRewards": "Loyalty rewards",
+  "settings": "Settings",
+  "roles": {
+    "STORE_MANAGER": "Store manager",
+    "CASHIER": "Cashier",
+    "WAREHOUSE_WORKER": "Warehouse",
+    "ACCOUNTANT": "Accountant"
+  }
+}

@@ -1,7 +1,7 @@
+import { useTranslation } from "react-i18next"
+
 import { useReportSummary } from "@/hooks/Reports/useReports"
-
 import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
-
 import {
   extractProfitComparison,
   extractRevenueCostComparison,
@@ -11,50 +11,36 @@ import {
   extractTimeSeries,
   isCompositionData,
 } from "@/lib/report-chart-data"
-
 import { extractTableRows } from "@/lib/report-parsers"
-
+import { formatNumber } from "@/utils/number-formatters"
 import { BarChart } from "@/view/components/charts/bar-chart"
-
 import { DonutChart } from "@/view/components/charts/donut-chart"
-
 import { LineChart } from "@/view/components/charts/line-chart"
-
 import { ExportReportButton } from "@/view/components/reports/export-report-button"
-
 import { ReportDateFilter } from "@/view/components/reports/report-date-filter"
-
 import { ReportLayout } from "@/view/components/reports/report-layout"
-
 import { ReportMetrics } from "@/view/components/reports/report-metrics"
-
 import { ReportTable } from "@/view/components/reports/report-table"
 
 export function ReportSummaryPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { from, to, setFrom, setTo, range } = useReportDateRange()
-
   const { data, isLoading, isError } = useReportSummary(range)
 
   const metrics = extractSummaryFinancialMetrics(data)
-
   const revenueCostComparison = extractRevenueCostComparison(data)
-
   const profitComparison = extractProfitComparison(data)
-
   const costComposition = extractSummaryCostComposition(data)
-
   const timeSeries = extractTimeSeries(data)
-
   const breakdownRows = extractTableRows(data)
-
   const periodLabel = extractSummaryPeriodLabel(data)
 
   return (
     <ReportLayout
-      title="ملخص مالي"
-      description="إيرادات، تكاليف، مصروفات، وربحية الفترة المحددة"
+      title={t("reports.summary", { ns: "pages" })}
+      description={t("reports.summaryReportDesc", { ns: "pages" })}
       backTo="/reports"
-      backLabel="كل التقارير"
+      backLabel={t("reports.allReports", { ns: "pages" })}
       loading={isLoading}
       error={isError}
       filters={
@@ -66,12 +52,16 @@ export function ReportSummaryPage() {
         />
       }
       actions={
-        <ExportReportButton type="summary" label="تصدير CSV" params={range} />
+        <ExportReportButton
+          type="summary"
+          label={t("exportCsv")}
+          params={range}
+        />
       }
     >
       {periodLabel && (
         <p className="text-sm text-[var(--erp-muted)]">
-          الفترة المعروضة: {periodLabel}
+          {t("reports.displayPeriod", { ns: "pages", period: periodLabel })}
         </p>
       )}
 
@@ -81,24 +71,24 @@ export function ReportSummaryPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <BarChart
-          title="الإيرادات مقابل التكاليف المباشرة"
+          title={t("reports.revenueVsDirectCosts", { ns: "pages" })}
           data={revenueCostComparison}
           unit="SP"
-          emptyMessage="لا توجد بيانات للمبيعات أو المشتريات أو المصروفات"
+          emptyMessage={t("reports.noSalesPurchasesExpenses", { ns: "pages" })}
         />
 
         <BarChart
-          title="الربح الإجمالي وصافي الربح"
+          title={t("reports.grossAndNetProfit", { ns: "pages" })}
           data={profitComparison}
           unit="SP"
-          emptyMessage="لا توجد بيانات ربحية للفترة"
+          emptyMessage={t("reports.noProfitabilityData", { ns: "pages" })}
         />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         {isCompositionData(costComposition) && (
           <DonutChart
-            title="توزيع التكاليف والمصروفات"
+            title={t("reports.costExpenseDistribution", { ns: "pages" })}
             data={costComposition}
             unit="SP"
           />
@@ -106,7 +96,7 @@ export function ReportSummaryPage() {
 
         {timeSeries.length >= 2 && (
           <LineChart
-            title="الاتجاه المالي عبر الفترة"
+            title={t("reports.financialTrend", { ns: "pages" })}
             data={timeSeries}
             unit="SP"
           />
@@ -114,7 +104,10 @@ export function ReportSummaryPage() {
       </div>
 
       {breakdownRows.length > 0 && (
-        <ReportTable title="تفاصيل الفترة" rows={breakdownRows} />
+        <ReportTable
+          title={t("reports.periodDetails", { ns: "pages" })}
+          rows={breakdownRows}
+        />
       )}
     </ReportLayout>
   )
@@ -125,40 +118,40 @@ function FinancialFlowNote({
 }: {
   metrics: ReturnType<typeof extractSummaryFinancialMetrics>
 }) {
+  const { t } = useTranslation(["common", "pages"])
+
   const sales = metrics.find((m) => m.key === "totalSales")?.value
-
   const purchases = metrics.find((m) => m.key === "totalPurchases")?.value ?? 0
-
   const expenses = metrics.find((m) => m.key === "totalExpenses")?.value ?? 0
-
   const discounts = metrics.find((m) => m.key === "discountsGiven")?.value ?? 0
-
   const netProfit = metrics.find((m) => m.key === "netProfit")?.value
 
   if (sales == null || netProfit == null) return null
 
+  const approximateProfit = sales - purchases - expenses - discounts
+
   return (
-    <section className="rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-4 text-right text-sm leading-7 text-[var(--erp-muted)]">
+    <section className="rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] p-4 text-start text-sm leading-7 text-[var(--erp-muted)]">
       <p>
         <span className="font-medium text-[var(--erp-text)]">
-          ملخص الحساب:{" "}
+          {t("reports.calculationSummary", { ns: "pages" })}{" "}
         </span>
-        إجمالي المبيعات ({sales.toLocaleString("ar-SY")} SP) ناقص تكاليف الشراء
-        ({purchases.toLocaleString("ar-SY")} SP) والمصروفات (
-        {expenses.toLocaleString("ar-SY")} SP)
+        {t("reports.totalSales", { ns: "pages" })} ({formatNumber(sales)} SP) −{" "}
+        {t("reports.totalPurchases", { ns: "pages" })} (
+        {formatNumber(purchases)} SP) & {t("expenses.title", { ns: "pages" })} (
+        {formatNumber(expenses)} SP)
         {discounts > 0 &&
-          ` والخصومات (${discounts.toLocaleString("ar-SY")} SP)`}{" "}
-        يعطي صافي ربح تقريبي{" "}
+          ` & ${t("discountLabel")} (${formatNumber(discounts)} SP)`}{" "}
+        {t("reports.netProfitApprox", { ns: "pages" })}{" "}
         <span className="font-medium text-[var(--erp-text)]">
-          {(sales - purchases - expenses - discounts).toLocaleString("ar-SY")}{" "}
-          SP
+          {formatNumber(approximateProfit)} SP
         </span>
-        {Math.abs(sales - purchases - expenses - discounts - netProfit) > 1 && (
+        {Math.abs(approximateProfit - netProfit) > 1 && (
           <>
             {" "}
-            — القيمة المُبلّغة من النظام:{" "}
+            {t("reports.reportedValue", { ns: "pages" })}{" "}
             <span className="font-medium text-[var(--erp-text)]">
-              {netProfit.toLocaleString("ar-SY")} SP
+              {formatNumber(netProfit)} SP
             </span>
           </>
         )}

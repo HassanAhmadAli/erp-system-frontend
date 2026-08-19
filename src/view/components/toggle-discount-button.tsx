@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { useTranslation } from "react-i18next"
 
 import { useQueryClient } from "@tanstack/react-query"
 
@@ -10,10 +11,9 @@ type Props = {
 }
 
 export function ToggleDiscountButton({ id, isActive }: Props) {
+  const { t } = useTranslation(["common", "pages"])
   const [loading, setLoading] = useState(false)
-
   const [message, setMessage] = useState("")
-
   const queryClient = useQueryClient()
 
   async function handleToggle() {
@@ -23,7 +23,7 @@ export function ToggleDiscountButton({ id, isActive }: Props) {
 
       await toggleDiscount(id, !isActive)
 
-      setMessage("تم تحديث الحالة بنجاح")
+      setMessage(t("common:statusUpdateSuccess"))
 
       queryClient.invalidateQueries({
         queryKey: ["discounts"],
@@ -32,8 +32,8 @@ export function ToggleDiscountButton({ id, isActive }: Props) {
       queryClient.invalidateQueries({
         queryKey: ["discount", id],
       })
-    } catch (error) {
-      setMessage("فشل تحديث الحالة")
+    } catch {
+      setMessage(t("common:statusUpdateFailed"))
     } finally {
       setLoading(false)
     }
@@ -46,7 +46,11 @@ export function ToggleDiscountButton({ id, isActive }: Props) {
         disabled={loading}
         className="rounded-xl bg-blue-600 px-4 py-2 text-white"
       >
-        {loading ? "جاري التحديث..." : isActive ? "تعطيل الخصم" : "تفعيل الخصم"}
+        {loading
+          ? t("common:loading")
+          : isActive
+            ? t("pages:discounts.disableDiscount")
+            : t("pages:discounts.enableDiscount")}
       </button>
 
       {message && <p className="text-sm">{message}</p>}

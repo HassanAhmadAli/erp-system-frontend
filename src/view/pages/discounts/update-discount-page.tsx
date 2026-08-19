@@ -1,16 +1,26 @@
 import { useEffect, useState } from "react"
+
 import { ArrowRight, Percent } from "lucide-react"
+
 import { Link, useNavigate, useParams } from "react-router-dom"
+
 import { useForm, type Resolver } from "react-hook-form"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 
+import { useTranslation } from "react-i18next"
+
 import { DiscountForm } from "@/view/components/discount-form"
+
 import {
   discountSchema,
   type DiscountFormValues,
 } from "@/validation/discount-schema"
+
 import { getDiscountById, updateDiscount } from "@/services/discount-service"
+
 import { formatId } from "@/utils/number-formatters"
+
 import { Button } from "@/view/components/ui/button"
 
 function isValidId(value: number) {
@@ -39,10 +49,7 @@ function toEditableScope(
   return "GLOBAL"
 }
 
-function getOptionalNumberField(
-  source: unknown,
-  key: string
-): string {
+function getOptionalNumberField(source: unknown, key: string): string {
   if (!source || typeof source !== "object") {
     return ""
   }
@@ -57,33 +64,56 @@ function getOptionalNumberField(
 }
 
 export function EditDiscountPage() {
+  const { t } = useTranslation(["common", "pages"])
+
   const { id } = useParams()
+
   const navigate = useNavigate()
+
   const discountId = Number(id)
 
   const [loading, setLoading] = useState(false)
+
   const [loadError, setLoadError] = useState("")
+
   const [submitError, setSubmitError] = useState("")
 
   const {
     register,
+
     handleSubmit,
+
     reset,
+
     watch,
+
     formState: { errors },
   } = useForm<DiscountFormValues>({
     resolver: zodResolver(discountSchema) as Resolver<DiscountFormValues>,
+
     defaultValues: {
       name: "",
+
+      nameAr: "",
+
       type: "PERCENTAGE",
+
       scope: "GLOBAL",
+
       value: "",
+
       categoryId: "",
+
       productId: "",
+
       maxInvoiceValue: "",
+
       maxUses: "",
+
       startDate: "",
+
       endDate: "",
+
       isActive: true,
     },
   })
@@ -94,43 +124,58 @@ export function EditDiscountPage() {
 
       try {
         setLoadError("")
+
         const discount = await getDiscountById(discountId)
 
         reset({
           name: discount.name ?? "",
+
+          nameAr: discount.nameAr ?? "",
+
           type: discount.type,
+
           scope: toEditableScope(discount.scope),
+
           value: String(discount.value ?? ""),
+
           categoryId: getOptionalNumberField(discount, "categoryId"),
+
           productId: getOptionalNumberField(discount, "productId"),
+
           maxInvoiceValue:
             typeof discount.maxInvoiceValue === "number" &&
             Number.isFinite(discount.maxInvoiceValue)
               ? String(discount.maxInvoiceValue)
               : "",
+
           maxUses:
             typeof discount.maxUses === "number" &&
             Number.isFinite(discount.maxUses)
               ? String(discount.maxUses)
               : "",
+
           startDate: toDateInputValue(discount.startDate),
+
           endDate: toDateInputValue(discount.endDate),
+
           isActive: discount.isActive,
         })
       } catch (error) {
         console.error(error)
-        setLoadError("تعذر تحميل بيانات الخصم.")
+
+        setLoadError(t("pages:discounts.loadFailedDetails"))
       }
     }
 
     loadDiscount()
-  }, [discountId, reset])
+  }, [discountId, reset, t])
 
   async function onSubmit(data: DiscountFormValues) {
     if (!isValidId(discountId)) return
 
     try {
       setLoading(true)
+
       setSubmitError("")
 
       await updateDiscount(discountId, data)
@@ -138,7 +183,8 @@ export function EditDiscountPage() {
       navigate("/discounts")
     } catch (err) {
       console.error(err)
-      setSubmitError("فشل تعديل الخصم")
+
+      setSubmitError(t("pages:discounts.updateFailed"))
     } finally {
       setLoading(false)
     }
@@ -146,29 +192,30 @@ export function EditDiscountPage() {
 
   if (!isValidId(discountId)) {
     return (
-      <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
-        <p className="text-red-500 dark:text-red-300">رقم الخصم غير صالح.</p>
+      <div className="space-y-6 text-start text-[var(--erp-text)]">
+        <p className="text-red-500 dark:text-red-300">
+          {t("pages:discounts.invalidDiscountId")}
+        </p>
+
         <BackToDiscountsLink />
       </div>
     )
   }
 
   return (
-    <div
-      className="mx-auto max-w-4xl space-y-6 text-right text-[var(--erp-text)]"
-      dir="rtl"
-    >
+    <div className="mx-auto max-w-4xl space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-              تعديل الخصم #{formatId(discountId)}
+              {t("pages:discounts.editTitle", { id: formatId(discountId) })}
             </h1>
+
             <Percent className="size-7 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            قم بتحديث بيانات الخصم ثم احفظ التغييرات.
+            {t("pages:discounts.editSubtitle")}
           </p>
         </div>
 
@@ -177,7 +224,8 @@ export function EditDiscountPage() {
           className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
         >
           <ArrowRight className="size-4" />
-          العودة إلى التفاصيل
+
+          {t("pages:discounts.backToDetails")}
         </Link>
       </header>
 
@@ -198,7 +246,7 @@ export function EditDiscountPage() {
 
             <div className="flex flex-col gap-2 border-t border-[var(--erp-border)] pt-4 sm:flex-row sm:justify-end">
               <Button type="submit" disabled={loading}>
-                {loading ? "جاري الحفظ..." : "حفظ التعديلات"}
+                {loading ? t("common:saving") : t("common:saveChanges")}
               </Button>
 
               <Button
@@ -206,7 +254,7 @@ export function EditDiscountPage() {
                 variant="outline"
                 onClick={() => navigate(`/discounts/${discountId}`)}
               >
-                إلغاء
+                {t("common:cancel")}
               </Button>
             </div>
           </form>
@@ -217,13 +265,16 @@ export function EditDiscountPage() {
 }
 
 function BackToDiscountsLink() {
+  const { t } = useTranslation(["common", "pages"])
+
   return (
     <Link
       to="/discounts"
       className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
     >
       <ArrowRight className="size-4" />
-      العودة إلى الخصومات
+
+      {t("pages:discounts.backToDiscounts")}
     </Link>
   )
 }

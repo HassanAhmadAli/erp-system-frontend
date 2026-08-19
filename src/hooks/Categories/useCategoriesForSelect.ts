@@ -24,7 +24,7 @@ export function useCategoriesForSelect() {
         const primary = await getCategories({ page: 1, limit: 100 })
         return { data: normalizeCategories(primary) }
       } catch {
-        // Fallback لبعض الإصدارات التي لا تدعم page/limit
+        // Fallback for API versions that do not support page/limit
         const fallback = await getCategories()
         return { data: normalizeCategories(fallback) }
       }

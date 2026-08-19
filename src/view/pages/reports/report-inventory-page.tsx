@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { useReportInventory } from "@/hooks/Reports/useReports"
 import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
 import {
@@ -15,6 +17,7 @@ import { ReportMetrics } from "@/view/components/reports/report-metrics"
 import { ReportTable } from "@/view/components/reports/report-table"
 
 export function ReportInventoryPage() {
+  const { t } = useTranslation(["common", "pages"])
   const { from, to, setFrom, setTo, range } = useReportDateRange()
   const { data, isLoading, isError } = useReportInventory(range)
 
@@ -25,10 +28,10 @@ export function ReportInventoryPage() {
 
   return (
     <ReportLayout
-      title="تقرير المخزون"
-      description="كميات المنتجات وحالة المخزون"
+      title={t("reports.inventory", { ns: "pages" })}
+      description={t("reports.inventoryReportDesc", { ns: "pages" })}
       backTo="/reports"
-      backLabel="كل التقارير"
+      backLabel={t("reports.allReports", { ns: "pages" })}
       loading={isLoading}
       error={isError}
       filters={
@@ -40,17 +43,30 @@ export function ReportInventoryPage() {
         />
       }
       actions={
-        <ExportReportButton type="inventory" label="تصدير CSV" params={range} />
+        <ExportReportButton
+          type="inventory"
+          label={t("exportCsv")}
+          params={range}
+        />
       }
     >
       <ReportMetrics metrics={metrics} />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <BarChart title="كميات المنتجات" data={quantityBars} />
-        <DonutChart title="توزيع حالة المخزون" data={statusComposition} />
+        <BarChart
+          title={t("reports.productQuantities", { ns: "pages" })}
+          data={quantityBars}
+        />
+        <DonutChart
+          title={t("reports.stockStatusDistribution", { ns: "pages" })}
+          data={statusComposition}
+        />
       </div>
 
-      <ReportTable title="تفاصيل المنتجات" rows={rows} />
+      <ReportTable
+        title={t("reports.productDetails", { ns: "pages" })}
+        rows={rows}
+      />
     </ReportLayout>
   )
 }

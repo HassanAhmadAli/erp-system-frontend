@@ -1,5 +1,6 @@
 import { type FormEvent, useEffect, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { useSupplierById } from "@/hooks/Suppliers/useSupplierById"
 import { useUpdateSupplier } from "@/hooks/Suppliers/useUpdateSupplier"
@@ -14,15 +15,17 @@ import {
 import { Button } from "@/view/components/ui/button"
 
 const inputClass =
-  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-right text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
+  "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const labelClass = "mb-2 block text-sm font-medium text-[var(--erp-text)]"
 
 const EMPTY_FORM: SupplierFormValues = {
   fullName: "",
+  fullNameAr: "",
   phone: "",
   email: "",
   address: "",
+  addressAr: "",
 }
 
 function ErrorText({ message }: { message?: string }) {
@@ -34,6 +37,7 @@ function ErrorText({ message }: { message?: string }) {
 }
 
 export function EditSupplierForm({ supplierId }: { supplierId: number }) {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
   const { data, isLoading, isError } = useSupplierById(supplierId)
   const updateMutation = useUpdateSupplier()
@@ -46,9 +50,11 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
     if (data) {
       setForm({
         fullName: data.fullName ?? "",
+        fullNameAr: data.fullNameAr ?? "",
         phone: data.phone ?? "",
         email: data.email ?? "",
         address: data.address ?? "",
+        addressAr: data.addressAr ?? "",
       })
       setErrors({})
       setErrorMessage("")
@@ -65,7 +71,7 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
     setErrorMessage("")
 
     if (!isValidId(supplierId)) {
-      setErrorMessage("رقم المورد غير صالح")
+      setErrorMessage(t("pages:suppliers.invalidSupplierId"))
       return
     }
 
@@ -87,23 +93,25 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
       navigate(`/suppliers/${supplierId}`)
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "حدث خطأ أثناء تحديث المورد"
+        error instanceof Error
+          ? error.message
+          : t("pages:suppliers.updateFailed")
       setErrorMessage(message)
     }
   }
 
   if (isLoading) {
     return (
-      <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-muted)] shadow-[var(--erp-shadow)]">
-        جاري تحميل بيانات المورد...
+      <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-muted)] shadow-[var(--erp-shadow)]">
+        {t("common:loadingDetails")}
       </section>
     )
   }
 
   if (isError || !data) {
     return (
-      <section className="rounded-3xl border border-red-500/20 bg-red-500/10 p-6 text-right text-red-700 shadow-[var(--erp-shadow)] dark:bg-red-500/15 dark:text-red-300">
-        تعذر تحميل بيانات المورد.
+      <section className="rounded-3xl border border-red-500/20 bg-red-500/10 p-6 text-start text-red-700 shadow-[var(--erp-shadow)] dark:bg-red-500/15 dark:text-red-300">
+        {t("pages:suppliers.loadFailed")}
       </section>
     )
   }
@@ -111,32 +119,45 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-right text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
+      className="space-y-5 rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-start text-[var(--erp-text)] shadow-[var(--erp-shadow)]"
     >
       <div className="grid gap-4 md:grid-cols-2">
         <div>
           <label htmlFor="edit-supplier-fullName" className={labelClass}>
-            اسم المورد
+            {t("pages:suppliers.supplierName")}
           </label>
           <input
             id="edit-supplier-fullName"
             value={form.fullName}
             onChange={(event) => setField("fullName", event.target.value)}
-            placeholder="أدخل اسم المورد"
+            placeholder={t("pages:suppliers.namePlaceholder")}
             className={inputClass}
           />
           <ErrorText message={errors.fullName} />
         </div>
 
         <div>
+          <label htmlFor="edit-supplier-fullNameAr" className={labelClass}>
+            {t("fullNameAr")}
+          </label>
+          <input
+            id="edit-supplier-fullNameAr"
+            value={form.fullNameAr ?? ""}
+            onChange={(event) => setField("fullNameAr", event.target.value)}
+            className={inputClass}
+          />
+          <ErrorText message={errors.fullNameAr} />
+        </div>
+
+        <div>
           <label htmlFor="edit-supplier-phone" className={labelClass}>
-            رقم الهاتف
+            {t("common:phoneNumber")}
           </label>
           <input
             id="edit-supplier-phone"
             value={form.phone}
             onChange={(event) => setField("phone", event.target.value)}
-            placeholder="أدخل رقم الهاتف"
+            placeholder={t("common:phonePlaceholder")}
             className={inputClass}
           />
           <ErrorText message={errors.phone} />
@@ -144,14 +165,14 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
 
         <div>
           <label htmlFor="edit-supplier-email" className={labelClass}>
-            البريد الإلكتروني
+            {t("common:email")}
           </label>
           <input
             id="edit-supplier-email"
             type="email"
             value={form.email}
             onChange={(event) => setField("email", event.target.value)}
-            placeholder="أدخل البريد الإلكتروني"
+            placeholder={t("common:emailPlaceholder")}
             className={inputClass}
           />
           <ErrorText message={errors.email} />
@@ -159,16 +180,29 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
 
         <div>
           <label htmlFor="edit-supplier-address" className={labelClass}>
-            العنوان
+            {t("common:address")}
           </label>
           <input
             id="edit-supplier-address"
             value={form.address}
             onChange={(event) => setField("address", event.target.value)}
-            placeholder="أدخل عنوان المورد"
+            placeholder={t("pages:suppliers.addressPlaceholder")}
             className={inputClass}
           />
           <ErrorText message={errors.address} />
+        </div>
+
+        <div>
+          <label htmlFor="edit-supplier-addressAr" className={labelClass}>
+            {t("addressAr")}
+          </label>
+          <input
+            id="edit-supplier-addressAr"
+            value={form.addressAr ?? ""}
+            onChange={(event) => setField("addressAr", event.target.value)}
+            className={inputClass}
+          />
+          <ErrorText message={errors.addressAr} />
         </div>
       </div>
 
@@ -180,7 +214,9 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
 
       <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
         <Button type="submit" disabled={updateMutation.isPending}>
-          {updateMutation.isPending ? "جاري الحفظ..." : "حفظ التعديلات"}
+          {updateMutation.isPending
+            ? t("common:saving")
+            : t("common:saveChanges")}
         </Button>
 
         <Button
@@ -188,7 +224,7 @@ export function EditSupplierForm({ supplierId }: { supplierId: number }) {
           variant="outline"
           onClick={() => navigate(`/suppliers/${supplierId}`)}
         >
-          إلغاء
+          {t("common:cancel")}
         </Button>
       </div>
     </form>

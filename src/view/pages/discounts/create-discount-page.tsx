@@ -1,15 +1,24 @@
 import { useState } from "react"
+
 import { ArrowRight, Percent } from "lucide-react"
+
 import { Link, useNavigate } from "react-router-dom"
+
 import { useForm, type Resolver } from "react-hook-form"
+
 import { zodResolver } from "@hookform/resolvers/zod"
 
+import { useTranslation } from "react-i18next"
+
 import { DiscountForm } from "@/view/components/discount-form"
+
 import {
   discountSchema,
   type DiscountFormValues,
 } from "@/validation/discount-schema"
+
 import { createDiscount } from "@/services/discount-service"
+
 import { Button } from "@/view/components/ui/button"
 
 function getTodayDateInputValue() {
@@ -17,28 +26,48 @@ function getTodayDateInputValue() {
 }
 
 export function CreateDiscountPage() {
+  const { t } = useTranslation(["common", "pages"])
+
   const navigate = useNavigate()
+
   const [loading, setLoading] = useState(false)
+
   const [errorMessage, setErrorMessage] = useState("")
 
   const {
     register,
+
     handleSubmit,
+
     watch,
+
     formState: { errors },
   } = useForm<DiscountFormValues>({
     resolver: zodResolver(discountSchema) as Resolver<DiscountFormValues>,
+
     defaultValues: {
       name: "",
+
+      nameAr: "",
+
       type: "PERCENTAGE",
+
       scope: "GLOBAL",
+
       value: "",
+
       categoryId: "",
+
       productId: "",
+
       maxInvoiceValue: "",
+
       maxUses: "",
+
       startDate: getTodayDateInputValue(),
+
       endDate: "",
+
       isActive: true,
     },
   })
@@ -46,6 +75,7 @@ export function CreateDiscountPage() {
   async function onSubmit(data: DiscountFormValues) {
     try {
       setLoading(true)
+
       setErrorMessage("")
 
       await createDiscount(data)
@@ -53,29 +83,27 @@ export function CreateDiscountPage() {
       navigate("/discounts")
     } catch (error) {
       console.error(error)
-      setErrorMessage("فشل إنشاء الخصم")
+
+      setErrorMessage(t("pages:discounts.createFailed"))
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div
-      className="mx-auto max-w-4xl space-y-6 text-right text-[var(--erp-text)]"
-      dir="rtl"
-    >
+    <div className="mx-auto max-w-4xl space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-              إنشاء خصم جديد
+              {t("pages:discounts.createTitle")}
             </h1>
 
             <Percent className="size-7 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            أدخل بيانات الخصم وحدد نوعه ونطاق تطبيقه.
+            {t("pages:discounts.createSubtitle")}
           </p>
         </div>
 
@@ -84,7 +112,8 @@ export function CreateDiscountPage() {
           className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
         >
           <ArrowRight className="size-4" />
-          العودة إلى الخصومات
+
+          {t("pages:discounts.backToDiscounts")}
         </Link>
       </header>
 
@@ -100,7 +129,7 @@ export function CreateDiscountPage() {
 
           <div className="flex flex-col gap-2 border-t border-[var(--erp-border)] pt-4 sm:flex-row sm:justify-end">
             <Button type="submit" disabled={loading}>
-              {loading ? "جاري الحفظ..." : "حفظ الخصم"}
+              {loading ? t("common:saving") : t("pages:discounts.saveDiscount")}
             </Button>
 
             <Button
@@ -108,7 +137,7 @@ export function CreateDiscountPage() {
               variant="outline"
               onClick={() => navigate("/discounts")}
             >
-              إلغاء
+              {t("common:cancel")}
             </Button>
           </div>
         </form>

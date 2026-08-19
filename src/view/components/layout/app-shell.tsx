@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
+import { useTranslation } from "react-i18next"
 
 import { usePermissions } from "@/hooks/usePermissions"
+import { useSyncLanguageFromUser } from "@/hooks/useSyncLanguageFromUser"
+import { useLocale } from "@/i18n/locale-provider"
 import { AppSidebar } from "@/view/components/layout/app-sidebar"
 import { TopBar } from "@/view/components/layout/top-bar"
 
@@ -16,8 +19,12 @@ function readSidebarCollapsed() {
 }
 
 export function AppShell() {
+  const { t } = useTranslation("common")
   const { headerTitle } = usePermissions()
+  const { dir, language } = useLocale()
+  useSyncLanguageFromUser()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(readSidebarCollapsed)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
   useEffect(() => {
     try {
@@ -27,25 +34,77 @@ export function AppShell() {
     }
   }, [sidebarCollapsed])
 
+  useEffect(() => {
+    if (!mobileNavOpen) return
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        setMobileNavOpen(false)
+      }
+    }
+
+    function handleResize() {
+      if (window.matchMedia("(min-width: 1024px)").matches) {
+        setMobileNavOpen(false)
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("resize", handleResize)
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = "hidden"
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("resize", handleResize)
+      document.body.style.overflow = previousOverflow
+    }
+  }, [mobileNavOpen])
+
   function toggleSidebar() {
     setSidebarCollapsed((current) => !current)
+  }
+
+  function closeMobileNav() {
+    setMobileNavOpen(false)
   }
 
   return (
     <div
       className="flex h-svh flex-col overflow-hidden bg-[var(--erp-page)] text-[var(--erp-text)]"
-      dir="rtl"
-      lang="ar"
+      dir={dir}
+      lang={language}
     >
-      <TopBar title={headerTitle} />
+      <TopBar title={headerTitle} onMenuClick={() => setMobileNavOpen(true)} />
 
-      <div className="flex min-h-0 flex-1">
-        <AppSidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <AppSidebar
+          collapsed={sidebarCollapsed}
+          onToggle={toggleSidebar}
+          className="hidden min-h-0 lg:flex"
+        />
 
-        <main className="erp-scrollbar min-h-0 flex-1 overflow-y-auto bg-[var(--erp-bg)] px-5 py-8 sm:px-10 lg:py-10">
+        <main className="erp-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--erp-bg)] px-5 py-8 sm:px-10 lg:py-10">
           <Outlet />
         </main>
       </div>
+
+      {mobileNavOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal>
+          <button
+            type="button"
+            aria-label={t("closeMenu")}
+            className="absolute inset-0 bg-black/50"
+            onClick={closeMobileNav}
+          />
+          <AppSidebar
+            collapsed={false}
+            showCollapseToggle={false}
+            onNavigate={closeMobileNav}
+            className="absolute inset-y-0 start-0 z-10 h-full shadow-[var(--erp-shadow)]"
+          />
+        </div>
+      )}
     </div>
   )
 }

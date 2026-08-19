@@ -2,15 +2,22 @@ import { useQuery } from "@tanstack/react-query"
 
 import {
   getLowStockProducts,
-  normalizeProducts,
+  normalizeProductList,
+  type ProductsQuery,
 } from "@/services/product-service"
+import { toPaginationQuery } from "@/lib/pagination"
 
-export function useLowStockProducts() {
+export function useLowStockProducts(params?: ProductsQuery, enabled = true) {
+  const query = toPaginationQuery(params ?? { limit: 100 })
+
   return useQuery({
-    queryKey: ["products-low-stock"],
-    queryFn: async () => {
-      const res = await getLowStockProducts()
-      return normalizeProducts(res)
-    },
+    queryKey: ["products-low-stock", query],
+    queryFn: async () =>
+      normalizeProductList(
+        await getLowStockProducts({ ...params, ...query }),
+        query.limit,
+        query.offset
+      ),
+    enabled,
   })
 }

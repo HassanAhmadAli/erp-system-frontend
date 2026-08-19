@@ -178,14 +178,14 @@ export function hasAllPermissions(
 export function canManageSalesInvoiceStatus(
   role: UserRole | undefined,
   userId: number | undefined,
-  cashierId: number | undefined
+  cashierUserId: number | undefined
 ): boolean {
   if (!hasPermission(role, PERMISSIONS.SALES_MANAGE)) {
     return false
   }
 
   if (role === "CASHIER") {
-    return userId !== undefined && cashierId === userId
+    return userId !== undefined && cashierUserId === userId
   }
 
   return true
@@ -204,14 +204,4 @@ export function getDefaultRouteForRole(role: UserRole | undefined): string {
     default:
       return "/login"
   }
-}
-
-export const ROLE_HEADER_TITLES: Record<
-  Exclude<UserRole, "CUSTOMER">,
-  string
-> = {
-  STORE_MANAGER: "مدير المتجر",
-  CASHIER: "الكاشير",
-  WAREHOUSE_WORKER: "مدير المخزون",
-  ACCOUNTANT: "المحاسب",
 }

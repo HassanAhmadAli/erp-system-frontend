@@ -10,6 +10,7 @@ import {
   Wallet,
   X,
 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import type { Order } from "@/services/orders-service"
 import {
@@ -61,12 +62,12 @@ type OrderItemLike = {
   } | null
 }
 
-const statusLabels: Record<string, string> = {
-  PENDING: "قيد الانتظار",
-  PREPARING: "قيد التحضير",
-  OUT_FOR_DELIVERY: "قيد التوصيل",
-  DELIVERED: "تم التسليم",
-  CANCELLED: "ملغي",
+const ORDER_STATUS_KEYS: Record<string, string> = {
+  PENDING: "statuses.pending",
+  PREPARING: "statuses.preparing",
+  OUT_FOR_DELIVERY: "statuses.outForDelivery",
+  DELIVERED: "statuses.delivered",
+  CANCELLED: "statuses.cancelled",
 }
 
 const statusStyles: Record<string, string> = {
@@ -82,12 +83,6 @@ const statusStyles: Record<string, string> = {
     "border-red-500/20 bg-red-500/10 text-red-700 dark:bg-red-500/15 dark:text-red-300",
 }
 
-function formatStatus(status?: string) {
-  const safeStatus = String(status ?? "PENDING").toUpperCase()
-
-  return statusLabels[safeStatus] ?? safeStatus
-}
-
 function formatOptionalCurrency(value?: string | number | null) {
   if (value === null || value === undefined || value === "") {
     return "—"
@@ -98,14 +93,6 @@ function formatOptionalCurrency(value?: string | number | null) {
 
 function getOrderTotal(order: OrderWithOptionalDetails) {
   return order.totalAmount ?? order.total ?? order.subtotal ?? null
-}
-
-function getCustomerName(order: OrderWithOptionalDetails) {
-  return (
-    order.customer?.user?.fullName ||
-    order.customer?.user?.email ||
-    (order.customerId ? `عميل #${formatId(order.customerId)}` : "—")
-  )
 }
 
 function getItemUnitPrice(item: OrderItemLike) {
@@ -136,7 +123,9 @@ function getItemTotal(item: OrderItemLike) {
 }
 
 function StatusBadge({ status }: { status?: string }) {
+  const { t } = useTranslation("common")
   const safeStatus = String(status ?? "PENDING").toUpperCase()
+  const statusKey = ORDER_STATUS_KEYS[safeStatus]
 
   return (
     <span
@@ -145,7 +134,7 @@ function StatusBadge({ status }: { status?: string }) {
         "border-slate-500/20 bg-slate-500/10 text-slate-700 dark:text-slate-300"
       }`}
     >
-      {formatStatus(safeStatus)}
+      {statusKey ? t(statusKey) : safeStatus}
     </span>
   )
 }
@@ -156,61 +145,74 @@ export function OrderDetailsCard({
   isLoading,
   onClose,
 }: OrderDetailsCardProps) {
+  const { t } = useTranslation(["common", "pages"])
   const orderDetails = order as OrderWithOptionalDetails | undefined
   const items = orderDetails?.items ?? []
+
+  function getCustomerName(orderData: OrderWithOptionalDetails) {
+    return (
+      orderData.customer?.user?.fullName ||
+      orderData.customer?.user?.email ||
+      (orderData.customerId
+        ? t("common:customerFallback", {
+            id: formatId(orderData.customerId),
+          })
+        : t("common:notAvailable"))
+    )
+  }
 
   return (
     <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div className="text-right">
+        <div className="text-start">
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-2xl font-bold text-[var(--erp-text)]">
-              تفاصيل الطلب #{formatId(orderId)}
+              {t("pages:orders.detailsTitle", { id: formatId(orderId) })}
             </h1>
 
             <ClipboardList className="size-6 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            عرض بيانات الطلب والعميل والمنتجات المطلوبة.
+            {t("pages:orders.detailsSubtitle")}
           </p>
         </div>
 
         <Button size="sm" variant="outline" className="gap-2" onClick={onClose}>
           <X className="size-4" />
-          إغلاق
+          {t("common:close")}
         </Button>
       </div>
 
       {isLoading ? (
         <div className="flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-sm text-[var(--erp-muted)]">
           <Loader2 className="size-4 animate-spin" />
-          جاري تحميل التفاصيل...
+          {t("common:loadingDetails")}
         </div>
       ) : orderDetails ? (
         <div className="space-y-6">
           <section className="grid gap-4 md:grid-cols-4">
             <SummaryCard
-              label="رقم الطلب"
+              label={t("common:orderId")}
               value={`#${formatId(orderDetails.id)}`}
               icon={<Hash className="size-5" />}
               ltr
             />
 
             <SummaryCard
-              label="العميل"
+              label={t("common:customer")}
               value={getCustomerName(orderDetails)}
               icon={<User className="size-5" />}
             />
 
             <SummaryCard
-              label="الحالة"
+              label={t("common:status")}
               value={<StatusBadge status={orderDetails.status} />}
               icon={<ClipboardList className="size-5" />}
             />
 
             <SummaryCard
-              label="الإجمالي"
+              label={t("common:total")}
               value={formatOptionalCurrency(getOrderTotal(orderDetails))}
               icon={<Wallet className="size-5" />}
               ltr
@@ -219,61 +221,61 @@ export function OrderDetailsCard({
 
           <section className="grid gap-4 md:grid-cols-2">
             <InfoCard
-              label="رقم العميل"
+              label={t("common:customerId")}
               value={
                 orderDetails.customerId
                   ? `#${formatId(orderDetails.customerId)}`
-                  : "—"
+                  : t("common:notAvailable")
               }
               icon={<User className="size-4" />}
               ltr
             />
 
             <InfoCard
-              label="المجموع الفرعي"
+              label={t("common:subtotal")}
               value={formatOptionalCurrency(orderDetails.subtotal)}
               icon={<Wallet className="size-4" />}
               ltr
             />
 
             <InfoCard
-              label="قيمة الخصم"
+              label={t("common:discountValue")}
               value={formatOptionalCurrency(orderDetails.discountAmount)}
               icon={<Wallet className="size-4" />}
               ltr
             />
 
             <InfoCard
-              label="رسوم التوصيل"
+              label={t("common:deliveryFee")}
               value={formatOptionalCurrency(orderDetails.deliveryFee)}
               icon={<Wallet className="size-4" />}
               ltr
             />
 
             <InfoCard
-              label="نقاط الولاء المستخدمة"
+              label={t("common:loyaltyPointsUsed")}
               value={formatNumber(orderDetails.loyaltyPointsUsed ?? 0)}
               icon={<Hash className="size-4" />}
               ltr
             />
 
             <InfoCard
-              label="تاريخ الإنشاء"
+              label={t("common:createdAt")}
               value={formatDateTime(orderDetails.createdAt)}
               icon={<Calendar className="size-4" />}
               ltr
             />
 
             <InfoCard
-              label="آخر تحديث"
+              label={t("common:updatedAt")}
               value={formatDateTime(orderDetails.updatedAt)}
               icon={<Calendar className="size-4" />}
               ltr
             />
 
             <InfoCard
-              label="عنوان التوصيل"
-              value={orderDetails.deliveryAddress ?? "—"}
+              label={t("pages:orders.deliveryAddress")}
+              value={orderDetails.deliveryAddress ?? t("common:notAvailable")}
               icon={<MapPin className="size-4" />}
               className="md:col-span-2"
             />
@@ -282,12 +284,14 @@ export function OrderDetailsCard({
           <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-bg)] p-5">
             <div className="mb-4 flex items-center justify-between gap-4">
               <span className="text-sm text-[var(--erp-muted)]">
-                {formatNumber(items.length)} منتج
+                {t("common:productCountSuffix", {
+                  count: formatNumber(items.length),
+                })}
               </span>
 
               <div className="flex items-center justify-end gap-2">
                 <h2 className="text-lg font-bold text-[var(--erp-text)]">
-                  المنتجات المطلوبة
+                  {t("pages:orders.orderItems")}
                 </h2>
 
                 <Package className="size-5 text-[var(--erp-brand-solid)]" />
@@ -296,11 +300,11 @@ export function OrderDetailsCard({
 
             {items.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-card)] p-8 text-center text-sm text-[var(--erp-muted)]">
-                لا توجد منتجات ظاهرة في تفاصيل هذا الطلب.
+                {t("pages:orders.noOrderItems")}
               </div>
             ) : (
-              <div className="overflow-hidden rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)]">
-                <table className="w-full table-fixed text-right text-sm">
+              <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)]">
+                <table className="w-full min-w-[640px] table-fixed text-start text-sm">
                   <colgroup>
                     <col className="w-[16%]" />
                     <col className="w-[36%]" />
@@ -311,11 +315,21 @@ export function OrderDetailsCard({
 
                   <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-xs text-[var(--erp-muted)]">
                     <tr>
-                      <th className="px-3 py-3 font-medium">رقم المنتج</th>
-                      <th className="px-3 py-3 font-medium">اسم المنتج</th>
-                      <th className="px-3 py-3 font-medium">الكمية</th>
-                      <th className="px-3 py-3 font-medium">سعر الوحدة</th>
-                      <th className="px-3 py-3 font-medium">الإجمالي</th>
+                      <th className="px-3 py-3 font-medium">
+                        {t("common:productId")}
+                      </th>
+                      <th className="px-3 py-3 font-medium">
+                        {t("common:productName")}
+                      </th>
+                      <th className="px-3 py-3 font-medium">
+                        {t("common:quantity")}
+                      </th>
+                      <th className="px-3 py-3 font-medium">
+                        {t("common:unitPrice")}
+                      </th>
+                      <th className="px-3 py-3 font-medium">
+                        {t("common:total")}
+                      </th>
                     </tr>
                   </thead>
 
@@ -328,12 +342,12 @@ export function OrderDetailsCard({
                         <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
                           {item.productId
                             ? `#${formatId(item.productId)}`
-                            : "—"}
+                            : t("common:notAvailable")}
                         </td>
 
                         <td className="px-3 py-3 font-medium text-[var(--erp-text)]">
                           <span className="block truncate">
-                            {item.product?.name || "—"}
+                            {item.product?.name || t("common:notAvailable")}
                           </span>
                         </td>
 
@@ -358,7 +372,7 @@ export function OrderDetailsCard({
         </div>
       ) : (
         <p className="text-sm text-[var(--erp-muted)]">
-          لم يتم العثور على تفاصيل الطلب.
+          {t("pages:orders.detailsNotFound")}
         </p>
       )}
     </section>

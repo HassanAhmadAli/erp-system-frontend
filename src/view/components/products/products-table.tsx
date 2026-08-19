@@ -1,13 +1,13 @@
 import { useMemo, useState } from "react"
 import {
-  ChevronLeft,
-  ChevronRight,
   Eye,
+  ImageOff,
   PackageOpen,
   Pencil,
   Search,
   Trash2,
 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
 import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
@@ -17,35 +17,42 @@ import { useProducts } from "@/hooks/Products/useProducts"
 import { useProductsByCategory } from "@/hooks/Products/useProductsByCategory"
 import { useProductsBySupplier } from "@/hooks/Products/useProductsBySupplier"
 import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
-import { normalizeProducts, type Product } from "@/services/product-service"
+import { useLocale } from "@/i18n/locale-provider"
+import type { AppLanguage } from "@/i18n/types"
+import { localizedFullName, localizedName } from "@/lib/localized"
+import { getProductImageSrc, type Product } from "@/services/product-service"
 import {
   formatCurrency,
   formatInteger,
   toEnglishDigits,
 } from "@/utils/number-formatters"
-import { StatusBadge } from "@/view/components/common/status-badge"
+import {
+  StatusBadge,
+  type StockStatus,
+} from "@/view/components/common/status-badge"
 import { Button } from "@/view/components/ui/button"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
 import { ProductsSkeleton } from "./products-skeleton"
 
-type ProductStatus = "متوفر" | "منخفض" | "نافد"
 type ProductFilterType = "all" | "low-stock" | "category" | "supplier"
 
 const PAGE_SIZE = 10
 
-function getProductStatus(product: Product): ProductStatus {
+function getProductStatus(product: Product): StockStatus {
   const quantity = product.quantityInStock ?? 0
   const minQuantity = product.minQuantity ?? 0
 
-  if (quantity <= 0) return "نافد"
-  if (minQuantity > 0 && quantity <= minQuantity) return "منخفض"
+  if (quantity <= 0) return "outOfStock"
+  if (minQuantity > 0 && quantity <= minQuantity) return "lowStock"
 
-  return "متوفر"
+  return "inStock"
 }
 
-function getProductCategory(product: Product) {
-  if (product.category?.name) {
-    return product.category.name
+function getProductCategory(product: Product, language: AppLanguage) {
+  if (product.category) {
+    const name = localizedName(product.category, language)
+    if (name) return name
   }
 
   if (product.categoryId) {
@@ -55,9 +62,10 @@ function getProductCategory(product: Product) {
   return "-"
 }
 
-function getProductSupplier(product: Product) {
-  if (product.supplier?.fullName) {
-    return product.supplier.fullName
+function getProductSupplier(product: Product, language: AppLanguage) {
+  if (product.supplier) {
+    const name = localizedFullName(product.supplier, language)
+    if (name) return name
   }
 
   if (product.supplierId) {
@@ -84,6 +92,7 @@ function ProductActions({
   product: Product
   onDelete: () => void
 }) {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
 
   return (
@@ -96,7 +105,7 @@ function ProductActions({
         onClick={() => navigate(`/products/${product.id}`)}
       >
         <Eye className="size-4" />
-        التفاصيل
+        {t("common:details")}
       </Button>
 
       <Button
@@ -104,7 +113,7 @@ function ProductActions({
         variant="outline"
         size="icon-sm"
         onClick={() => navigate(`/products/${product.id}/edit`)}
-        title="تعديل المنتج"
+        title={t("pages:products.edit")}
       >
         <Pencil className="size-4" />
       </Button>
@@ -114,7 +123,7 @@ function ProductActions({
         variant="destructive"
         size="icon-sm"
         onClick={onDelete}
-        title="حذف المنتج"
+        title={t("pages:products.deleteProduct")}
       >
         <Trash2 className="size-4" />
       </Button>
@@ -129,31 +138,63 @@ function ProductMobileCard({
   product: Product
   onDelete: () => void
 }) {
+  const { t } = useTranslation(["common", "pages"])
+  const { language } = useLocale()
+  const imageSrc = getProductImageSrc(product.imageUrl)
+  const displayName = localizedName(product, language)
+
   return (
     <article className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-4">
       <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1 text-right">
-          <h3 className="line-clamp-2 font-semibold leading-6 text-[var(--erp-text)]">
-            {product.name}
-          </h3>
+        <div className="flex min-w-0 flex-1 items-start gap-3 text-start">
+          <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
+            {imageSrc ? (
+              <img
+                src={imageSrc}
+                alt={displayName}
+                className="size-full object-cover"
+              />
+            ) : (
+              <ImageOff className="size-4 text-[var(--erp-muted)]" />
+            )}
+          </div>
 
-          <p dir="ltr" className="mt-1 text-left text-xs text-[var(--erp-muted)]">
-            {toEnglishDigits(product.barcode)}
-          </p>
+          <div className="min-w-0 flex-1">
+            <h3 className="line-clamp-2 leading-6 font-semibold text-[var(--erp-text)]">
+              {displayName}
+            </h3>
+
+            <p
+              dir="ltr"
+              className="mt-1 text-left text-xs text-[var(--erp-muted)]"
+            >
+              {toEnglishDigits(product.barcode)}
+            </p>
+          </div>
         </div>
 
         <StatusBadge status={getProductStatus(product)} />
       </div>
 
       <div className="mt-4 grid gap-3 rounded-2xl bg-[var(--erp-bg)] p-3 text-sm">
-        <InfoRow label="التصنيف" value={getProductCategory(product)} />
-        <InfoRow label="المورد" value={getProductSupplier(product)} />
         <InfoRow
-          label="السعر"
+          label={t("common:category")}
+          value={getProductCategory(product, language)}
+        />
+        <InfoRow
+          label={t("common:supplier")}
+          value={getProductSupplier(product, language)}
+        />
+        <InfoRow
+          label={t("common:price")}
           value={formatCurrency(product.sellingPrice ?? 0)}
           ltr
         />
-        <InfoRow label="الكمية" value={getProductQuantity(product)} ltr />
+        <InfoRow
+          label={t("common:quantity")}
+          value={getProductQuantity(product)}
+          ltr
+        />
       </div>
 
       <div className="mt-4">
@@ -179,7 +220,7 @@ function InfoRow({
       <span
         dir={ltr ? "ltr" : "rtl"}
         className={`font-medium text-[var(--erp-text)] ${
-          ltr ? "text-left tabular-nums" : "text-right"
+          ltr ? "text-left tabular-nums" : "text-start"
         }`}
       >
         {value}
@@ -189,7 +230,9 @@ function InfoRow({
 }
 
 export function ProductsTable() {
+  const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
+  const { language } = useLocale()
   const [deleteId, setDeleteId] = useState<number | null>(null)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterType, setFilterType] = useState<ProductFilterType>("all")
@@ -197,47 +240,67 @@ export function ProductsTable() {
   const [supplierId, setSupplierId] = useState<number | null>(null)
   const [page, setPage] = useState(1)
 
-  const { data, isLoading, error } = useProducts()
+  const listParams = {
+    page,
+    limit: PAGE_SIZE,
+    search: filterType === "all" ? searchQuery || undefined : undefined,
+  }
+
+  const { data, isLoading, error } = useProducts(
+    filterType === "all" ? listParams : { limit: 100 }
+  )
   const { data: lowStockData, isLoading: isLoadingLowStock } =
-    useLowStockProducts()
+    useLowStockProducts(
+      filterType === "low-stock" ? { page, limit: PAGE_SIZE } : { limit: 100 },
+      filterType === "low-stock"
+    )
   const { data: categoryData, isLoading: isLoadingCategory } =
-    useProductsByCategory(categoryId ?? 0)
+    useProductsByCategory(
+      categoryId ?? 0,
+      filterType === "category" ? { page, limit: PAGE_SIZE } : { limit: 100 }
+    )
   const { data: supplierData, isLoading: isLoadingSupplier } =
-    useProductsBySupplier(supplierId ?? 0)
+    useProductsBySupplier(
+      supplierId ?? 0,
+      filterType === "supplier" ? { page, limit: PAGE_SIZE } : { limit: 100 }
+    )
   const { data: categoriesData } = useCategoriesForSelect()
-  const { data: suppliersData } = useSuppliers()
+  const { data: suppliersData } = useSuppliers({ limit: 100 })
   const deleteMutation = useDeleteProduct()
 
   const categories = categoriesData?.data ?? []
   const suppliers = suppliersData?.data ?? []
 
-  const products = useMemo(() => {
-    let filteredProducts: Product[] = []
-
+  const activeList = useMemo(() => {
     switch (filterType) {
       case "low-stock":
-        filteredProducts = normalizeProducts(lowStockData)
-        break
-
+        return lowStockData
       case "category":
-        filteredProducts = categoryId ? normalizeProducts(categoryData) : []
-        break
-
+        return categoryId ? categoryData : undefined
       case "supplier":
-        filteredProducts = supplierId ? normalizeProducts(supplierData) : []
-        break
-
+        return supplierId ? supplierData : undefined
       default:
-        filteredProducts = normalizeProducts(data)
+        return data
     }
+  }, [
+    filterType,
+    data,
+    lowStockData,
+    categoryData,
+    supplierData,
+    categoryId,
+    supplierId,
+  ])
 
+  const products = useMemo(() => {
+    const list = activeList?.data ?? []
     const query = toEnglishDigits(searchQuery).trim().toLowerCase()
 
-    if (!query) {
-      return filteredProducts
+    if (!query || filterType === "all") {
+      return list
     }
 
-    return filteredProducts.filter((product) => {
+    return list.filter((product) => {
       const name = product.name.toLowerCase()
       const barcode = toEnglishDigits(product.barcode).toLowerCase()
       const productId = String(product.id)
@@ -248,28 +311,14 @@ export function ProductsTable() {
         productId.includes(query)
       )
     })
-  }, [
-    data,
-    lowStockData,
-    categoryData,
-    supplierData,
-    filterType,
-    categoryId,
-    supplierId,
-    searchQuery,
-  ])
+  }, [activeList, searchQuery, filterType])
 
-  const totalPages = Math.max(1, Math.ceil(products.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const paginatedProducts = products.slice(
-    (currentPage - 1) * PAGE_SIZE,
-    currentPage * PAGE_SIZE
-  )
-
+  const isFinalPage = activeList?.isFinalPage ?? products.length < PAGE_SIZE
+  const total = activeList?.total
   const selectedProduct = products.find((product) => product.id === deleteId)
 
   const isLoadingData =
-    isLoading ||
+    (filterType === "all" && isLoading) ||
     (filterType === "low-stock" && isLoadingLowStock) ||
     (filterType === "category" && categoryId !== null && isLoadingCategory) ||
     (filterType === "supplier" && supplierId !== null && isLoadingSupplier)
@@ -320,10 +369,10 @@ export function ProductsTable() {
 
           <input
             type="search"
-            placeholder="بحث بالاسم أو الباركود أو رقم المنتج..."
+            placeholder={t("pages:products.searchPlaceholder")}
             value={searchQuery}
             onChange={(event) => handleSearchChange(event.target.value)}
-            className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent py-2.5 ps-10 pe-4 text-right text-sm text-[var(--erp-text)] outline-none transition focus:border-[var(--erp-accent)]"
+            className="w-full rounded-2xl border border-[var(--erp-border)] bg-transparent py-2.5 ps-10 pe-4 text-start text-sm text-[var(--erp-text)] transition outline-none focus:border-[var(--erp-accent)]"
           />
         </label>
 
@@ -332,28 +381,28 @@ export function ProductsTable() {
             active={filterType === "all"}
             onClick={() => handleFilterChange("all")}
           >
-            الكل
+            {t("common:all")}
           </FilterButton>
 
           <FilterButton
             active={filterType === "low-stock"}
             onClick={() => handleFilterChange("low-stock")}
           >
-            المخزون المنخفض
+            {t("pages:products.filterLowStock")}
           </FilterButton>
 
           <FilterButton
             active={filterType === "category"}
             onClick={() => handleFilterChange("category")}
           >
-            حسب التصنيف
+            {t("pages:products.filterByCategory")}
           </FilterButton>
 
           <FilterButton
             active={filterType === "supplier"}
             onClick={() => handleFilterChange("supplier")}
           >
-            حسب المورد
+            {t("pages:products.filterBySupplier")}
           </FilterButton>
         </div>
       </div>
@@ -361,7 +410,7 @@ export function ProductsTable() {
       {filterType === "category" && (
         <div className="grid gap-2 sm:max-w-sm">
           <label className="text-sm font-medium text-[var(--erp-muted)]">
-            التصنيف
+            {t("common:category")}
           </label>
 
           <select
@@ -369,11 +418,11 @@ export function ProductsTable() {
             onChange={(event) => handleCategoryChange(event.target.value)}
             className="rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none"
           >
-            <option value="">اختر التصنيف</option>
+            <option value="">{t("common:selectCategory")}</option>
 
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name}
+                {localizedName(category, language)}
               </option>
             ))}
           </select>
@@ -383,7 +432,7 @@ export function ProductsTable() {
       {filterType === "supplier" && (
         <div className="grid gap-2 sm:max-w-sm">
           <label className="text-sm font-medium text-[var(--erp-muted)]">
-            المورد
+            {t("common:supplier")}
           </label>
 
           <select
@@ -391,11 +440,11 @@ export function ProductsTable() {
             onChange={(event) => handleSupplierChange(event.target.value)}
             className="rounded-2xl border border-[var(--erp-border)] bg-transparent px-4 py-2.5 text-sm text-[var(--erp-text)] outline-none"
           >
-            <option value="">اختر المورد</option>
+            <option value="">{t("common:selectSupplier")}</option>
 
             {suppliers.map((supplier) => (
               <option key={supplier.id} value={supplier.id}>
-                {supplier.fullName}
+                {localizedFullName(supplier, language)}
               </option>
             ))}
           </select>
@@ -410,7 +459,7 @@ export function ProductsTable() {
 
       {!isLoadingData && error && (
         <p className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-center text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
-          حدث خطأ أثناء تحميل المنتجات
+          {t("pages:products.loadListFailed")}
         </p>
       )}
 
@@ -419,11 +468,11 @@ export function ProductsTable() {
           <PackageOpen className="size-12 text-[var(--erp-muted)]" />
 
           <h3 className="mt-4 text-lg font-semibold text-[var(--erp-text)]">
-            لا توجد منتجات
+            {t("pages:products.emptyTitle")}
           </h3>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            جرّب تغيير البحث أو الفلاتر، أو أضف منتج جديد.
+            {t("pages:products.emptyHint")}
           </p>
 
           <Button
@@ -431,7 +480,7 @@ export function ProductsTable() {
             className="mt-4"
             onClick={() => navigate("/products/create")}
           >
-            إضافة منتج
+            {t("pages:products.create")}
           </Button>
         </div>
       )}
@@ -439,7 +488,7 @@ export function ProductsTable() {
       {!isLoadingData && !error && products.length > 0 && (
         <>
           <div className="space-y-3 lg:hidden">
-            {paginatedProducts.map((product) => (
+            {products.map((product) => (
               <ProductMobileCard
                 key={product.id}
                 product={product}
@@ -449,131 +498,133 @@ export function ProductsTable() {
           </div>
 
           <div className="hidden overflow-x-auto rounded-2xl border border-[var(--erp-border)] lg:block">
-            <table className="w-full min-w-[1050px] text-right text-sm">
+            <table className="w-full min-w-[1050px] text-start text-sm">
               <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
                 <tr>
-                  <th className="px-4 py-3 font-medium">المنتج</th>
-                  <th className="px-4 py-3 font-medium">التصنيف</th>
-                  <th className="px-4 py-3 font-medium">المورد</th>
-                  <th className="px-4 py-3 font-medium">السعر</th>
-                  <th className="px-4 py-3 font-medium">الكمية</th>
-                  <th className="px-4 py-3 text-center font-medium">الحالة</th>
+                  <th className="px-4 py-3 font-medium">{t("common:image")}</th>
+                  <th className="px-4 py-3 font-medium">
+                    {t("common:product")}
+                  </th>
+                  <th className="px-4 py-3 font-medium">
+                    {t("common:category")}
+                  </th>
+                  <th className="px-4 py-3 font-medium">
+                    {t("common:supplier")}
+                  </th>
+                  <th className="px-4 py-3 font-medium">{t("common:price")}</th>
+                  <th className="px-4 py-3 font-medium">
+                    {t("common:quantity")}
+                  </th>
                   <th className="px-4 py-3 text-center font-medium">
-                    الإجراءات
+                    {t("common:status")}
+                  </th>
+                  <th className="px-4 py-3 text-center font-medium">
+                    {t("common:actions")}
                   </th>
                 </tr>
               </thead>
 
               <tbody>
-                {paginatedProducts.map((product) => (
-                  <tr
-                    key={product.id}
-                    className="border-b border-[var(--erp-border)] transition-colors last:border-0 hover:bg-[var(--erp-bg)]"
-                  >
-                    <td className="max-w-[280px] px-4 py-4">
-                      <p className="line-clamp-2 font-semibold leading-6 text-[var(--erp-text)]">
-                        {product.name}
-                      </p>
+                {products.map((product) => {
+                  const imageSrc = getProductImageSrc(product.imageUrl)
+                  const displayName = localizedName(product, language)
 
-                      <p
+                  return (
+                    <tr
+                      key={product.id}
+                      className="border-b border-[var(--erp-border)] transition-colors last:border-0 hover:bg-[var(--erp-bg)]"
+                    >
+                      <td className="px-4 py-4">
+                        <div className="flex size-12 items-center justify-center overflow-hidden rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
+                          {imageSrc ? (
+                            <img
+                              src={imageSrc}
+                              alt={displayName}
+                              className="size-full object-cover"
+                            />
+                          ) : (
+                            <ImageOff className="size-4 text-[var(--erp-muted)]" />
+                          )}
+                        </div>
+                      </td>
+
+                      <td className="max-w-[280px] px-4 py-4">
+                        <p className="line-clamp-2 leading-6 font-semibold text-[var(--erp-text)]">
+                          {displayName}
+                        </p>
+
+                        <p
+                          dir="ltr"
+                          className="mt-1 text-left text-xs text-[var(--erp-muted)]"
+                        >
+                          {toEnglishDigits(product.barcode)}
+                        </p>
+                      </td>
+
+                      <td className="px-4 py-4 text-[var(--erp-muted)]">
+                        {getProductCategory(product, language)}
+                      </td>
+
+                      <td className="px-4 py-4 text-[var(--erp-muted)]">
+                        {getProductSupplier(product, language)}
+                      </td>
+
+                      <td
                         dir="ltr"
-                        className="mt-1 text-left text-xs text-[var(--erp-muted)]"
+                        className="px-4 py-4 text-left text-[var(--erp-muted)] tabular-nums"
                       >
-                        {toEnglishDigits(product.barcode)}
-                      </p>
-                    </td>
+                        {formatCurrency(product.sellingPrice ?? 0)}
+                      </td>
 
-                    <td className="px-4 py-4 text-[var(--erp-muted)]">
-                      {getProductCategory(product)}
-                    </td>
+                      <td
+                        dir="ltr"
+                        className="px-4 py-4 text-left text-[var(--erp-muted)] tabular-nums"
+                      >
+                        {getProductQuantity(product)}
+                      </td>
 
-                    <td className="px-4 py-4 text-[var(--erp-muted)]">
-                      {getProductSupplier(product)}
-                    </td>
+                      <td className="px-4 py-4">
+                        <div className="flex justify-center">
+                          <StatusBadge status={getProductStatus(product)} />
+                        </div>
+                      </td>
 
-                    <td
-                      dir="ltr"
-                      className="px-4 py-4 text-left tabular-nums text-[var(--erp-muted)]"
-                    >
-                      {formatCurrency(product.sellingPrice ?? 0)}
-                    </td>
-
-                    <td
-                      dir="ltr"
-                      className="px-4 py-4 text-left tabular-nums text-[var(--erp-muted)]"
-                    >
-                      {getProductQuantity(product)}
-                    </td>
-
-                    <td className="px-4 py-4">
-                      <div className="flex justify-center">
-                        <StatusBadge status={getProductStatus(product)} />
-                      </div>
-                    </td>
-
-                    <td className="px-4 py-4">
-                      <ProductActions
-                        product={product}
-                        onDelete={() => setDeleteId(product.id)}
-                      />
-                    </td>
-                  </tr>
-                ))}
+                      <td className="px-4 py-4">
+                        <ProductActions
+                          product={product}
+                          onDelete={() => setDeleteId(product.id)}
+                        />
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
           </div>
 
-          <div className="flex flex-col gap-3 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-center text-sm text-[var(--erp-muted)] sm:text-right">
-              الصفحة{" "}
-              <span dir="ltr" className="font-semibold text-[var(--erp-text)]">
-                {formatInteger(currentPage)}
-              </span>{" "}
-              من{" "}
-              <span dir="ltr" className="font-semibold text-[var(--erp-text)]">
-                {formatInteger(totalPages)}
-              </span>
-            </p>
-
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setPage((previous) => Math.max(1, previous - 1))}
-              >
-                <ChevronRight className="size-4" />
-                السابق
-              </Button>
-
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={currentPage >= totalPages}
-                onClick={() =>
-                  setPage((previous) => Math.min(totalPages, previous + 1))
-                }
-              >
-                التالي
-                <ChevronLeft className="size-4" />
-              </Button>
-            </div>
-          </div>
+          <PaginationControls
+            page={page}
+            isFinalPage={isFinalPage}
+            isLoading={isLoadingData}
+            total={total}
+            onPrevious={() => setPage((previous) => Math.max(1, previous - 1))}
+            onNext={() => setPage((previous) => previous + 1)}
+          />
         </>
       )}
 
       <ConfirmDialog
         open={deleteId !== null}
-        title="حذف المنتج"
+        title={t("pages:products.deleteProduct")}
         description={
           selectedProduct
-            ? `هل أنت متأكد من حذف المنتج "${selectedProduct.name}"؟ لا يمكن التراجع عن هذه العملية.`
-            : "هل أنت متأكد من حذف هذا المنتج؟ لا يمكن التراجع عن هذه العملية."
+            ? t("pages:products.confirmDeleteNamed", {
+                name: localizedName(selectedProduct, language),
+              })
+            : t("pages:products.confirmDeleteGeneric")
         }
-        confirmLabel="حذف المنتج"
-        cancelLabel="إلغاء"
+        confirmLabel={t("pages:products.deleteProduct")}
+        cancelLabel={t("common:cancel")}
         isLoading={deleteMutation.isPending}
         onClose={() => setDeleteId(null)}
         onConfirm={confirmDelete}

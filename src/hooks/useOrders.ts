@@ -1,18 +1,24 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 import {
   createOrder,
   getOrder,
   getOrders,
+  normalizeOrdersList,
   updateOrderStatus,
   type CreateOrderPayload,
+  type OrdersQuery,
   type OrderStatus,
 } from "@/services/orders-service"
+import { toPaginationQuery } from "@/lib/pagination"
 
-export function useOrders() {
+export function useOrders(params?: OrdersQuery) {
+  const query = toPaginationQuery(params)
+
   return useQuery({
-    queryKey: ["orders"],
-    queryFn: getOrders,
+    queryKey: ["orders", query],
+    queryFn: async () =>
+      normalizeOrdersList(await getOrders(params), query.limit, query.offset),
   })
 }
 

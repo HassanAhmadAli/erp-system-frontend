@@ -5,50 +5,53 @@ import {
   RefreshCw,
   TrendingUp,
 } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import {
   ReportHubCard,
   ReportLayout,
 } from "@/view/components/reports/report-layout"
 
-const financialLinks = [
-  {
-    title: "هوامش الربح",
-    description: "تحليل ربحية المنتجات ونسب الهامش",
-    to: "/financial/profit-margins",
-    icon: TrendingUp,
-  },
-  {
-    title: "تفصيل التكاليف",
-    description: "توزيع التكاليف حسب الفئات والمصادر",
-    to: "/financial/cost-breakdown",
-    icon: PieChart,
-  },
-  {
-    title: "اتجاهات التكلفة",
-    description: "تتبع تغير التكلفة عبر الزمن أو حسب المنتج",
-    to: "/financial/cost-trends",
-    icon: LineChart,
-  },
-  {
-    title: "تقرير المورد",
-    description: "تحليل التعاملات والتكاليف مع مورد محدد",
-    to: "/financial/supplier-report",
-    icon: Building2,
-  },
-  {
-    title: "إعادة حساب التكاليف",
-    description: "تحديث تكاليف المنتجات بعد تغيير الأسعار",
-    to: "/financial/recalculate",
-    icon: RefreshCw,
-  },
-]
-
 export function FinancialPage() {
+  const { t } = useTranslation(["common", "pages"])
+
+  const financialLinks = [
+    {
+      title: t("financial.profitMargins", { ns: "pages" }),
+      description: t("financial.profitMarginsDesc", { ns: "pages" }),
+      to: "/financial/profit-margins",
+      icon: TrendingUp,
+    },
+    {
+      title: t("financial.costBreakdown", { ns: "pages" }),
+      description: t("financial.costBreakdownDesc", { ns: "pages" }),
+      to: "/financial/cost-breakdown",
+      icon: PieChart,
+    },
+    {
+      title: t("financial.costTrends", { ns: "pages" }),
+      description: t("financial.costTrendsDesc", { ns: "pages" }),
+      to: "/financial/cost-trends",
+      icon: LineChart,
+    },
+    {
+      title: t("financial.supplierReport", { ns: "pages" }),
+      description: t("financial.supplierReportDesc", { ns: "pages" }),
+      to: "/financial/supplier-report",
+      icon: Building2,
+    },
+    {
+      title: t("financial.recalculate", { ns: "pages" }),
+      description: t("financial.recalculateDesc", { ns: "pages" }),
+      to: "/financial/recalculate",
+      icon: RefreshCw,
+    },
+  ]
+
   return (
     <ReportLayout
-      title="التحليل المالي"
-      description="اختر نوع التحليل لعرضه في صفحة مخصصة مع مخططات توضيحية"
+      title={t("financial.title", { ns: "pages" })}
+      description={t("financial.hubSubtitle", { ns: "pages" })}
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {financialLinks.map((item) => (

@@ -2,15 +2,16 @@ import { useState } from "react"
 import { ArrowRight, Percent } from "lucide-react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query"
+import { useTranslation } from "react-i18next"
 
 import { useDiscountById } from "@/hooks/use-discounts"
-import {
-  deleteDiscount,
-  toggleDiscount,
-  type DiscountScope,
-  type DiscountType,
-} from "@/services/discount-service"
+import { deleteDiscount, toggleDiscount } from "@/services/discount-service"
 import { isValidId } from "@/validation/helpers"
+import {
+  formatDiscountValue,
+  getDiscountScopeLabel,
+  getDiscountTypeLabel,
+} from "@/lib/discount-labels"
 import {
   formatId,
   formatNumber,
@@ -19,28 +20,8 @@ import {
 import { Button } from "@/view/components/ui/button"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
 
-function getDiscountTypeLabel(type: DiscountType) {
-  return type === "PERCENTAGE" ? "نسبة مئوية" : "مبلغ ثابت"
-}
-
-function getDiscountScopeLabel(scope: DiscountScope) {
-  const labels: Record<DiscountScope, string> = {
-    GLOBAL: "عام",
-    CATEGORY: "تصنيف",
-    PRODUCT: "منتج",
-  }
-
-  return labels[scope]
-}
-
-function formatDiscountValue(type: DiscountType, value: string) {
-  const formattedValue = formatNumber(value)
-
-  return type === "PERCENTAGE" ? `${formattedValue}%` : `${formattedValue} SYP`
-}
-
-function formatLocalDate(value: string | null) {
-  if (!value) return "لا يوجد"
+function formatLocalDate(value: string | null, t: (key: string) => string) {
+  if (!value) return t("common:none")
 
   return toEnglishDigits(
     new Date(value).toLocaleDateString("en-GB", {
@@ -52,6 +33,7 @@ function formatLocalDate(value: string | null) {
 }
 
 export function DiscountDetailsPage() {
+  const { t } = useTranslation(["common", "pages"])
   const params = useParams()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
@@ -74,7 +56,7 @@ export function DiscountDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ["discounts"] })
     } catch (err) {
       console.error(err)
-      setActionError("فشل تحديث حالة الخصم")
+      setActionError(t("pages:discounts.toggleFailed"))
     }
   }
 
@@ -88,30 +70,32 @@ export function DiscountDetailsPage() {
       navigate("/discounts")
     } catch (err) {
       console.error(err)
-      setActionError("فشل حذف الخصم")
+      setActionError(t("pages:discounts.deleteFailed"))
     } finally {
       setIsDeleting(false)
     }
   }
 
   if (!isValidId(id)) {
-    return <ErrorMessage message="رقم الخصم غير صالح." />
+    return <ErrorMessage message={t("pages:discounts.invalidDiscountId")} />
   }
 
   if (isLoading) {
     return (
-      <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
-        <p className="text-[var(--erp-muted)]">جاري تحميل الخصم...</p>
+      <div className="space-y-6 text-start text-[var(--erp-text)]">
+        <p className="text-[var(--erp-muted)]">
+          {t("pages:discounts.loadingDetails")}
+        </p>
       </div>
     )
   }
 
   if (error || !data) {
-    return <ErrorMessage message="فشل تحميل الخصم." />
+    return <ErrorMessage message={t("pages:discounts.loadDetailsFailed")} />
   }
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
@@ -122,13 +106,13 @@ export function DiscountDetailsPage() {
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            تفاصيل الخصم وحالته وحدود استخدامه.
+            {t("pages:discounts.detailsSubtitle")}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
           <Link to={`/discounts/${data.id}/edit`}>
-            <Button>تعديل الخصم</Button>
+            <Button>{t("pages:discounts.editDiscount")}</Button>
           </Link>
 
           <Link
@@ -136,7 +120,7 @@ export function DiscountDetailsPage() {
             className="inline-flex items-center justify-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
           >
             <ArrowRight className="size-4" />
-            العودة إلى الخصومات
+            {t("pages:discounts.backToDiscounts")}
           </Link>
         </div>
       </header>
@@ -148,46 +132,64 @@ export function DiscountDetailsPage() {
       )}
 
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard label="رقم الخصم" value={formatId(data.id)} />
-        <SummaryCard label="النوع" value={getDiscountTypeLabel(data.type)} />
-        <SummaryCard label="النطاق" value={getDiscountScopeLabel(data.scope)} />
+        <SummaryCard label={t("common:discountId")} value={formatId(data.id)} />
         <SummaryCard
-          label="القيمة"
+          label={t("common:type")}
+          value={getDiscountTypeLabel(data.type, t)}
+        />
+        <SummaryCard
+          label={t("common:scope")}
+          value={getDiscountScopeLabel(data.scope, t)}
+        />
+        <SummaryCard
+          label={t("common:value")}
           value={formatDiscountValue(data.type, data.value)}
         />
       </section>
 
       <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
         <h2 className="mb-5 text-xl font-semibold text-[var(--erp-text)]">
-          معلومات الخصم
+          {t("pages:discounts.discountInfo")}
         </h2>
 
         <div className="grid gap-4 sm:grid-cols-2">
-          <InfoRow label="الحالة" value={data.isActive ? "مفعل" : "معطل"} />
-          <InfoRow label="عدد الاستخدام" value={formatNumber(data.usedCount)} />
-
           <InfoRow
-            label="الحد الأقصى للاستخدام"
-            value={data.maxUses ? formatNumber(data.maxUses) : "غير محدود"}
+            label={t("common:status")}
+            value={
+              data.isActive
+                ? t("common:enabledLabel")
+                : t("common:disabledLabel")
+            }
+          />
+          <InfoRow
+            label={t("common:usageCount")}
+            value={formatNumber(data.usedCount)}
           />
 
           <InfoRow
-            label="أقصى قيمة للفاتورة"
+            label={t("common:maxUsageLimit")}
             value={
-              data.maxInvoiceValue
-                ? `${formatNumber(data.maxInvoiceValue)} SYP`
-                : "غير محدود"
+              data.maxUses ? formatNumber(data.maxUses) : t("common:unlimited")
             }
           />
 
           <InfoRow
-            label="تاريخ البداية"
-            value={formatLocalDate(data.startDate)}
+            label={t("common:maxInvoiceValueLabel")}
+            value={
+              data.maxInvoiceValue
+                ? `${formatNumber(data.maxInvoiceValue)} SYP`
+                : t("common:unlimited")
+            }
           />
 
           <InfoRow
-            label="تاريخ النهاية"
-            value={formatLocalDate(data.endDate)}
+            label={t("common:startDate")}
+            value={formatLocalDate(data.startDate, t)}
+          />
+
+          <InfoRow
+            label={t("common:endDate")}
+            value={formatLocalDate(data.endDate, t)}
           />
         </div>
 
@@ -196,24 +198,26 @@ export function DiscountDetailsPage() {
             variant={data.isActive ? "destructive" : "success"}
             onClick={handleToggle}
           >
-            {data.isActive ? "تعطيل الخصم" : "تفعيل الخصم"}
+            {data.isActive
+              ? t("pages:discounts.disableDiscount")
+              : t("pages:discounts.enableDiscount")}
           </Button>
 
           <Button
             variant="destructive"
             onClick={() => setShowDeleteDialog(true)}
           >
-            حذف الخصم
+            {t("pages:discounts.deleteDiscount")}
           </Button>
         </div>
       </section>
 
       <ConfirmDialog
         open={showDeleteDialog}
-        title="حذف الخصم"
-        description="هل أنت متأكد من حذف هذا الخصم؟ لا يمكن التراجع عن هذه العملية."
-        confirmLabel="حذف"
-        cancelLabel="إلغاء"
+        title={t("pages:discounts.confirmDeleteTitle")}
+        description={t("pages:discounts.confirmDeleteDesc")}
+        confirmLabel={t("common:delete")}
+        cancelLabel={t("common:cancel")}
         isLoading={isDeleting}
         onClose={() => setShowDeleteDialog(false)}
         onConfirm={handleDelete}
@@ -241,15 +245,17 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 function ErrorMessage({ message }: { message: string }) {
+  const { t } = useTranslation(["common", "pages"])
+
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <p className="text-red-500 dark:text-red-300">{message}</p>
 
       <Link
         to="/discounts"
         className="inline-flex rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
       >
-        العودة إلى الخصومات
+        {t("pages:discounts.backToDiscounts")}
       </Link>
     </div>
   )

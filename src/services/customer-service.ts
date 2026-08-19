@@ -1,4 +1,9 @@
-import { apiRequest, buildQuery } from "@/api/client"
+import { apiRequest, buildQuery, type PaginatedResponse } from "@/api/client"
+import {
+  normalizePaginatedResponse,
+  toPaginationQuery,
+  type PaginationParams,
+} from "@/lib/pagination"
 import {
   isCustomerStatus,
   type CustomerRequestPayload,
@@ -9,32 +14,26 @@ import { isValidId } from "@/validation/helpers"
 export type CustomerUser = {
   id: number
   fullName: string
+  fullNameAr?: string | null
   email: string
   phoneNumber: string
   isActive: boolean
+  language?: string
 }
 
 export type Customer = {
   id: number
   userId: number
   address?: string
+  addressAr?: string | null
   loyaltyPoints: number
   totalSpent: string
   user: CustomerUser
 }
 
-export type CustomersResponse = {
-  data: Customer[]
-  total: number
-  limit: number
-  offset: number
-  isFinalPage: boolean
-}
+export type CustomersResponse = PaginatedResponse<Customer>
 
-export type CustomersQuery = {
-  limit?: number
-  offset?: number
-}
+export type CustomersQuery = PaginationParams
 
 export type CreateCustomerInput = CustomerRequestPayload
 export type UpdateCustomerInput = Partial<CustomerRequestPayload>
@@ -50,8 +49,17 @@ export function normalizeCustomers(
   return response.data ?? []
 }
 
+export function normalizeCustomersList(
+  response?: CustomersResponse | Customer[] | null,
+  fallbackLimit = 10,
+  fallbackOffset = 0
+) {
+  return normalizePaginatedResponse(response, fallbackLimit, fallbackOffset)
+}
+
 export async function getCustomers(params?: CustomersQuery) {
-  return apiRequest<CustomersResponse>(`/customer${buildQuery(params)}`)
+  const query = toPaginationQuery(params)
+  return apiRequest<CustomersResponse>(`/customer${buildQuery(query)}`)
 }
 
 export async function getCustomer(id: number) {

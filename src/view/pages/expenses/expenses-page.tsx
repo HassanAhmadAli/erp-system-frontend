@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
+import { useTranslation } from "react-i18next"
 import { FolderOpen, Plus, Receipt, Wallet } from "lucide-react"
 
 import { useExpenses } from "@/hooks/Expenses/useExpenses"
@@ -14,13 +15,26 @@ import { formatNumber, toEnglishDigits } from "@/utils/number-formatters"
 import { ExpensesTable } from "@/view/components/expenses/ExpensesTable"
 import { Button } from "@/view/components/ui/button"
 
+const PAGE_SIZE = 10
+
 function formatAmount(value: unknown) {
   return `${toEnglishDigits(formatExpenseAmount(value))} SYP`
 }
 
 export function ExpensesPage() {
-  const { data: expenses = [], isLoading, isError } = useExpenses()
+  const { t } = useTranslation(["common", "pages"])
   const [search, setSearch] = useState("")
+  const [page, setPage] = useState(1)
+  const { data, isLoading, isError, isFetching } = useExpenses({
+    page,
+    limit: PAGE_SIZE,
+  })
+
+  useEffect(() => {
+    setPage(1)
+  }, [search])
+
+  const expenses = data?.data ?? []
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase()
@@ -33,26 +47,25 @@ export function ExpensesPage() {
     )
   }, [expenses, search])
 
-  const totalAmount = sumExpenseAmounts(expenses)
-  const filteredTotal = sumExpenseAmounts(filtered)
-  const categoryCount = new Set(expenses.map((expense) => expense.category))
+  const pageTotal = sumExpenseAmounts(filtered)
+  const categoryCount = new Set(filtered.map((expense) => expense.category))
     .size
   const isFiltered = search.trim().length > 0
 
   return (
-    <div className="space-y-6 text-right text-[var(--erp-text)]" dir="rtl">
+    <div className="space-y-6 text-start text-[var(--erp-text)]">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex items-center justify-end gap-2">
             <h1 className="text-3xl font-bold text-[var(--erp-text)]">
-              المصروفات
+              {t("expenses.title", { ns: "pages" })}
             </h1>
 
             <Receipt className="size-7 text-[var(--erp-brand-solid)]" />
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            إدارة وتتبع مصروفات المتجر.
+            {t("expenses.subtitle", { ns: "pages" })}
           </p>
         </div>
 
@@ -60,7 +73,7 @@ export function ExpensesPage() {
           <Link to="/expenses/create">
             <Button className="gap-2">
               <Plus className="size-4" />
-              إضافة مصروف
+              {t("expenses.create", { ns: "pages" })}
             </Button>
           </Link>
         </Can>
@@ -69,29 +82,40 @@ export function ExpensesPage() {
       {!isLoading && !isError && (
         <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <SummaryCard
-            label="إجمالي المصروفات"
-            value={formatAmount(totalAmount)}
+            label={t("expenses.pageTotal", { ns: "pages" })}
+            value={formatAmount(pageTotal)}
             hint={
               isFiltered
-                ? `المعروض بعد البحث: ${formatAmount(filteredTotal)}`
-                : `مجموع ${formatNumber(expenses.length)} مصروف`
+                ? t("expenses.afterPageSearch", { ns: "pages" })
+                : data?.total != null
+                  ? t("expenses.ofTotalExpenses", {
+                      ns: "pages",
+                      total: formatNumber(data.total),
+                    })
+                  : undefined
             }
             icon={<Wallet className="size-5" />}
           />
 
           <SummaryCard
-            label="عدد المصروفات"
+            label={t("expenses.expenseCount", { ns: "pages" })}
             value={
-              isFiltered
-                ? `${formatNumber(filtered.length)} / ${formatNumber(expenses.length)}`
-                : formatNumber(expenses.length)
+              data?.total != null
+                ? formatNumber(data.total)
+                : formatNumber(filtered.length)
             }
-            hint={isFiltered ? "معروض / الإجمالي" : undefined}
+            hint={
+              isFiltered
+                ? t("shownOnPage", {
+                    count: formatNumber(filtered.length),
+                  })
+                : undefined
+            }
             icon={<Receipt className="size-5" />}
           />
 
           <SummaryCard
-            label="عدد الفئات"
+            label={t("expenses.categoryCountPage", { ns: "pages" })}
             value={formatNumber(categoryCount)}
             icon={<FolderOpen className="size-5" />}
           />
@@ -104,6 +128,12 @@ export function ExpensesPage() {
         onSearchChange={setSearch}
         isLoading={isLoading}
         isError={isError}
+        page={page}
+        isFinalPage={data?.isFinalPage ?? true}
+        isFetching={isFetching}
+        total={data?.total}
+        onPrevious={() => setPage((current) => Math.max(1, current - 1))}
+        onNext={() => setPage((current) => current + 1)}
       />
     </div>
   )

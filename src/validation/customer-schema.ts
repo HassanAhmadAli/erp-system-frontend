@@ -1,10 +1,7 @@
 import { z } from "zod"
 
-import {
-  normalizeText,
-  optionalText,
-  parseNonNegativeInteger,
-} from "./helpers"
+import i18n from "@/i18n"
+import { normalizeText, optionalText, parseNonNegativeInteger } from "./helpers"
 import { optionalTrimmedText } from "./zod-helpers"
 
 const PHONE_PATTERN = /^[0-9+\-()\s]+$/
@@ -17,26 +14,25 @@ export const customerSchema = z.object({
   fullName: optionalTrimmedText({
     min: 2,
     max: 100,
-    minMessage: "اسم العميل يجب أن يكون حرفين على الأقل",
-    maxMessage: "اسم العميل يجب ألا يتجاوز 100 حرف",
+    minMessage: () => i18n.t("validation:customer.nameMin"),
+    maxMessage: () => i18n.t("validation:customer.nameMax"),
   }),
   phoneNumber: optionalTrimmedText({
     max: 30,
-    maxMessage: "رقم الهاتف يجب ألا يتجاوز 30 حرف",
+    maxMessage: () => i18n.t("validation:shared.phoneMax30"),
   }).superRefine((value, ctx) => {
     const phone = normalizeText(value ?? "")
 
     if (phone && !PHONE_PATTERN.test(phone)) {
       ctx.addIssue({
         code: "custom",
-        message:
-          "رقم الهاتف يجب أن يحتوي على أرقام ومسافات والرموز + - ( ) فقط",
+        message: i18n.t("validation:shared.phoneInvalid"),
       })
     }
   }),
   email: optionalTrimmedText({
     max: 120,
-    maxMessage: "البريد الإلكتروني يجب ألا يتجاوز 120 حرف",
+    maxMessage: () => i18n.t("validation:shared.emailMax120"),
   }).superRefine((value, ctx) => {
     const email = normalizeText(value ?? "")
 
@@ -46,26 +42,27 @@ export const customerSchema = z.object({
     if (!validation.success) {
       ctx.addIssue({
         code: "custom",
-        message: "أدخل بريدًا إلكترونيًا صالحًا",
+        message: i18n.t("validation:shared.emailInvalid"),
       })
     }
   }),
   address: optionalTrimmedText({
     max: 255,
-    maxMessage: "العنوان يجب ألا يتجاوز 255 حرف",
+    maxMessage: () => i18n.t("validation:shared.addressMax255"),
   }),
-  loyaltyPoints: z.union([z.string(), z.number()]).optional().superRefine(
-    (value, ctx) => {
+  loyaltyPoints: z
+    .union([z.string(), z.number()])
+    .optional()
+    .superRefine((value, ctx) => {
       if (value == null || String(value).trim() === "") return
 
       if (parseNonNegativeInteger(value) == null) {
         ctx.addIssue({
           code: "custom",
-          message: "نقاط الولاء يجب أن تكون رقمًا صحيحًا لا يقل عن الصفر",
+          message: i18n.t("validation:customer.loyaltyPointsInvalid"),
         })
       }
-    }
-  ),
+    }),
 })
 
 export type CustomerFormValues = z.input<typeof customerSchema>

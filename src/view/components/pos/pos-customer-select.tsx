@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react"
 import { ChevronDown, Loader2, Search, User } from "lucide-react"
+import { useTranslation } from "react-i18next"
 
 import { usePosCustomers } from "@/hooks/usePos"
 import type { Customer } from "@/services/customer-service"
@@ -15,6 +16,7 @@ function getCustomerLabel(customer: Customer) {
 }
 
 export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
+  const { t } = useTranslation(["common", "pages"])
   const containerRef = useRef<HTMLDivElement>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [search, setSearch] = useState("")
@@ -82,7 +84,7 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
   return (
     <div ref={containerRef} className="relative">
       <span className="mb-2 block text-sm text-[var(--erp-muted)]">
-        العميل - اختياري
+        {t("pages:pos.customerOptional")}
       </span>
 
       <button
@@ -97,7 +99,7 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
         />
 
         <span
-          className={`min-w-0 flex-1 truncate text-right ${
+          className={`min-w-0 flex-1 truncate text-start ${
             selectedCustomer
               ? "text-[var(--erp-text)]"
               : "text-[var(--erp-muted)]"
@@ -105,7 +107,7 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
         >
           {selectedCustomer
             ? getCustomerLabel(selectedCustomer)
-            : "زبون نقدي / بدون عميل"}
+            : t("common:cashCustomer")}
         </span>
 
         <User className="h-4 w-4 shrink-0 text-[var(--erp-accent)]" />
@@ -123,7 +125,7 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
                 onChange={(event) =>
                   setSearch(toEnglishDigits(event.target.value))
                 }
-                placeholder="ابحث بالاسم أو البريد أو الهاتف..."
+                placeholder={t("pages:pos.searchCustomerPlaceholder")}
                 className="w-full rounded-xl border border-[var(--erp-border)] bg-transparent py-2.5 ps-10 pe-3 text-sm text-[var(--erp-text)] outline-none placeholder:text-[var(--erp-muted)]"
               />
             </label>
@@ -133,7 +135,7 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
             <button
               type="button"
               onClick={handleSelectCashCustomer}
-              className={`flex w-full items-center justify-between gap-3 border-b border-[var(--erp-border)] px-4 py-3 text-right transition-colors ${
+              className={`flex w-full items-center justify-between gap-3 border-b border-[var(--erp-border)] px-4 py-3 text-start transition-colors ${
                 value === ""
                   ? "bg-[color-mix(in_srgb,var(--erp-accent)_10%,var(--erp-card))]"
                   : "hover:bg-[var(--erp-nav-active-bg)]"
@@ -143,15 +145,15 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
                 dir="ltr"
                 className="shrink-0 text-xs text-[var(--erp-muted)]"
               >
-                بدون ID
+                {t("common:noId")}
               </span>
 
               <div className="min-w-0 flex-1">
                 <p className="truncate font-medium text-[var(--erp-text)]">
-                  زبون نقدي / بدون عميل
+                  {t("common:cashCustomer")}
                 </p>
                 <p className="truncate text-xs text-[var(--erp-text)]/65">
-                  استخدم هذا الخيار إذا كان العميل لا يريد تسجيل بياناته.
+                  {t("pages:pos.cashCustomerHint")}
                 </p>
               </div>
             </button>
@@ -162,11 +164,11 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
               </div>
             ) : isError ? (
               <p className="p-4 text-center text-sm text-red-500">
-                تعذر تحميل قائمة العملاء.
+                {t("pages:pos.loadCustomersFailed")}
               </p>
             ) : filteredCustomers.length === 0 ? (
               <p className="p-4 text-center text-sm text-[var(--erp-muted)]">
-                لا يوجد عملاء مطابقون للبحث.
+                {t("pages:pos.noMatchingCustomers")}
               </p>
             ) : (
               filteredCustomers.map((customer) => {
@@ -177,7 +179,7 @@ export function PosCustomerSelect({ value, onChange }: PosCustomerSelectProps) {
                     key={customer.id}
                     type="button"
                     onClick={() => handleSelect(customer)}
-                    className={`flex w-full items-start justify-between gap-3 border-b border-[var(--erp-border)] px-4 py-3 text-right transition-colors last:border-0 ${
+                    className={`flex w-full items-start justify-between gap-3 border-b border-[var(--erp-border)] px-4 py-3 text-start transition-colors last:border-0 ${
                       isSelected
                         ? "bg-[color-mix(in_srgb,var(--erp-accent)_10%,var(--erp-card))]"
                         : "hover:bg-[var(--erp-nav-active-bg)]"

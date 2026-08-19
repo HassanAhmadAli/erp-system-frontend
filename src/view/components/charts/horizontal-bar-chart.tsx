@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next"
+
 import { formatNumber } from "@/lib/report-parsers"
 import type { ChartPoint } from "@/lib/report-parsers"
 
@@ -6,7 +8,6 @@ type HorizontalBarChartProps = {
   data: ChartPoint[]
   unit?: string
   maxItems?: number
-  /** When set, bar width is value / maxScale (e.g. 50% margin → half bar at maxScale=100). */
   maxScale?: number
   getBarColor?: (value: number) => string
   emptyMessage?: string
@@ -19,29 +20,36 @@ export function HorizontalBarChart({
   maxItems = 10,
   maxScale,
   getBarColor,
-  emptyMessage = "لا توجد بيانات للعرض",
+  emptyMessage,
 }: HorizontalBarChartProps) {
+  const { t } = useTranslation("common")
+  const resolvedEmptyMessage = emptyMessage ?? t("charts.noData")
   const items = data.slice(0, maxItems)
 
   if (items.length === 0) {
     return (
       <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
         {title && <h3 className="mb-4 text-lg font-bold">{title}</h3>}
-        <p className="text-sm text-[var(--erp-muted)]">{emptyMessage}</p>
+        <p className="text-sm text-[var(--erp-muted)]">
+          {resolvedEmptyMessage}
+        </p>
       </section>
     )
   }
 
   const relativeMax = Math.max(...items.map((d) => Math.abs(d.value)), 1)
+  const effectiveScale =
+    maxScale != null && maxScale > 0
+      ? Math.max(maxScale, relativeMax)
+      : relativeMax
 
   function barWidth(value: number): number {
     const absValue = Math.abs(value)
 
-    if (maxScale != null && maxScale > 0) {
-      return Math.max(2, Math.min(100, Math.round((absValue / maxScale) * 100)))
-    }
-
-    return Math.max(4, Math.round((absValue / relativeMax) * 100))
+    return Math.max(
+      2,
+      Math.min(100, Math.round((absValue / effectiveScale) * 100))
+    )
   }
 
   return (
@@ -52,10 +60,10 @@ export function HorizontalBarChart({
         </h3>
       )}
 
-      {maxScale != null && (
+      {(maxScale != null || unit === "%") && (
         <div className="mb-3 flex justify-between px-1 text-xs text-[var(--erp-muted)]">
-          <span>٠{unit}</span>
-          <span>{formatNumber(maxScale, unit)}</span>
+          <span>{t("charts.zeroWithUnit", { unit })}</span>
+          <span>{formatNumber(effectiveScale, unit)}</span>
         </div>
       )}
 

@@ -1,11 +1,13 @@
 import { z } from "zod"
 
+import i18n from "@/i18n"
 import {
   dateInputToIsoString,
   normalizeText,
   optionalDateInputToIsoString,
   optionalPositiveIntegerOrNull,
   optionalPositiveNumberOrNull,
+  optionalText,
   parseFiniteNumber,
   parsePositiveInteger,
   requireFiniteNumber,
@@ -17,6 +19,7 @@ import {
   optionalDateInputText,
   optionalPositiveIntegerText,
   optionalPositiveNumberText,
+  optionalTrimmedText,
   requiredText,
   validateDateRange,
 } from "./zod-helpers"
@@ -35,37 +38,43 @@ export const discountSchema = z
     name: requiredText({
       min: 2,
       max: 100,
-      requiredMessage: "اسم الخصم مطلوب",
-      minMessage: "اسم الخصم يجب أن يكون حرفين على الأقل",
-      maxMessage: "اسم الخصم يجب ألا يتجاوز 100 حرف",
+      requiredMessage: () => i18n.t("validation:discount.nameRequired"),
+      minMessage: () => i18n.t("validation:discount.nameMin"),
+      maxMessage: () => i18n.t("validation:discount.nameMax"),
+    }),
+
+    nameAr: optionalTrimmedText({
+      max: 100,
+      maxMessage: () => i18n.t("validation:shared.nameArMax100"),
     }),
 
     type: discountTypeSchema,
     scope: discountScopeSchema,
 
     value: finiteNumberText({
-      requiredMessage: "قيمة الخصم مطلوبة",
-      invalidMessage: "أدخل قيمة خصم صالحة",
+      requiredMessage: () => i18n.t("validation:discount.valueRequired"),
+      invalidMessage: () => i18n.t("validation:discount.valueInvalid"),
     }),
 
     categoryId: optionalPositiveIntegerText({
-      invalidMessage: "اختر تصنيفًا صالحًا",
+      invalidMessage: () => i18n.t("validation:shared.selectCategoryValid"),
     }),
 
     productId: optionalPositiveIntegerText({
-      invalidMessage: "اختر منتجًا صالحًا",
+      invalidMessage: () => i18n.t("validation:shared.selectProductValid"),
     }),
 
     maxInvoiceValue: optionalPositiveNumberText({
-      invalidMessage: "أقصى قيمة للفاتورة يجب أن تكون أكبر من الصفر",
+      invalidMessage: () => i18n.t("validation:discount.maxInvoiceInvalid"),
     }),
 
     maxUses: optionalPositiveIntegerText({
-      invalidMessage:
-        "عدد مرات الاستخدام يجب أن يكون رقمًا صحيحًا أكبر من الصفر",
+      invalidMessage: () => i18n.t("validation:discount.maxUsesInvalid"),
     }),
 
-    startDate: dateInputText("تاريخ البداية مطلوب"),
+    startDate: dateInputText(() =>
+      i18n.t("validation:discount.startDateRequired")
+    ),
     endDate: optionalDateInputText(),
 
     isActive: z.boolean().default(true),
@@ -77,7 +86,7 @@ export const discountSchema = z
       if (value <= 0 || value > 100) {
         ctx.addIssue({
           code: "custom",
-          message: "النسبة يجب أن تكون أكبر من 0 وأقل أو تساوي 100",
+          message: i18n.t("validation:discount.percentageRange"),
           path: ["value"],
         })
       }
@@ -86,7 +95,7 @@ export const discountSchema = z
     if (value != null && data.type === "FIXED_AMOUNT" && value <= 0) {
       ctx.addIssue({
         code: "custom",
-        message: "مبلغ الخصم يجب أن يكون أكبر من الصفر",
+        message: i18n.t("validation:discount.fixedAmountPositive"),
         path: ["value"],
       })
     }
@@ -97,7 +106,7 @@ export const discountSchema = z
     ) {
       ctx.addIssue({
         code: "custom",
-        message: "يرجى اختيار التصنيف",
+        message: i18n.t("validation:shared.selectCategory"),
         path: ["categoryId"],
       })
     }
@@ -108,7 +117,7 @@ export const discountSchema = z
     ) {
       ctx.addIssue({
         code: "custom",
-        message: "يرجى اختيار المنتج",
+        message: i18n.t("validation:shared.selectProduct"),
         path: ["productId"],
       })
     }
@@ -120,6 +129,7 @@ export type DiscountFormValues = z.input<typeof discountSchema>
 
 export type DiscountRequestPayload = {
   name: string
+  nameAr?: string
   type: DiscountType
   scope: DiscountScope
   value: string
@@ -138,9 +148,11 @@ export function discountFormValuesToPayload(
   const value = requireFiniteNumber(values.value, "discount value")
   const maxInvoiceValue = optionalPositiveNumberOrNull(values.maxInvoiceValue)
   const maxUses = optionalPositiveIntegerOrNull(values.maxUses)
+  const nameAr = optionalText(values.nameAr)
 
   const payload: DiscountRequestPayload = {
     name: normalizeText(values.name),
+    ...(nameAr ? { nameAr } : {}),
     type: values.type,
     scope: values.scope,
     value: String(value),
