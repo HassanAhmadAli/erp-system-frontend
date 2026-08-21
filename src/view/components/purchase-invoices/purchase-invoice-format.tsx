@@ -85,7 +85,13 @@ export function getSupplierName(invoice: PurchaseInvoice, t: TFunction) {
 }
 
 export function getInvoiceTotal(invoice: PurchaseInvoice) {
-  return invoice.finalAmount ?? invoice.totalAmount ?? invoice.subtotal ?? null
+  return (
+    invoice.total ??
+    invoice.finalAmount ??
+    invoice.totalAmount ??
+    invoice.subtotal ??
+    null
+  )
 }
 
 export function getItemTotal(item: PurchaseInvoiceItem) {

@@ -14,15 +14,22 @@ import { toPaginationQuery } from "@/lib/pagination"
 import { isValidId } from "@/validation/helpers"
 
 export function usePurchaseInvoices(params?: PurchaseInvoicesQuery) {
-  const query = toPaginationQuery(params ?? { limit: 100 })
+  const pagination = toPaginationQuery(params ?? { limit: 100 })
+  const query = {
+    ...pagination,
+    status: params?.status,
+    supplierId: params?.supplierId,
+    from: params?.from,
+    to: params?.to,
+  }
 
   return useQuery({
     queryKey: ["purchase-invoices", query],
     queryFn: async () =>
       normalizePurchaseInvoicesList(
-        await getPurchaseInvoices({ ...params, ...query }),
-        query.limit,
-        query.offset
+        await getPurchaseInvoices({ ...params, ...pagination }),
+        pagination.limit,
+        pagination.offset
       ),
   })
 }

@@ -2,11 +2,13 @@ import { useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
+import { useNotificationSocket } from "@/hooks/Notifications/useNotificationSocket"
 import { usePermissions } from "@/hooks/usePermissions"
 import { useSyncLanguageFromUser } from "@/hooks/useSyncLanguageFromUser"
 import { useLocale } from "@/i18n/locale-provider"
 import { AppSidebar } from "@/view/components/layout/app-sidebar"
 import { TopBar } from "@/view/components/layout/top-bar"
+import { NotificationLiveToasts } from "@/view/components/notifications/notification-live-toasts"
 
 const SIDEBAR_COLLAPSED_KEY = "erp-sidebar-collapsed"
 
@@ -22,6 +24,7 @@ export function AppShell() {
   const { t } = useTranslation("common")
   const { headerTitle } = usePermissions()
   const { dir, language } = useLocale()
+  const { toasts, dismissToast } = useNotificationSocket()
   useSyncLanguageFromUser()
   const [sidebarCollapsed, setSidebarCollapsed] = useState(readSidebarCollapsed)
   const [mobileNavOpen, setMobileNavOpen] = useState(false)
@@ -105,6 +108,8 @@ export function AppShell() {
           />
         </div>
       )}
+
+      <NotificationLiveToasts toasts={toasts} onDismiss={dismissToast} />
     </div>
   )
 }

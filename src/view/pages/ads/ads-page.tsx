@@ -1,9 +1,10 @@
 import { useState } from "react"
-import { Eye, Megaphone, Plus, Trash2 } from "lucide-react"
+import { Eye, ImageOff, Megaphone, Pencil, Plus, Trash2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { useAds, useDeleteAd } from "@/hooks/useAds"
+import { getAdImageSrc } from "@/services/ads-service"
 import { PERMISSIONS } from "@/auth/permissions"
 import { useLocale } from "@/i18n/locale-provider"
 import { localizedTitle } from "@/lib/localized"
@@ -112,16 +113,18 @@ export function AdsPage() {
             <div className="overflow-x-auto rounded-2xl border border-[var(--erp-border)]">
               <table className="w-full min-w-[860px] table-fixed text-start text-sm">
                 <colgroup>
+                  <col className="w-[10%]" />
                   <col className="w-[28%]" />
                   <col className="w-[14%]" />
-                  <col className="w-[12%]" />
-                  <col className="w-[18%]" />
-                  <col className="w-[18%]" />
                   <col className="w-[10%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[10%]" />
+                  <col className="w-[18%]" />
                 </colgroup>
 
                 <thead className="border-b border-[var(--erp-border)] bg-[var(--erp-bg)] text-[var(--erp-muted)]">
                   <tr>
+                    <th className="px-3 py-3 font-medium">{t("image")}</th>
                     <th className="px-3 py-3 font-medium">{t("title")}</th>
                     <th className="px-3 py-3 font-medium">
                       {t("ads.placement", { ns: "pages" })}
@@ -138,75 +141,106 @@ export function AdsPage() {
                 </thead>
 
                 <tbody>
-                  {ads.map((ad) => (
-                    <tr
-                      key={ad.id}
-                      className="border-b border-[var(--erp-border)] transition-colors last:border-0 hover:bg-[var(--erp-bg)]"
-                    >
-                      <td className="px-3 py-4 leading-6 font-medium text-[var(--erp-text)]">
-                        {localizedTitle(ad, language)}
-                      </td>
+                  {ads.map((ad) => {
+                    const imageSrc = getAdImageSrc(ad.imageUrl, ad.storedFileId)
+                    const displayTitle = localizedTitle(ad, language)
 
-                      <td className="px-3 py-4 text-sm text-[var(--erp-text)]">
-                        {placementLabel(ad.placement)}
-                      </td>
-
-                      <td className="px-3 py-4">
-                        <div className="flex justify-center">
-                          <span
-                            className={
-                              ad.isActive
-                                ? "rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
-                                : "rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-300"
-                            }
-                          >
-                            {ad.isActive ? t("active") : t("inactive")}
-                          </span>
-                        </div>
-                      </td>
-
-                      <td
-                        dir="ltr"
-                        className="px-3 py-4 text-start text-sm text-[var(--erp-muted)] tabular-nums"
+                    return (
+                      <tr
+                        key={ad.id}
+                        className="border-b border-[var(--erp-border)] transition-colors last:border-0 hover:bg-[var(--erp-bg)]"
                       >
-                        {formatAdDate(ad.startDate)}
-                      </td>
+                        <td className="px-3 py-3">
+                          <div className="flex size-12 items-center justify-center overflow-hidden rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
+                            {imageSrc ? (
+                              <img
+                                src={imageSrc}
+                                alt={displayTitle}
+                                className="size-full object-cover"
+                              />
+                            ) : (
+                              <ImageOff className="size-4 text-[var(--erp-muted)]" />
+                            )}
+                          </div>
+                        </td>
 
-                      <td
-                        dir="ltr"
-                        className="px-3 py-4 text-start text-sm text-[var(--erp-muted)] tabular-nums"
-                      >
-                        {formatAdDate(ad.endDate)}
-                      </td>
+                        <td className="px-3 py-4 leading-6 font-medium text-[var(--erp-text)]">
+                          {displayTitle}
+                        </td>
 
-                      <td className="px-3 py-4">
-                        <div className="flex flex-wrap justify-center gap-1.5">
-                          {canManage && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1"
-                              onClick={() => navigate(`/ads/${ad.id}`)}
+                        <td className="px-3 py-4 text-sm text-[var(--erp-text)]">
+                          {placementLabel(ad.placement)}
+                        </td>
+
+                        <td className="px-3 py-4">
+                          <div className="flex justify-center">
+                            <span
+                              className={
+                                ad.isActive
+                                  ? "rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
+                                  : "rounded-full border border-red-500/20 bg-red-500/10 px-3 py-1 text-xs font-medium text-red-700 dark:bg-red-500/15 dark:text-red-300"
+                              }
                             >
-                              <Eye className="size-3.5" />
-                              {t("view")}
-                            </Button>
-                          )}
+                              {ad.isActive ? t("active") : t("inactive")}
+                            </span>
+                          </div>
+                        </td>
 
-                          {canManage && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDelete(ad.id)}
-                              disabled={deleteAdMutation.isPending}
-                            >
-                              <Trash2 className="size-4 text-red-500" />
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                        <td
+                          dir="ltr"
+                          className="px-3 py-4 text-start text-sm text-[var(--erp-muted)] tabular-nums"
+                        >
+                          {formatAdDate(ad.startDate)}
+                        </td>
+
+                        <td
+                          dir="ltr"
+                          className="px-3 py-4 text-start text-sm text-[var(--erp-muted)] tabular-nums"
+                        >
+                          {formatAdDate(ad.endDate)}
+                        </td>
+
+                        <td className="px-3 py-4">
+                          <div className="flex flex-wrap justify-center gap-1.5">
+                            {canManage && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1"
+                                onClick={() => navigate(`/ads/${ad.id}`)}
+                              >
+                                <Eye className="size-3.5" />
+                                {t("view")}
+                              </Button>
+                            )}
+
+                            {canManage && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-1"
+                                onClick={() => navigate(`/ads/${ad.id}/edit`)}
+                              >
+                                <Pencil className="size-3.5" />
+                                {t("edit")}
+                              </Button>
+                            )}
+
+                            {canManage && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(ad.id)}
+                                disabled={deleteAdMutation.isPending}
+                              >
+                                <Trash2 className="size-4 text-red-500" />
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

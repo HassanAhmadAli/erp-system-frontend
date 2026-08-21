@@ -6,6 +6,7 @@ import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
 import { buildInvoiceCharts } from "@/lib/report-chart-data"
 import { toNumber } from "@/lib/report-parsers"
 import { type PurchaseInvoice } from "@/services/purchase-invoices-service"
+import { getInvoiceTotal } from "@/view/components/purchase-invoices/purchase-invoice-format"
 import { BarChart } from "@/view/components/charts/bar-chart"
 import { DonutChart } from "@/view/components/charts/donut-chart"
 import { LineChart } from "@/view/components/charts/line-chart"
@@ -36,7 +37,7 @@ export function ReportPurchasesPage() {
         id: inv.id,
         status: String(inv.status ?? "UNKNOWN"),
         invoiceDate: inv.invoiceDate ?? inv.createdAt,
-        totalAmount: inv.finalAmount ?? inv.totalAmount ?? inv.subtotal,
+        totalAmount: getInvoiceTotal(inv) ?? undefined,
         supplier:
           inv.supplier?.companyName ??
           inv.supplier?.name ??

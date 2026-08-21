@@ -72,13 +72,6 @@ export function formatAuditRole(role: string): string {
   return role
 }
 
-export function formatAuditValue(
-  value: Record<string, unknown> | null
-): string {
-  if (!value) return "—"
-  return JSON.stringify(value, null, 2)
-}
-
 export function auditChangePreview(log: AuditLog, maxLength = 80): string {
   const parts: string[] = []
 

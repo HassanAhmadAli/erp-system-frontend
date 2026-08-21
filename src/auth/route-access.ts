@@ -110,7 +110,8 @@ const ROUTE_ACCESS_RULES: RouteAccessRule[] = [
     test: (path) =>
       isExact(path, "/ads") ||
       isExact(path, "/ads/create") ||
-      isNumericDetailsRoute(path, "/ads"),
+      isNumericDetailsRoute(path, "/ads") ||
+      isNumericEditRoute(path, "/ads"),
     permissions: [PERMISSIONS.ADS_MANAGE],
   },
 
@@ -245,6 +246,13 @@ const ROUTE_ACCESS_RULES: RouteAccessRule[] = [
   },
 
   /**
+   * Profile — any authenticated staff user
+   */
+  {
+    test: (path) => isExact(path, "/profile") || isExact(path, "/profile/edit"),
+  },
+
+  /**
    * Settings — any authenticated staff user
    */
   {
@@ -333,6 +341,9 @@ export const SIDEBAR_ACCESS: SidebarAccess[] = [
     to: "/staff",
     rolesOnly: ["STORE_MANAGER"],
     permissions: [PERMISSIONS.EMPLOYEE_MANAGE],
+  },
+  {
+    to: "/profile",
   },
   {
     to: "/settings",

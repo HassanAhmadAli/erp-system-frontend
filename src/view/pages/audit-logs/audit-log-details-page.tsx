@@ -8,10 +8,10 @@ import {
   formatAuditAction,
   formatAuditEntity,
   formatAuditRole,
-  formatAuditValue,
   type AuditLog,
 } from "@/services/audit-log-service"
 import { formatId, toEnglishDigits } from "@/utils/number-formatters"
+import { AuditValueCard } from "@/view/components/audit-logs/audit-value-card"
 import { CustomerInfoCard } from "@/view/components/customers/customer-info-card"
 import { CustomerInfoRow } from "@/view/components/customers/customer-info-row"
 
@@ -154,19 +154,9 @@ export function AuditLogDetailsPage() {
       </section>
 
       <section className="grid gap-4 lg:grid-cols-2">
-        <JsonCard
-          title={t("previousValue")}
-          content={formatAuditValue(log.oldValue)}
-          empty={!log.oldValue}
-          emptyLabel={t("none")}
-        />
+        <AuditValueCard title={t("previousValue")} value={log.oldValue} />
 
-        <JsonCard
-          title={t("newValue")}
-          content={formatAuditValue(log.newValue)}
-          empty={!log.newValue}
-          emptyLabel={t("none")}
-        />
+        <AuditValueCard title={t("newValue")} value={log.newValue} />
       </section>
     </div>
   )
@@ -196,34 +186,6 @@ function SummaryCard({
       </div>
 
       <p className="mt-3 text-lg font-bold text-[var(--erp-text)]">{value}</p>
-    </div>
-  )
-}
-
-function JsonCard({
-  title,
-  content,
-  empty,
-  emptyLabel,
-}: {
-  title: string
-  content: string
-  empty?: boolean
-  emptyLabel: string
-}) {
-  return (
-    <div className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
-      <h2 className="mb-4 text-xl font-semibold text-[var(--erp-text)]">
-        {title}
-      </h2>
-
-      {empty ? (
-        <p className="text-sm text-[var(--erp-muted)]">{emptyLabel}</p>
-      ) : (
-        <pre className="erp-scrollbar max-h-80 overflow-auto rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4 text-left text-xs leading-6 whitespace-pre-wrap text-[var(--erp-text)]">
-          {content}
-        </pre>
-      )}
     </div>
   )
 }

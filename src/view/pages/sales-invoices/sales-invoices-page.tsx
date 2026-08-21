@@ -1,34 +1,80 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Plus, ReceiptText, RefreshCw, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
+import { toApiDateRange } from "@/lib/report-parsers"
 import { PERMISSIONS } from "@/auth/permissions"
 import { usePermissions } from "@/hooks/usePermissions"
 import { useSalesInvoices } from "@/hooks/useSalesInvoices"
 import { CreateSalesInvoiceForm } from "@/view/components/sales-invoices/create-sales-invoice-form"
+import { SalesInvoicesListToolbar } from "@/view/components/sales-invoices/sales-invoices-list-toolbar"
 import { SalesInvoicesTable } from "@/view/components/sales-invoices/sales-invoices-table"
-import {
-  formatNumber,
-  NumberText,
-} from "@/view/components/sales-invoices/sales-invoice-format"
+import { getCustomerName } from "@/view/components/sales-invoices/sales-invoice-format"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
+import { isSalesInvoiceStatus } from "@/validation/sales-invoice-schema"
+import type { SalesInvoice } from "@/services/sales-invoices-service"
+import { toEnglishDigits } from "@/utils/number-formatters"
 
 const PAGE_SIZE = 10
+
+function matchesSalesSearch(
+  invoice: SalesInvoice,
+  search: string,
+  customerName: string
+) {
+  const query = toEnglishDigits(search).trim().toLowerCase()
+
+  if (!query) return true
+
+  const haystack = [
+    String(invoice.id),
+    invoice.customerId != null ? String(invoice.customerId) : "",
+    customerName,
+    invoice.customer?.user?.fullName,
+    invoice.customer?.user?.email,
+    invoice.cashier?.user?.fullName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+
+  return haystack.includes(query)
+}
 
 export function SalesInvoicesPage() {
   const { t } = useTranslation(["common", "pages"])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState("")
+  const [status, setStatus] = useState("")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
   const { can } = usePermissions()
   const canCreate = can(PERMISSIONS.SALES_CREATE)
+  const range = toApiDateRange(from, to)
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, status, from, to])
 
   const { data, isLoading, isError, refetch, isFetching } = useSalesInvoices({
     page,
     limit: PAGE_SIZE,
+    status: isSalesInvoiceStatus(status) ? status : undefined,
+    from: range.from,
+    to: range.to,
   })
 
   const invoices = data?.data ?? []
+
+  const filteredInvoices = useMemo(
+    () =>
+      invoices.filter((invoice) =>
+        matchesSalesSearch(invoice, search, getCustomerName(invoice, t))
+      ),
+    [invoices, search, t]
+  )
 
   return (
     <main className="space-y-6">
@@ -78,29 +124,22 @@ export function SalesInvoicesPage() {
       )}
 
       <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="text-start">
-            <h2 className="text-lg font-bold text-[var(--erp-text)]">
-              {t("pages:salesInvoices.list")}
-            </h2>
-
-            <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              {t("common:shownInvoices")}:{" "}
-              <NumberText value={formatNumber(invoices.length)} />
-              {data?.total != null ? (
-                <>
-                  {" "}
-                  {t("common:grandTotalSuffix", {
-                    count: formatNumber(data.total),
-                  })}
-                </>
-              ) : null}
-            </p>
-          </div>
-        </div>
+        <SalesInvoicesListToolbar
+          search={search}
+          status={status}
+          from={from}
+          to={to}
+          totalCount={invoices.length}
+          filteredCount={filteredInvoices.length}
+          listTotal={data?.total}
+          onSearchChange={setSearch}
+          onStatusChange={setStatus}
+          onFromChange={setFrom}
+          onToChange={setTo}
+        />
 
         <SalesInvoicesTable
-          invoices={invoices}
+          invoices={filteredInvoices}
           isLoading={isLoading}
           isError={isError}
         />

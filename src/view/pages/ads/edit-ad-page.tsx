@@ -1,47 +1,36 @@
-import { ArrowRight, Save, UploadCloud } from "lucide-react"
-import { useState, type FormEvent } from "react"
-import { useNavigate } from "react-router-dom"
-import { useQueryClient } from "@tanstack/react-query"
+import { type FormEvent, useEffect, useState } from "react"
+import { ArrowRight, Megaphone, Save } from "lucide-react"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
-import { useCreateAd } from "@/hooks/useAds"
-import { uploadAdImage } from "@/services/ads-service"
-import { toEnglishDigits } from "@/utils/number-formatters"
-import {
-  isAllowedFileType,
-  isValidId,
-  isWithinMaxFileSize,
-} from "@/validation/helpers"
+import { useAdById, useUpdateAd } from "@/hooks/useAds"
+import { formatId } from "@/utils/number-formatters"
+import { isValidId } from "@/validation/helpers"
 import {
   AD_PLACEMENTS,
   adFormValuesToPayload,
   adSchema,
   adZodErrorToFormErrors,
+  isoToDatetimeLocalInput,
   type AdFormErrors,
   type AdPlacement,
 } from "@/validation/ad-schema"
 import { Button } from "@/view/components/ui/button"
+import { AdImagePanel } from "@/view/components/ads/ad-image-panel"
 
 const inputClass =
   "w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-3 text-sm text-[var(--erp-text)] outline-none transition placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 const dateInputClass = `${inputClass} text-left [direction:ltr]`
 
-const ALLOWED_IMAGE_TYPES = [
-  "image/jpeg",
-  "image/jpg",
-  "image/png",
-  "image/webp",
-  "image/gif",
-] as const
-
-const MAX_IMAGE_BYTES = 5 * 1024 * 1024
-
-export function CreateAdPage() {
+export function EditAdPage() {
   const { t } = useTranslation(["common", "pages"])
+  const { id } = useParams()
   const navigate = useNavigate()
-  const queryClient = useQueryClient()
-  const createAdMutation = useCreateAd()
+  const adId = Number(id)
+
+  const { data: ad, isLoading, isError } = useAdById(adId)
+  const updateAdMutation = useUpdateAd()
 
   const [title, setTitle] = useState("")
   const [titleAr, setTitleAr] = useState("")
@@ -52,30 +41,32 @@ export function CreateAdPage() {
   const [isActive, setIsActive] = useState(true)
   const [startDate, setStartDate] = useState("")
   const [endDate, setEndDate] = useState("")
-  const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [formErrors, setFormErrors] = useState<AdFormErrors>({})
   const [formError, setFormError] = useState("")
 
-  function handleFileChange(file: File | null) {
-    setSelectedFile(null)
+  useEffect(() => {
+    if (!ad) return
+
+    setTitle(ad.title ?? "")
+    setTitleAr(ad.titleAr ?? "")
+    setDescription(ad.description ?? "")
+    setDescriptionAr(ad.descriptionAr ?? "")
+    setLinkUrl(ad.linkUrl ?? "")
+    setPlacement(
+      ad.placement === "HOME" ||
+        ad.placement === "CHECKOUT" ||
+        ad.placement === "SIDEBAR"
+        ? ad.placement
+        : "HOME"
+    )
+    setIsActive(ad.isActive)
+    setStartDate(isoToDatetimeLocalInput(ad.startDate))
+    setEndDate(isoToDatetimeLocalInput(ad.endDate))
+    setFormErrors({})
     setFormError("")
+  }, [ad])
 
-    if (!file) return
-
-    if (!isAllowedFileType(file, ALLOWED_IMAGE_TYPES)) {
-      setFormError(t("common:invalidImageFile"))
-      return
-    }
-
-    if (!isWithinMaxFileSize(file, MAX_IMAGE_BYTES)) {
-      setFormError(t("common:imageTooLarge"))
-      return
-    }
-
-    setSelectedFile(file)
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     setFormError("")
     setFormErrors({})
@@ -98,48 +89,64 @@ export function CreateAdPage() {
       return
     }
 
-    try {
-      const created = await createAdMutation.mutateAsync(
-        adFormValuesToPayload(validation.data)
-      )
+    const { imageUrl: _imageUrl, ...payload } = adFormValuesToPayload(
+      validation.data
+    )
 
-      if (selectedFile && isValidId(created?.id)) {
-        try {
-          await uploadAdImage(created.id, selectedFile)
-          void queryClient.invalidateQueries({ queryKey: ["ads"] })
-          void queryClient.invalidateQueries({
-            queryKey: ["ads", created.id],
-          })
-        } catch (error: unknown) {
-          setFormError(
-            error instanceof Error
-              ? t("ads.createdImageUploadFailedWithError", {
-                  ns: "pages",
-                  error: error.message,
-                })
-              : t("ads.createdImageUploadFailed", { ns: "pages" })
-          )
-          navigate(`/ads/${created.id}`, { replace: true })
-          return
-        }
+    updateAdMutation.mutate(
+      { id: adId, data: payload },
+      {
+        onSuccess: () => {
+          navigate(`/ads/${adId}`)
+        },
+        onError: () => {
+          setFormError(t("ads.updateFailed", { ns: "pages" }))
+        },
       }
+    )
+  }
 
-      navigate("/ads")
-    } catch {
-      setFormError(t("ads.createFailed", { ns: "pages" }))
-    }
+  if (!isValidId(adId)) {
+    return (
+      <ErrorState
+        message={t("ads.invalidAdId", { ns: "pages" })}
+        backLabel={t("ads.backToAds", { ns: "pages" })}
+      />
+    )
+  }
+
+  if (isLoading) {
+    return (
+      <main className="space-y-6 text-start text-[var(--erp-text)]">
+        <p className="text-sm text-[var(--erp-muted)]">
+          {t("ads.loadingAd", { ns: "pages" })}
+        </p>
+      </main>
+    )
+  }
+
+  if (isError || !ad) {
+    return (
+      <ErrorState
+        message={t("ads.loadAdFailed", { ns: "pages" })}
+        backLabel={t("ads.backToAds", { ns: "pages" })}
+      />
+    )
   }
 
   return (
     <main className="space-y-6 text-[var(--erp-text)]">
       <section className="flex items-center justify-between gap-4">
         <div className="text-start">
-          <h1 className="text-2xl font-bold text-[var(--erp-text)]">
-            {t("ads.create", { ns: "pages" })}
-          </h1>
+          <div className="flex items-center justify-end gap-2">
+            <h1 className="text-2xl font-bold text-[var(--erp-text)]">
+              {t("ads.editTitle", { ns: "pages", id: formatId(ad.id) })}
+            </h1>
+            <Megaphone className="size-7 text-[var(--erp-brand-solid)]" />
+          </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            {t("ads.createSubtitle", { ns: "pages" })}
+            {t("ads.editSubtitle", { ns: "pages" })}
           </p>
         </div>
 
@@ -147,7 +154,7 @@ export function CreateAdPage() {
           type="button"
           variant="outline"
           className="gap-2"
-          onClick={() => navigate("/ads")}
+          onClick={() => navigate(`/ads/${adId}`)}
         >
           <ArrowRight className="size-4" />
           {t("back")}
@@ -233,47 +240,6 @@ export function CreateAdPage() {
                 {formErrors.descriptionAr}
               </p>
             )}
-          </div>
-
-          <div className="space-y-2 md:col-span-2">
-            <label
-              htmlFor="ad-image"
-              className="text-sm font-medium text-[var(--erp-text)]"
-            >
-              {t("ads.adImageOptional", { ns: "pages" })}
-            </label>
-
-            <label
-              htmlFor="ad-image"
-              className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-6 text-center transition hover:border-[var(--erp-brand-solid)]/50 hover:bg-[var(--erp-nav-active-bg)]"
-            >
-              <UploadCloud className="mb-2 size-7 text-[var(--erp-brand-solid)]" />
-              <span className="text-sm font-medium text-[var(--erp-text)]">
-                {t("common:clickToSelectImage")}
-              </span>
-              <span className="mt-1 text-xs text-[var(--erp-muted)]">
-                {t("common:imageFormats")}
-              </span>
-              <span
-                dir="ltr"
-                className="mt-3 max-w-full truncate rounded-full bg-[var(--erp-card)] px-3 py-1 text-xs font-medium text-[var(--erp-text)]"
-              >
-                {selectedFile?.name
-                  ? toEnglishDigits(selectedFile.name)
-                  : t("common:noFileSelected")}
-              </span>
-              <input
-                id="ad-image"
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif"
-                className="sr-only"
-                disabled={createAdMutation.isPending}
-                onChange={(event) => {
-                  handleFileChange(event.target.files?.[0] ?? null)
-                  event.target.value = ""
-                }}
-              />
-            </label>
           </div>
 
           <div className="space-y-2">
@@ -391,7 +357,7 @@ export function CreateAdPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate("/ads")}
+            onClick={() => navigate(`/ads/${adId}`)}
           >
             {t("cancel")}
           </Button>
@@ -399,13 +365,42 @@ export function CreateAdPage() {
           <Button
             type="submit"
             className="gap-2"
-            disabled={createAdMutation.isPending}
+            disabled={updateAdMutation.isPending}
           >
             <Save className="size-4" />
-            {createAdMutation.isPending ? t("saving") : t("saveAd")}
+            {updateAdMutation.isPending ? t("saving") : t("saveChanges")}
           </Button>
         </div>
       </form>
+
+      <AdImagePanel
+        adId={ad.id}
+        imageUrl={ad.imageUrl}
+        storedFileId={ad.storedFileId}
+        title={ad.title}
+      />
+    </main>
+  )
+}
+
+function ErrorState({
+  message,
+  backLabel,
+}: {
+  message: string
+  backLabel: string
+}) {
+  return (
+    <main className="space-y-6 text-start text-[var(--erp-text)]">
+      <p className="text-red-500 dark:text-red-300">{message}</p>
+
+      <Link
+        to="/ads"
+        className="inline-flex items-center gap-2 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-2 text-sm font-medium text-[var(--erp-text)] transition hover:bg-[var(--erp-bg)]"
+      >
+        <ArrowRight className="size-4" />
+        {backLabel}
+      </Link>
     </main>
   )
 }

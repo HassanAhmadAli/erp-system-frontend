@@ -43,6 +43,7 @@ export type PurchaseInvoice = {
   updatedAt?: string
   receive?: boolean
   received?: boolean
+  total?: string | number
   totalAmount?: string | number
   finalAmount?: string | number
   subtotal?: string | number
@@ -74,7 +75,12 @@ export type PurchaseInvoicesResponse =
 export type CreatePurchaseInvoiceItem = PurchaseInvoiceItemPayload
 export type CreatePurchaseInvoicePayload = PurchaseInvoicePayload
 
-export type PurchaseInvoicesQuery = PaginationParams
+export type PurchaseInvoicesQuery = PaginationParams & {
+  status?: PurchaseInvoiceStatus
+  supplierId?: number
+  from?: string
+  to?: string
+}
 
 export function normalizePurchaseInvoices(response?: PurchaseInvoicesResponse) {
   if (!response) return []
@@ -95,9 +101,16 @@ export function normalizePurchaseInvoicesList(
 }
 
 export async function getPurchaseInvoices(params?: PurchaseInvoicesQuery) {
-  const query = toPaginationQuery(params)
+  const pagination = toPaginationQuery(params)
+
   return apiRequest<PurchaseInvoicesResponse>(
-    `${PURCHASE_INVOICES_ENDPOINT}${buildQuery(query)}`
+    `${PURCHASE_INVOICES_ENDPOINT}${buildQuery({
+      ...pagination,
+      status: params?.status,
+      supplierId: params?.supplierId,
+      from: params?.from,
+      to: params?.to,
+    })}`
   )
 }
 

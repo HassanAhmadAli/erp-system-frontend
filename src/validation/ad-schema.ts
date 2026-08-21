@@ -66,6 +66,18 @@ function dateTimeInputToIsoString(value: string) {
   return date.toISOString()
 }
 
+export function isoToDatetimeLocalInput(value?: string | null) {
+  if (!value?.trim()) return ""
+
+  const date = new Date(value)
+
+  if (!Number.isFinite(date.getTime())) return ""
+
+  const pad = (part: number) => String(part).padStart(2, "0")
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
 function requiredDateTimeInput(fieldMessage: () => string) {
   return z.string().superRefine((value, ctx) => {
     if (!value.trim()) {
