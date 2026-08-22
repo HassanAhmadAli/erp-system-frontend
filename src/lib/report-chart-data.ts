@@ -266,14 +266,82 @@ function parseDateSortKey(value: unknown): number | null {
   return Number.isNaN(time) ? null : time
 }
 
-function rowDate(row: Record<string, unknown>): number | null {
-  return (
-    parseDateSortKey(row.date) ??
-    parseDateSortKey(row.period) ??
-    parseDateSortKey(row.month) ??
-    parseDateSortKey(row.invoiceDate) ??
-    parseDateSortKey(row.createdAt)
-  )
+function rowPeriodValue(row: Record<string, unknown>): unknown {
+  return row.date ?? row.period ?? row.month ?? row.invoiceDate ?? row.createdAt
+}
+
+/**
+ * Parses API period keys (`YYYY-MM-DD`, `YYYY-MM`, `YYYY-MM-Wn`) as local calendar
+ * values so month/week buckets sort and label correctly.
+ */
+function parsePeriodPoint(
+  value: unknown
+): { sortKey: number; label: string } | null {
+  if (typeof value === "number") {
+    const time = new Date(value).getTime()
+
+    if (Number.isNaN(time)) return null
+
+    return {
+      sortKey: time,
+      label: formatShortDate(new Date(value).toISOString()),
+    }
+  }
+
+  if (typeof value !== "string" || !value.trim()) return null
+
+  const raw = value.trim()
+
+  const weekMatch = raw.match(/^(\d{4})-(\d{2})-W(\d+)$/i)
+  if (weekMatch) {
+    const year = Number(weekMatch[1])
+    const month = Number(weekMatch[2])
+    const week = Number(weekMatch[3])
+    const day = Math.min(28, (week - 1) * 7 + 1)
+    const date = new Date(year, month - 1, day)
+
+    if (Number.isNaN(date.getTime())) return null
+
+    return {
+      sortKey: date.getTime(),
+      label: toEnglishDigits(
+        `${weekMatch[2]}/${String(year).slice(-2)} W${week}`
+      ),
+    }
+  }
+
+  const monthMatch = raw.match(/^(\d{4})-(\d{2})$/)
+  if (monthMatch) {
+    const year = Number(monthMatch[1])
+    const month = Number(monthMatch[2])
+    const date = new Date(year, month - 1, 1)
+
+    if (Number.isNaN(date.getTime())) return null
+
+    return {
+      sortKey: date.getTime(),
+      label: toEnglishDigits(`${monthMatch[2]}/${String(year).slice(-2)}`),
+    }
+  }
+
+  const dayMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (dayMatch) {
+    const date = new Date(
+      Number(dayMatch[1]),
+      Number(dayMatch[2]) - 1,
+      Number(dayMatch[3])
+    )
+
+    if (Number.isNaN(date.getTime())) return null
+
+    return { sortKey: date.getTime(), label: formatShortDate(raw) }
+  }
+
+  const time = parseDateSortKey(raw)
+
+  if (time === null) return null
+
+  return { sortKey: time, label: formatShortDate(raw) }
 }
 
 function rowAmount(row: Record<string, unknown>): number | null {
@@ -317,18 +385,68 @@ export function extractTimeSeries(payload: unknown): ChartPoint[] {
 
   const points = candidates
     .map((row) => {
-      const sortKey = rowDate(row)
+      const period = parsePeriodPoint(rowPeriodValue(row))
       const value = rowAmount(row)
 
-      if (sortKey === null || value === null) return null
-
-      const rawDate =
-        row.date ?? row.period ?? row.month ?? row.invoiceDate ?? row.createdAt
+      if (period === null || value === null) return null
 
       return {
-        label: formatShortDate(String(rawDate)),
+        label: period.label,
         value,
-        sortKey,
+        sortKey: period.sortKey,
+      }
+    })
+    .filter(
+      (point): point is ChartPoint & { sortKey: number } => point !== null
+    )
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .map(({ label, value }) => ({ label, value }))
+
+  return points
+}
+
+/** Cost trends: unit cost over time (falls back to period total cost). */
+export function extractCostTrendSeries(payload: unknown): ChartPoint[] {
+  const rows = extractTableRows(payload)
+  const candidates =
+    rows.length > 0
+      ? rows
+      : (() => {
+          const obj = unwrapData(payload)
+
+          if (Array.isArray(obj)) {
+            return obj as Record<string, unknown>[]
+          }
+
+          if (!obj || typeof obj !== "object") return []
+
+          const source = obj as Record<string, unknown>
+
+          for (const key of ["trends", "series", "timeline", "history"]) {
+            if (Array.isArray(source[key])) {
+              return source[key] as Record<string, unknown>[]
+            }
+          }
+
+          return []
+        })()
+
+  const points = candidates
+    .map((row) => {
+      if (!row || typeof row !== "object") return null
+
+      const period = parsePeriodPoint(rowPeriodValue(row))
+      const value =
+        toNumber(row.averageUnitCost) ??
+        toNumber(row.totalCost) ??
+        rowAmount(row)
+
+      if (period === null || value === null) return null
+
+      return {
+        label: period.label,
+        value,
+        sortKey: period.sortKey,
       }
     })
     .filter(
@@ -556,6 +674,43 @@ export function extractCostBreakdownSeries(payload: unknown): ChartPoint[] {
     .filter((point): point is ChartPoint => point !== null)
 
   return points
+}
+
+const COST_BREAKDOWN_ROW_KEYS = [
+  "revenue",
+  "purchasingCosts",
+  "operatingExpenses",
+  "discountsGiven",
+  "grossProfit",
+  "netProfit",
+] as const
+
+export function extractCostBreakdownTableRows(
+  payload: unknown
+): Record<string, unknown>[] {
+  const existing = extractTableRows(payload)
+
+  if (existing.length > 0) return existing
+
+  const root = unwrapData(payload)
+
+  if (!root || typeof root !== "object" || Array.isArray(root)) return []
+
+  const obj = root as Record<string, unknown>
+  const rows: Record<string, unknown>[] = []
+
+  for (const key of COST_BREAKDOWN_ROW_KEYS) {
+    const amount = toNumber(obj[key])
+
+    if (amount === null) continue
+
+    rows.push({
+      item: i18n.t(`pages:reports.metrics.${key}`),
+      amount,
+    })
+  }
+
+  return rows
 }
 
 export function extractInventoryQuantityBars(payload: unknown): ChartPoint[] {

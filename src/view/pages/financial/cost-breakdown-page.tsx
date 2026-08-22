@@ -4,9 +4,10 @@ import { useReportDateRange } from "@/hooks/Reports/useReportDateRange"
 import { useCostBreakdown } from "@/hooks/Financial/useFinancial"
 import {
   extractCostBreakdownSeries,
+  extractCostBreakdownTableRows,
   isCompositionData,
 } from "@/lib/report-chart-data"
-import { extractMetrics, extractTableRows } from "@/lib/report-parsers"
+import { extractMetrics } from "@/lib/report-parsers"
 import { BarChart } from "@/view/components/charts/bar-chart"
 import { DonutChart } from "@/view/components/charts/donut-chart"
 import { ReportDateFilter } from "@/view/components/reports/report-date-filter"
@@ -20,7 +21,7 @@ export function CostBreakdownPage() {
   const { data, isLoading, isError } = useCostBreakdown(range)
 
   const series = extractCostBreakdownSeries(data)
-  const rows = extractTableRows(data)
+  const rows = extractCostBreakdownTableRows(data)
   const metrics = extractMetrics(data).filter((m) =>
     [
       "revenue",

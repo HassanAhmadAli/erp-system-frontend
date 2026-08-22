@@ -2,6 +2,7 @@ import { AlertTriangle, ArrowRight, ImageIcon } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 
+import { useProductById } from "@/hooks/Products/useProductById"
 import { toEnglishDigits } from "@/utils/number-formatters"
 import { ProductPhotosPanel } from "@/view/components/products/product-photos-panel"
 import { Button } from "@/view/components/ui/button"
@@ -12,6 +13,9 @@ export function ProductPhotosPage() {
   const navigate = useNavigate()
 
   const productId = Number(id)
+  const { data: product } = useProductById(
+    id && !Number.isNaN(productId) && productId > 0 ? productId : null
+  )
 
   if (!id || Number.isNaN(productId) || productId <= 0) {
     return (
@@ -75,7 +79,11 @@ export function ProductPhotosPage() {
         </Button>
       </section>
 
-      <ProductPhotosPanel productId={productId} />
+      <ProductPhotosPanel
+        productId={productId}
+        fallbackPhotos={product?.productPhotos}
+        imageUrl={product?.imageUrl}
+      />
     </main>
   )
 }

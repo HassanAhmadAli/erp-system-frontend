@@ -154,7 +154,7 @@ export function AppSidebar({
   return (
     <aside
       className={cn(
-        "erp-scrollbar flex shrink-0 flex-col overflow-y-auto border-e border-[var(--erp-border)] bg-[var(--erp-sidebar)] py-6 transition-[width,padding] duration-200 ease-in-out",
+        "erp-scrollbar flex shrink-0 flex-col overflow-y-auto border-e border-[var(--erp-border)] bg-[var(--erp-sidebar)] py-6 transition-[width,padding] duration-200 ease-in-out print:hidden",
         collapsed ? "w-[76px] px-3" : "w-[280px] px-5",
         className
       )}

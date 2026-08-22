@@ -49,6 +49,7 @@ const METRIC_LABEL_KEYS = [
   "total",
   "amount",
   "totalAmount",
+  "item",
   "lowStockCount",
   "outOfStockCount",
   "inventoryValue",

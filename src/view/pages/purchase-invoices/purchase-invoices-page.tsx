@@ -10,10 +10,25 @@ import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices"
 import { CreatePurchaseInvoiceForm } from "@/view/components/purchase-invoices/create-purchase-invoice-form"
 import { PurchaseInvoicesListToolbar } from "@/view/components/purchase-invoices/purchase-invoices-list-toolbar"
 import { PurchaseInvoicesTable } from "@/view/components/purchase-invoices/purchase-invoices-table"
-import { getSupplierName } from "@/view/components/purchase-invoices/purchase-invoice-format"
+import {
+  getPurchaseInvoiceStatusLabel,
+  getSupplierName,
+} from "@/view/components/purchase-invoices/purchase-invoice-format"
+import {
+  buildPurchaseInvoicesListCsv,
+  buildPurchaseInvoicesListRows,
+  getPurchaseInvoicesListColumns,
+} from "@/view/components/purchase-invoices/purchase-invoice-io"
+import { InvoiceIoButtons } from "@/view/components/invoices/invoice-io-buttons"
+import { InvoiceListPrintDocument } from "@/view/components/invoices/invoice-print-document"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
 import { isPurchaseInvoiceStatus } from "@/validation/purchase-invoice-schema"
-import type { PurchaseInvoice } from "@/services/purchase-invoices-service"
+import {
+  listAllPurchaseInvoices,
+  type PurchaseInvoice,
+} from "@/services/purchase-invoices-service"
+import { downloadCsv } from "@/utils/csv"
+import { printPage } from "@/utils/print"
 import { toEnglishDigits } from "@/utils/number-formatters"
 
 const PAGE_SIZE = 10
@@ -54,6 +69,7 @@ export function PurchaseInvoicesPage() {
   const { can } = usePermissions()
   const canCreate = can(PERMISSIONS.PURCHASES_CREATE)
   const range = toApiDateRange(from, to)
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     setPage(1)
@@ -79,9 +95,60 @@ export function PurchaseInvoicesPage() {
     [invoices, search, t]
   )
 
+  const printSubtitle = [
+    status
+      ? `${t("common:status")}: ${getPurchaseInvoiceStatusLabel(status, t)}`
+      : `${t("common:status")}: ${t("common:all")}`,
+    from ? `${t("common:from")}: ${from}` : null,
+    to ? `${t("common:to")}: ${to}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+
+  function handlePrintList() {
+    printPage(t("pages:purchaseInvoices.title"))
+  }
+
+  async function handleExportList() {
+    setIsExporting(true)
+
+    try {
+      const allInvoices = await listAllPurchaseInvoices({
+        status: isPurchaseInvoiceStatus(status) ? status : undefined,
+        from: range.from,
+        to: range.to,
+      })
+      const rows = allInvoices.filter((invoice) =>
+        matchesPurchaseSearch(invoice, search, getSupplierName(invoice, t))
+      )
+
+      if (rows.length === 0) {
+        alert(t("common:exportEmpty"))
+        return
+      }
+
+      downloadCsv(
+        "purchase-invoices.csv",
+        buildPurchaseInvoicesListCsv(rows, t)
+      )
+    } catch {
+      alert(t("common:exportFailed"))
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <main className="space-y-6">
-      <section className="flex flex-col gap-4 rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)] md:flex-row md:items-center md:justify-between">
+      <InvoiceListPrintDocument
+        title={t("pages:purchaseInvoices.title")}
+        subtitle={printSubtitle}
+        columns={getPurchaseInvoicesListColumns(t)}
+        rows={buildPurchaseInvoicesListRows(filteredInvoices, t)}
+        emptyLabel={t("pages:purchaseInvoices.noInvoices")}
+      />
+
+      <section className="flex flex-col gap-4 rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)] md:flex-row md:items-center md:justify-between print:hidden">
         <div className="space-y-2 text-start">
           <div className="flex items-center gap-2">
             <ReceiptText className="size-6 text-[var(--erp-brand-solid)]" />
@@ -96,6 +163,15 @@ export function PurchaseInvoicesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <InvoiceIoButtons
+            onPrint={handlePrintList}
+            onExport={handleExportList}
+            printLabel={t("common:printList")}
+            exportLabel={t("common:exportCsv")}
+            isExporting={isExporting}
+            disabled={isLoading}
+          />
+
           <button
             type="button"
             onClick={() => refetch()}
@@ -123,10 +199,12 @@ export function PurchaseInvoicesPage() {
       </section>
 
       {canCreate && isCreateOpen && (
-        <CreatePurchaseInvoiceForm onCreated={() => setIsCreateOpen(false)} />
+        <div className="print:hidden">
+          <CreatePurchaseInvoiceForm onCreated={() => setIsCreateOpen(false)} />
+        </div>
       )}
 
-      <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
+      <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)] print:hidden">
         <PurchaseInvoicesListToolbar
           search={search}
           status={status}

@@ -10,8 +10,9 @@ export type FinancialDateRange = FinancialPagination & {
   to?: string
 }
 
-export type CostTrendsParams = FinancialPagination & {
+export type CostTrendsParams = FinancialDateRange & {
   productId?: number
+  groupBy?: "day" | "week" | "month"
 }
 
 export function getProfitMargins(params?: FinancialPagination) {

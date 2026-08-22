@@ -31,12 +31,18 @@ export type PurchaseInvoiceItem = {
     id: number
     name?: string
     title?: string
+    purchasePrice?: string | number
+    costPrice?: string | number
+    buyingPrice?: string | number
+    price?: string | number
   }
 }
 
 export type PurchaseInvoice = {
   id: number
   supplierId?: number
+  accountantId?: number
+  warehouseWorkerId?: number
   status?: PurchaseInvoiceStatus | string
   invoiceDate?: string
   createdAt?: string
@@ -47,6 +53,8 @@ export type PurchaseInvoice = {
   totalAmount?: string | number
   finalAmount?: string | number
   subtotal?: string | number
+  amountPaid?: string | number
+  remainingAmount?: string | number
   supplier?: {
     id: number
     name?: string
@@ -129,6 +137,39 @@ export async function createPurchaseInvoice(
     method: "POST",
     body: JSON.stringify(payload),
   })
+}
+
+const LIST_ALL_PAGE_SIZE = 100
+const LIST_ALL_MAX_PAGES = 50
+
+export async function listAllPurchaseInvoices(
+  params?: Omit<PurchaseInvoicesQuery, "page" | "limit" | "offset">
+) {
+  const invoices: PurchaseInvoice[] = []
+  let offset = 0
+
+  for (let page = 0; page < LIST_ALL_MAX_PAGES; page += 1) {
+    const response = await getPurchaseInvoices({
+      ...params,
+      limit: LIST_ALL_PAGE_SIZE,
+      offset,
+    })
+    const list = normalizePurchaseInvoicesList(
+      response,
+      LIST_ALL_PAGE_SIZE,
+      offset
+    )
+
+    invoices.push(...list.data)
+
+    if (list.isFinalPage || list.data.length === 0) {
+      break
+    }
+
+    offset += LIST_ALL_PAGE_SIZE
+  }
+
+  return invoices
 }
 
 export async function updatePurchaseInvoiceStatus(

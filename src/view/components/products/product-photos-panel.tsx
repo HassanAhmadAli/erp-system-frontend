@@ -20,6 +20,8 @@ import {
   getProductPhotoFileName,
   getProductPhotoSrc,
   getProductPhotoStoredFileId,
+  isPersistedProductPhoto,
+  resolveProductPhotos,
   type ProductPhoto,
 } from "@/services/product-service"
 import { toEnglishDigits } from "@/utils/number-formatters"
@@ -29,6 +31,8 @@ import { Button } from "@/view/components/ui/button"
 type ProductPhotosPanelProps = {
   productId: number
   readOnly?: boolean
+  fallbackPhotos?: ProductPhoto[] | null
+  imageUrl?: string | null
 }
 
 function ProductPhotoImage({
@@ -60,6 +64,8 @@ function ProductPhotoImage({
 export function ProductPhotosPanel({
   productId,
   readOnly = false,
+  fallbackPhotos,
+  imageUrl,
 }: ProductPhotosPanelProps) {
   const { t } = useTranslation(["common", "pages"])
   const { data, isLoading, error } = useProductPhotos(productId)
@@ -70,7 +76,7 @@ export function ProductPhotosPanel({
   const [message, setMessage] = useState("")
   const [deletePhotoId, setDeletePhotoId] = useState<number | null>(null)
 
-  const photos = data ?? []
+  const photos = resolveProductPhotos(data, fallbackPhotos, imageUrl)
 
   async function handleUpload() {
     setMessage("")
@@ -233,13 +239,13 @@ export function ProductPhotosPanel({
         </div>
       )}
 
-      {isLoading && (
+      {isLoading && photos.length === 0 && (
         <div className="flex min-h-[220px] items-center justify-center rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)]">
           <Loader2 className="size-7 animate-spin text-[var(--erp-accent)]" />
         </div>
       )}
 
-      {error && (
+      {error && photos.length === 0 && (
         <div className="flex items-start gap-3 rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-sm text-red-700 dark:bg-red-500/15 dark:text-red-300">
           <AlertCircle className="mt-0.5 size-5 shrink-0" />
 
@@ -270,9 +276,10 @@ export function ProductPhotosPanel({
         </div>
       )}
 
-      {!isLoading && !error && photos.length > 0 && (
+      {photos.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {photos.map((photo) => {
+            const persisted = isPersistedProductPhoto(photo)
             const fileName = getProductPhotoFileName(photo)
             const label = fileName
               ? toEnglishDigits(fileName)
@@ -282,7 +289,7 @@ export function ProductPhotosPanel({
 
             return (
               <article
-                key={String(photo.id)}
+                key={persisted ? String(photo.id) : `image:${photo.url ?? ""}`}
                 className="overflow-hidden rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)]"
               >
                 <div className="flex min-h-[220px] items-center justify-center overflow-hidden border-b border-dashed border-[var(--erp-border)] p-4">
@@ -294,27 +301,31 @@ export function ProductPhotosPanel({
                     <p className="truncate font-semibold text-[var(--erp-text)]">
                       {label}
                     </p>
-                    <p
-                      dir="ltr"
-                      className="mt-1 text-left text-xs text-[var(--erp-muted)]"
-                    >
-                      ID: {toEnglishDigits(String(photo.id))}
-                    </p>
+                    {persisted && (
+                      <p
+                        dir="ltr"
+                        className="mt-1 text-left text-xs text-[var(--erp-muted)]"
+                      >
+                        ID: {toEnglishDigits(String(photo.id))}
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-2"
-                      onClick={() => void handleDownload(photo)}
-                    >
-                      <Download className="size-4" />
-                      {t("common:download")}
-                    </Button>
+                    {getProductPhotoStoredFileId(photo) && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="gap-2"
+                        onClick={() => void handleDownload(photo)}
+                      >
+                        <Download className="size-4" />
+                        {t("common:download")}
+                      </Button>
+                    )}
 
-                    {!readOnly && (
+                    {!readOnly && persisted && (
                       <Button
                         type="button"
                         variant="outline"

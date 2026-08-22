@@ -155,7 +155,11 @@ export function EditProductPage() {
         />
       </section>
 
-      <ProductPhotosPanel productId={data.id} />
+      <ProductPhotosPanel
+        productId={data.id}
+        fallbackPhotos={data.productPhotos}
+        imageUrl={data.imageUrl}
+      />
     </main>
   )
 }

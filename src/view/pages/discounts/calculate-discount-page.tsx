@@ -7,13 +7,23 @@ import { useCalculateDiscount } from "@/hooks/use-discounts"
 import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
 import { useProducts } from "@/hooks/Products/useProducts"
 import { useLocale } from "@/i18n/locale-provider"
-import { localizedName } from "@/lib/localized"
+import {
+  formatCurrency,
+  formatId,
+  toEnglishDigits,
+} from "@/utils/number-formatters"
+import {
+  getDiscountScopeLabel,
+  getDiscountTypeLabel,
+} from "@/lib/discount-labels"
+import { localized, localizedName } from "@/lib/localized"
 import { normalizeProducts } from "@/services/product-service"
+import type { DiscountScope, DiscountType } from "@/services/discount-service"
 import {
   calculateDiscountSchema,
   calculateDiscountValuesToPayload,
 } from "@/validation/discount-helper-schema"
-import { formatCurrency } from "@/utils/number-formatters"
+import { DiscountSearchSelect } from "@/view/components/discounts/discount-search-select"
 import { Button } from "@/view/components/ui/button"
 
 type TargetType = "NONE" | "CATEGORY" | "PRODUCT"
@@ -115,32 +125,24 @@ export function CalculateDiscountPage() {
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <label className={labelClass}>{t("common:discountId")}</label>
+          <DiscountSearchSelect
+            value={discountId}
+            onChange={setDiscountId}
+            label={t("common:selectDiscount")}
+          />
 
-              <input
-                type="number"
-                value={discountId}
-                onChange={(event) => setDiscountId(event.target.value)}
-                placeholder={t("common:exampleId")}
-                className={inputClass}
-              />
-            </div>
+          <div>
+            <label className={labelClass}>
+              {t("pages:discounts.invoiceTotal")}
+            </label>
 
-            <div>
-              <label className={labelClass}>
-                {t("pages:discounts.invoiceTotal")}
-              </label>
-
-              <input
-                type="number"
-                value={subtotal}
-                onChange={(event) => setSubtotal(event.target.value)}
-                placeholder={t("common:exampleAmount")}
-                className={inputClass}
-              />
-            </div>
+            <input
+              type="number"
+              value={subtotal}
+              onChange={(event) => setSubtotal(event.target.value)}
+              placeholder={t("common:exampleAmount")}
+              className={inputClass}
+            />
           </div>
 
           <div>
@@ -230,6 +232,20 @@ export function CalculateDiscountPage() {
   )
 }
 
+function isDiscountType(value: unknown): value is DiscountType {
+  return value === "PERCENTAGE" || value === "FIXED_AMOUNT"
+}
+
+function isDiscountScope(value: unknown): value is DiscountScope {
+  return value === "GLOBAL" || value === "CATEGORY" || value === "PRODUCT"
+}
+
+function formatMoney(value: unknown, fallback: string) {
+  if (value === null || value === undefined || value === "") return fallback
+
+  return formatCurrency(String(value))
+}
+
 function ResultCard({
   result,
   isSuccess,
@@ -238,6 +254,7 @@ function ResultCard({
   isSuccess: boolean
 }) {
   const { t } = useTranslation(["common", "pages"])
+  const { language } = useLocale()
 
   if (!isSuccess) {
     return (
@@ -263,7 +280,22 @@ function ResultCard({
       : {}
 
   const discountAmount = safeResult.discountAmount
-  const finalAmount = safeResult.finalAmount
+  const finalAmount = safeResult.finalAmount ?? safeResult.total
+  const discountName = localized(
+    typeof safeResult.discountName === "string"
+      ? safeResult.discountName
+      : null,
+    typeof safeResult.discountNameAr === "string"
+      ? safeResult.discountNameAr
+      : null,
+    language
+  )
+  const typeLabel = isDiscountType(safeResult.type)
+    ? getDiscountTypeLabel(safeResult.type, t)
+    : t("common:unavailable")
+  const scopeLabel = isDiscountScope(safeResult.scope)
+    ? getDiscountScopeLabel(safeResult.scope, t)
+    : t("common:unavailable")
 
   return (
     <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
@@ -274,20 +306,12 @@ function ResultCard({
       <div className="space-y-3">
         <ResultRow
           label={t("common:discountValue")}
-          value={
-            discountAmount !== undefined
-              ? formatCurrency(String(discountAmount))
-              : t("common:unavailable")
-          }
+          value={formatMoney(discountAmount, t("common:unavailable"))}
         />
 
         <ResultRow
           label={t("pages:discounts.finalAmountAfterDiscount")}
-          value={
-            finalAmount !== undefined
-              ? formatCurrency(String(finalAmount))
-              : t("common:unavailable")
-          }
+          value={formatMoney(finalAmount, t("common:unavailable"))}
         />
 
         <details className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4">
@@ -295,9 +319,33 @@ function ResultCard({
             {t("pages:discounts.showTechnicalData")}
           </summary>
 
-          <pre className="erp-scrollbar mt-3 max-h-56 overflow-auto rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-3 text-left text-xs leading-6 whitespace-pre-wrap text-[var(--erp-text)]">
-            {JSON.stringify(safeResult, null, 2)}
-          </pre>
+          <div className="mt-3 grid gap-2">
+            <DetailRow
+              label={t("common:discountName")}
+              value={discountName || t("common:unavailable")}
+            />
+            <DetailRow
+              label={t("common:discountId")}
+              value={
+                safeResult.discountId != null
+                  ? `#${formatId(safeResult.discountId)}`
+                  : t("common:unavailable")
+              }
+              ltr
+            />
+            <DetailRow
+              label={t("pages:discounts.typeLabel")}
+              value={typeLabel}
+            />
+            <DetailRow
+              label={t("pages:discounts.scopeLabel")}
+              value={scopeLabel}
+            />
+            <DetailRow
+              label={t("common:subtotal")}
+              value={formatMoney(safeResult.subtotal, t("common:unavailable"))}
+            />
+          </div>
         </details>
       </div>
     </section>
@@ -309,6 +357,28 @@ function ResultRow({ label, value }: { label: string; value: string }) {
     <div className="rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4 text-start">
       <p className="text-sm text-[var(--erp-muted)]">{label}</p>
       <p className="mt-1 text-lg font-bold text-[var(--erp-text)]">{value}</p>
+    </div>
+  )
+}
+
+function DetailRow({
+  label,
+  value,
+  ltr = false,
+}: {
+  label: string
+  value: string
+  ltr?: boolean
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 rounded-xl border border-[var(--erp-border)] bg-[var(--erp-card)] px-3 py-2.5">
+      <p className="text-sm text-[var(--erp-muted)]">{label}</p>
+      <p
+        dir={ltr ? "ltr" : undefined}
+        className="text-end text-sm font-semibold text-[var(--erp-text)]"
+      >
+        {ltr ? toEnglishDigits(value) : value}
+      </p>
     </div>
   )
 }

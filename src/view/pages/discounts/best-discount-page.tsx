@@ -5,20 +5,19 @@ import { useTranslation } from "react-i18next"
 
 import { useBestDiscount } from "@/hooks/use-discounts"
 import { useCategoriesForSelect } from "@/hooks/Categories/useCategoriesForSelect"
-import { useProducts } from "@/hooks/Products/useProducts"
 import { useLocale } from "@/i18n/locale-provider"
-import { localizedName } from "@/lib/localized"
+import { localized, localizedName } from "@/lib/localized"
 import {
-  formatDiscountValue,
   getDiscountScopeLabel,
   getDiscountTypeLabel,
 } from "@/lib/discount-labels"
-import { normalizeProducts } from "@/services/product-service"
-import type { DiscountScope, DiscountType } from "@/services/discount-service"
+import type { BestDiscountResponse } from "@/services/discount-service"
 import {
   bestDiscountSchema,
   bestDiscountValuesToPayload,
 } from "@/validation/discount-helper-schema"
+import { formatCurrency, formatId } from "@/utils/number-formatters"
+import { ProductSearchSelect } from "@/view/components/financial/product-search-select"
 import { Button } from "@/view/components/ui/button"
 
 type TargetType = "GLOBAL" | "CATEGORY" | "PRODUCT"
@@ -43,10 +42,8 @@ export function BestDiscountPage() {
   const bestDiscount = useBestDiscount()
 
   const { data: categoriesData } = useCategoriesForSelect()
-  const { data: productsData } = useProducts()
 
   const categories = categoriesData?.data ?? []
-  const products = normalizeProducts(productsData)
 
   const result = bestDiscount.data
 
@@ -130,6 +127,9 @@ export function BestDiscountPage() {
               <option value="CATEGORY">{t("common:scopeByCategory")}</option>
               <option value="PRODUCT">{t("common:scopeByProduct")}</option>
             </select>
+            <p className="mt-2 text-xs text-[var(--erp-muted)]">
+              {t("pages:discounts.bestScopeHint")}
+            </p>
           </div>
 
           {targetType === "CATEGORY" && (
@@ -151,21 +151,13 @@ export function BestDiscountPage() {
           )}
 
           {targetType === "PRODUCT" && (
-            <div>
-              <label className={labelClass}>{t("common:product")}</label>
-              <select
-                value={productId}
-                onChange={(event) => setProductId(event.target.value)}
-                className={selectClass}
-              >
-                <option value="">{t("common:selectProduct")}</option>
-                {products.map((product) => (
-                  <option key={product.id} value={product.id}>
-                    {localizedName(product, language)}
-                  </option>
-                ))}
-              </select>
-            </div>
+            <ProductSearchSelect
+              value={productId}
+              onChange={setProductId}
+              includeAllOption={false}
+              className="relative w-full"
+              label={t("common:product")}
+            />
           )}
 
           {message && (
@@ -202,19 +194,11 @@ function BestDiscountResultCard({
   result,
   isSuccess,
 }: {
-  result:
-    | {
-        id: number
-        name: string
-        type: DiscountType
-        value: string
-        scope: DiscountScope
-      }
-    | null
-    | undefined
+  result: BestDiscountResponse | undefined
   isSuccess: boolean
 }) {
   const { t } = useTranslation(["common", "pages"])
+  const { language } = useLocale()
 
   if (!isSuccess) {
     return (
@@ -248,6 +232,10 @@ function BestDiscountResultCard({
     )
   }
 
+  const name = localized(result.discountName, result.discountNameAr, language)
+  const discountAmount = result.discountAmount
+  const finalAmount = result.total
+
   return (
     <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
       <h2 className="mb-4 text-xl font-bold text-[var(--erp-text)]">
@@ -255,7 +243,15 @@ function BestDiscountResultCard({
       </h2>
 
       <div className="space-y-3">
-        <ResultRow label={t("common:name")} value={result.name} />
+        <ResultRow
+          label={t("common:discountName")}
+          value={name || t("common:unavailable")}
+        />
+
+        <ResultRow
+          label={t("common:discountId")}
+          value={`#${formatId(result.discountId)}`}
+        />
 
         <ResultRow
           label={t("common:type")}
@@ -263,16 +259,38 @@ function BestDiscountResultCard({
         />
 
         <ResultRow
-          label={t("common:value")}
-          value={formatDiscountValue(result.type, result.value)}
-        />
-
-        <ResultRow
           label={t("common:scope")}
           value={getDiscountScopeLabel(result.scope, t)}
         />
 
-        <Link to={`/discounts/${result.id}`}>
+        <ResultRow
+          label={t("common:subtotal")}
+          value={
+            result.subtotal != null
+              ? formatCurrency(String(result.subtotal))
+              : t("common:unavailable")
+          }
+        />
+
+        <ResultRow
+          label={t("common:discountValue")}
+          value={
+            discountAmount != null
+              ? formatCurrency(String(discountAmount))
+              : t("common:unavailable")
+          }
+        />
+
+        <ResultRow
+          label={t("pages:discounts.finalAmountAfterDiscount")}
+          value={
+            finalAmount != null
+              ? formatCurrency(String(finalAmount))
+              : t("common:unavailable")
+          }
+        />
+
+        <Link to={`/discounts/${result.discountId}`}>
           <Button variant="outline" className="mt-2 w-full">
             {t("pages:discounts.viewDiscountDetails")}
           </Button>
