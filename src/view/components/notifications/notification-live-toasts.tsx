@@ -30,7 +30,7 @@ export function NotificationLiveToasts({
   if (toasts.length === 0) return null
 
   return (
-    <div className="pointer-events-none fixed start-4 end-4 bottom-6 z-[60] flex max-w-sm flex-col gap-2 sm:start-auto sm:end-6">
+    <div className="pointer-events-none fixed start-4 end-4 bottom-6 z-[60] flex max-w-sm flex-col gap-2 sm:start-auto sm:end-6 print:hidden">
       {toasts.map((toast) => {
         const title =
           toast.title.trim() ||

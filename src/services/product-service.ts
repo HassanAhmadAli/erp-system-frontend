@@ -6,6 +6,23 @@ import {
 } from "@/lib/pagination"
 import { getAccessToken } from "@/utils/auth-storage"
 
+export type ProductPhoto = {
+  id: number
+  productId?: number
+  storedFileId?: string
+  storedFile?: {
+    id: string
+    originalname?: string
+    mimetype?: string
+    path?: string
+    size?: number
+  } | null
+  /** Legacy/compat fields some responses may include */
+  url?: string | null
+  fileName?: string | null
+  deletedAt?: string | null
+}
+
 export type Product = {
   id: number
   name: string
@@ -20,6 +37,7 @@ export type Product = {
   categoryId?: number
   supplierId?: number
   imageUrl?: string | null
+  productPhotos?: ProductPhoto[] | null
   createdAt?: string
   updatedAt?: string
 
@@ -53,22 +71,6 @@ export type ProductListResponse =
   | Product[]
 
 export type ProductsQuery = PaginationParams
-
-export type ProductPhoto = {
-  id: number
-  productId?: number
-  storedFileId?: string
-  storedFile?: {
-    id: string
-    originalname?: string
-    mimetype?: string
-    path?: string
-    size?: number
-  } | null
-  /** Legacy/compat fields some responses may include */
-  url?: string | null
-  fileName?: string | null
-}
 
 export type ProductPhotoListResponse =
   | {
@@ -141,8 +143,76 @@ export function normalizeProductList(
   )
 }
 
+function isProductPhotoLike(value: unknown): value is ProductPhoto {
+  if (!value || typeof value !== "object") return false
+
+  const photo = value as Record<string, unknown>
+  return typeof photo.id === "number" || typeof photo.id === "string"
+}
+
+function asProductPhotoArray(response: unknown): ProductPhoto[] {
+  if (!response) return []
+  if (Array.isArray(response)) {
+    return response.filter(isProductPhotoLike)
+  }
+
+  if (typeof response !== "object") return []
+
+  const record = response as Record<string, unknown>
+  const nestedKeys = ["data", "productPhotos", "photos", "items", "rows"]
+
+  for (const key of nestedKeys) {
+    const value = record[key]
+    if (Array.isArray(value)) {
+      return value.filter(isProductPhotoLike)
+    }
+  }
+
+  if (isProductPhotoLike(record)) {
+    return [record]
+  }
+
+  return []
+}
+
 export function normalizeProductPhotos(response: unknown): ProductPhoto[] {
-  return asArray<ProductPhoto>(response)
+  return asProductPhotoArray(response).filter((photo) => !photo.deletedAt)
+}
+
+export function isPersistedProductPhoto(photo: ProductPhoto) {
+  return Number.isSafeInteger(photo.id) && photo.id > 0
+}
+
+export function photoFromProductImageUrl(
+  imageUrl?: string | null
+): ProductPhoto | null {
+  if (!imageUrl?.trim()) return null
+
+  const trimmed = imageUrl.trim()
+  const storedFileId =
+    trimmed.match(/product-photo\/download\/([^/?#]+)/i)?.[1] ?? undefined
+  const fileName = trimmed.split("/").filter(Boolean).pop() ?? null
+
+  return {
+    id: 0,
+    storedFileId,
+    url: trimmed,
+    fileName,
+  }
+}
+
+export function resolveProductPhotos(
+  listed: ProductPhoto[] | undefined,
+  fallbackPhotos?: ProductPhoto[] | null,
+  imageUrl?: string | null
+): ProductPhoto[] {
+  if (listed?.length) return listed
+
+  const nested = normalizeProductPhotos(fallbackPhotos)
+  if (nested.length) return nested
+
+  const fromImage = photoFromProductImageUrl(imageUrl)
+  return fromImage ? [fromImage] : []
 }
 
 /**

@@ -180,6 +180,39 @@ export async function createSalesInvoice(
   })
 }
 
+const LIST_ALL_PAGE_SIZE = 100
+const LIST_ALL_MAX_PAGES = 50
+
+export async function listAllSalesInvoices(
+  params?: Omit<SalesInvoicesQuery, "page" | "limit" | "offset">
+) {
+  const invoices: SalesInvoice[] = []
+  let offset = 0
+
+  for (let page = 0; page < LIST_ALL_MAX_PAGES; page += 1) {
+    const response = await getSalesInvoices({
+      ...params,
+      limit: LIST_ALL_PAGE_SIZE,
+      offset,
+    })
+    const list = normalizeSalesInvoicesList(
+      response,
+      LIST_ALL_PAGE_SIZE,
+      offset
+    )
+
+    invoices.push(...list.data)
+
+    if (list.isFinalPage || list.data.length === 0) {
+      break
+    }
+
+    offset += LIST_ALL_PAGE_SIZE
+  }
+
+  return invoices
+}
+
 export async function updateSalesInvoiceStatus(
   id: number,
   status: SalesInvoiceStatus

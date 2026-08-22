@@ -11,11 +11,19 @@ import { useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { apiRequest } from "@/api/client"
+import { downloadCsv } from "@/utils/csv"
+import { printPage } from "@/utils/print"
 import { isValidId } from "@/validation/helpers"
 import {
   isPurchaseInvoiceStatus,
   type PurchaseInvoiceStatus,
 } from "@/validation/purchase-invoice-schema"
+import { InvoiceIoButtons } from "@/view/components/invoices/invoice-io-buttons"
+import { InvoicePrintDocument } from "@/view/components/invoices/invoice-print-document"
+import {
+  buildPurchaseInvoiceCsv,
+  getPurchaseInvoicePrintModel,
+} from "@/view/components/purchase-invoices/purchase-invoice-io"
 import {
   formatDate,
   formatMoney,
@@ -87,6 +95,26 @@ export function PurchaseInvoiceDetailsPage() {
       queryClient.invalidateQueries({ queryKey: ["purchase-invoices"] })
     },
   })
+  const printModel = invoice ? getPurchaseInvoicePrintModel(invoice, t) : null
+
+  function handlePrint() {
+    if (!invoice) return
+
+    printPage(`${t("pages:purchaseInvoices.detailsTitle")} #${invoice.id}`)
+  }
+
+  function handleExport() {
+    if (!invoice) return
+
+    try {
+      downloadCsv(
+        `purchase-invoice-${invoice.id}.csv`,
+        buildPurchaseInvoiceCsv(invoice, t)
+      )
+    } catch {
+      alert(t("common:exportFailed"))
+    }
+  }
 
   function handleComplete() {
     setStatusError("")
@@ -141,7 +169,9 @@ export function PurchaseInvoiceDetailsPage() {
 
   return (
     <main className="space-y-6">
-      <section className="flex flex-col gap-4 rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)] md:flex-row md:items-center md:justify-between">
+      {printModel ? <InvoicePrintDocument {...printModel} /> : null}
+
+      <section className="flex flex-col gap-4 rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)] md:flex-row md:items-center md:justify-between print:hidden">
         <div className="space-y-2 text-start">
           <div className="flex items-center gap-2">
             <ReceiptText className="size-6 text-[var(--erp-brand-solid)]" />
@@ -155,18 +185,28 @@ export function PurchaseInvoiceDetailsPage() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => navigate("/purchase-invoices")}
-          className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-medium transition hover:bg-[var(--erp-nav-active-bg)]"
-        >
-          <ArrowRight className="size-4 ltr:rotate-180" />
-          {t("pages:purchaseInvoices.backToList")}
-        </button>
+        <div className="flex flex-wrap items-center gap-3">
+          <InvoiceIoButtons
+            onPrint={invoice ? handlePrint : undefined}
+            onExport={invoice ? handleExport : undefined}
+            printLabel={t("common:printInvoice")}
+            exportLabel={t("common:exportCsv")}
+            disabled={!invoice}
+          />
+
+          <button
+            type="button"
+            onClick={() => navigate("/purchase-invoices")}
+            className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-medium transition hover:bg-[var(--erp-nav-active-bg)]"
+          >
+            <ArrowRight className="size-4 ltr:rotate-180" />
+            {t("pages:purchaseInvoices.backToList")}
+          </button>
+        </div>
       </section>
 
       {isLoading && (
-        <section className="rounded-[24px] bg-[var(--erp-card)] p-10 shadow-[var(--erp-shadow)]">
+        <section className="rounded-[24px] bg-[var(--erp-card)] p-10 shadow-[var(--erp-shadow)] print:hidden">
           <div className="flex items-center justify-center gap-2 text-[var(--erp-muted)]">
             <Loader2 className="size-5 animate-spin" />
             {t("pages:purchaseInvoices.loadingDetails")}
@@ -175,7 +215,7 @@ export function PurchaseInvoiceDetailsPage() {
       )}
 
       {isError && (
-        <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
+        <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)] print:hidden">
           <div className="rounded-2xl bg-red-50 p-4 text-sm text-red-600">
             {t("pages:purchaseInvoices.loadDetailsFailed")}
           </div>
@@ -184,7 +224,7 @@ export function PurchaseInvoiceDetailsPage() {
 
       {invoice && (
         <>
-          <section className="grid gap-4 md:grid-cols-4">
+          <section className="grid gap-4 md:grid-cols-4 print:hidden">
             <div className="rounded-[24px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
               <p className="text-xs text-[var(--erp-muted)]">
                 {t("common:status")}
@@ -222,7 +262,7 @@ export function PurchaseInvoiceDetailsPage() {
             </div>
           </section>
 
-          <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
+          <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)] print:hidden">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div className="text-start">
                 <h2 className="text-lg font-bold text-[var(--erp-text)]">
@@ -357,7 +397,7 @@ export function PurchaseInvoiceDetailsPage() {
             </div>
           </section>
 
-          <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
+          <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)] print:hidden">
             <h2 className="mb-4 text-lg font-bold text-[var(--erp-text)]">
               {t("pages:purchaseInvoices.invoiceProducts")}
             </h2>

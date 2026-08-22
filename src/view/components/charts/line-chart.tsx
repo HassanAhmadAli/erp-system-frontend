@@ -23,20 +23,6 @@ export function LineChart({ title, data, unit = "" }: LineChartProps) {
     )
   }
 
-  if (data.length === 1) {
-    return (
-      <section className="rounded-[20px] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)]">
-        {title && <h3 className="mb-4 text-lg font-bold">{title}</h3>}
-        <p className="text-center text-sm text-[var(--erp-muted)]">
-          {t("charts.singlePoint", {
-            label: data[0].label,
-            value: formatNumber(data[0].value, unit),
-          })}
-        </p>
-      </section>
-    )
-  }
-
   const width = Math.max(600, data.length * 72)
   const height = 240
   const padding = { top: 24, right: 24, bottom: 48, left: 48 }

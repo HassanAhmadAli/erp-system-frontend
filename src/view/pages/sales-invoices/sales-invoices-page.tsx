@@ -10,10 +10,25 @@ import { useSalesInvoices } from "@/hooks/useSalesInvoices"
 import { CreateSalesInvoiceForm } from "@/view/components/sales-invoices/create-sales-invoice-form"
 import { SalesInvoicesListToolbar } from "@/view/components/sales-invoices/sales-invoices-list-toolbar"
 import { SalesInvoicesTable } from "@/view/components/sales-invoices/sales-invoices-table"
-import { getCustomerName } from "@/view/components/sales-invoices/sales-invoice-format"
+import {
+  getCustomerName,
+  getSalesInvoiceStatusLabel,
+} from "@/view/components/sales-invoices/sales-invoice-format"
+import {
+  buildSalesInvoicesListCsv,
+  buildSalesInvoicesListRows,
+  getSalesInvoicesListColumns,
+} from "@/view/components/sales-invoices/sales-invoice-io"
+import { InvoiceIoButtons } from "@/view/components/invoices/invoice-io-buttons"
+import { InvoiceListPrintDocument } from "@/view/components/invoices/invoice-print-document"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
 import { isSalesInvoiceStatus } from "@/validation/sales-invoice-schema"
-import type { SalesInvoice } from "@/services/sales-invoices-service"
+import {
+  listAllSalesInvoices,
+  type SalesInvoice,
+} from "@/services/sales-invoices-service"
+import { downloadCsv } from "@/utils/csv"
+import { printPage } from "@/utils/print"
 import { toEnglishDigits } from "@/utils/number-formatters"
 
 const PAGE_SIZE = 10
@@ -53,6 +68,7 @@ export function SalesInvoicesPage() {
   const { can } = usePermissions()
   const canCreate = can(PERMISSIONS.SALES_CREATE)
   const range = toApiDateRange(from, to)
+  const [isExporting, setIsExporting] = useState(false)
 
   useEffect(() => {
     setPage(1)
@@ -76,9 +92,57 @@ export function SalesInvoicesPage() {
     [invoices, search, t]
   )
 
+  const printSubtitle = [
+    status
+      ? `${t("common:status")}: ${getSalesInvoiceStatusLabel(status, t)}`
+      : `${t("common:status")}: ${t("common:all")}`,
+    from ? `${t("common:from")}: ${from}` : null,
+    to ? `${t("common:to")}: ${to}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ")
+
+  function handlePrintList() {
+    printPage(t("pages:salesInvoices.title"))
+  }
+
+  async function handleExportList() {
+    setIsExporting(true)
+
+    try {
+      const allInvoices = await listAllSalesInvoices({
+        status: isSalesInvoiceStatus(status) ? status : undefined,
+        from: range.from,
+        to: range.to,
+      })
+      const rows = allInvoices.filter((invoice) =>
+        matchesSalesSearch(invoice, search, getCustomerName(invoice, t))
+      )
+
+      if (rows.length === 0) {
+        alert(t("common:exportEmpty"))
+        return
+      }
+
+      downloadCsv("sales-invoices.csv", buildSalesInvoicesListCsv(rows, t))
+    } catch {
+      alert(t("common:exportFailed"))
+    } finally {
+      setIsExporting(false)
+    }
+  }
+
   return (
     <main className="space-y-6">
-      <section className="flex flex-col gap-4 rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)] md:flex-row md:items-center md:justify-between">
+      <InvoiceListPrintDocument
+        title={t("pages:salesInvoices.title")}
+        subtitle={printSubtitle}
+        columns={getSalesInvoicesListColumns(t)}
+        rows={buildSalesInvoicesListRows(filteredInvoices, t)}
+        emptyLabel={t("pages:salesInvoices.noInvoices")}
+      />
+
+      <section className="flex flex-col gap-4 rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)] md:flex-row md:items-center md:justify-between print:hidden">
         <div className="space-y-2 text-start">
           <div className="flex items-center gap-2">
             <ReceiptText className="size-6 text-[var(--erp-brand-solid)]" />
@@ -93,6 +157,15 @@ export function SalesInvoicesPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <InvoiceIoButtons
+            onPrint={handlePrintList}
+            onExport={handleExportList}
+            printLabel={t("common:printList")}
+            exportLabel={t("common:exportCsv")}
+            isExporting={isExporting}
+            disabled={isLoading}
+          />
+
           <button
             type="button"
             onClick={() => refetch()}
@@ -120,10 +193,12 @@ export function SalesInvoicesPage() {
       </section>
 
       {canCreate && isCreateOpen && (
-        <CreateSalesInvoiceForm onCreated={() => setIsCreateOpen(false)} />
+        <div className="print:hidden">
+          <CreateSalesInvoiceForm onCreated={() => setIsCreateOpen(false)} />
+        </div>
       )}
 
-      <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
+      <section className="rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)] print:hidden">
         <SalesInvoicesListToolbar
           search={search}
           status={status}

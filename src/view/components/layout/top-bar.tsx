@@ -25,7 +25,7 @@ export function TopBar({ title, className, onMenuClick }: TopBarProps) {
     <header
       className={cn(
         "flex h-[60px] w-full shrink-0 items-center justify-between px-6 sm:px-10",
-        "bg-[var(--erp-top-bar)] text-white shadow-[var(--erp-top-shadow)]",
+        "bg-[var(--erp-top-bar)] text-white shadow-[var(--erp-top-shadow)] print:hidden",
         className
       )}
     >

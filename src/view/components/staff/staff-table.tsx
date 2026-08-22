@@ -8,31 +8,34 @@ import { useStaff } from "@/hooks/Staff/useStaff"
 import { useLocale } from "@/i18n/locale-provider"
 import { localized, localizedFullName } from "@/lib/localized"
 import { STAFF_ROLES, type StaffRole } from "@/services/staff-service"
-import { formatNumber } from "@/utils/number-formatters"
+import { formatNumber, toEnglishDigits } from "@/utils/number-formatters"
 import { Can } from "@/view/components/auth/can"
 import { Button } from "@/view/components/ui/button"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
 
 const PAGE_SIZE = 10
 
-const selectClass =
+const fieldClass =
   "rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-3 py-2 text-sm text-[var(--erp-text)] outline-none transition focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20"
 
 export function StaffTable() {
   const { t } = useTranslation(["common", "pages"])
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState("")
   const [roleFilter, setRoleFilter] = useState<StaffRole | "ALL">("ALL")
   const { language } = useLocale()
   const { data, isLoading, error, isFetching } = useStaff({
     page,
     limit: PAGE_SIZE,
+    search: search || undefined,
     ...(roleFilter === "ALL" ? {} : { role: roleFilter }),
   })
   const deleteMutation = useDeleteStaff()
+  const hasSearch = search.trim().length > 0
 
   useEffect(() => {
     setPage(1)
-  }, [roleFilter])
+  }, [roleFilter, search])
 
   const staff = data?.data ?? []
 
@@ -66,23 +69,33 @@ export function StaffTable() {
           </p>
         </div>
 
-        <label className="flex items-center gap-2 text-sm text-[var(--erp-muted)]">
-          <span>{t("common:filterByRole")}</span>
-          <select
-            value={roleFilter}
-            onChange={(event) =>
-              setRoleFilter(event.target.value as StaffRole | "ALL")
-            }
-            className={selectClass}
-          >
-            <option value="ALL">{t("common:all")}</option>
-            {STAFF_ROLES.map((role) => (
-              <option key={role} value={role}>
-                {t(`roles.${role}`, { ns: "common" })}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center md:w-auto">
+          <input
+            type="search"
+            value={search}
+            onChange={(event) => setSearch(toEnglishDigits(event.target.value))}
+            placeholder={t("pages:staff.searchPlaceholder")}
+            className={`${fieldClass} w-full bg-[var(--erp-bg)] px-4 py-2.5 placeholder:text-[var(--erp-muted)] sm:w-64`}
+          />
+
+          <label className="flex items-center gap-2 text-sm text-[var(--erp-muted)]">
+            <span className="shrink-0">{t("common:filterByRole")}</span>
+            <select
+              value={roleFilter}
+              onChange={(event) =>
+                setRoleFilter(event.target.value as StaffRole | "ALL")
+              }
+              className={fieldClass}
+            >
+              <option value="ALL">{t("common:all")}</option>
+              {STAFF_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {t(`roles.${role}`, { ns: "common" })}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       {isLoading && (
@@ -98,17 +111,19 @@ export function StaffTable() {
       {!isLoading && !error && staff.length === 0 && (
         <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-center">
           <p className="text-sm text-[var(--erp-muted)]">
-            {t("pages:staff.noStaff")}
+            {hasSearch ? t("pages:staff.noMatching") : t("pages:staff.noStaff")}
           </p>
 
-          <Can permission={PERMISSIONS.EMPLOYEE_MANAGE}>
-            <Link
-              to="/staff/create"
-              className="mt-4 inline-flex rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
-            >
-              {t("pages:staff.addFirstStaff")}
-            </Link>
-          </Can>
+          {!hasSearch && (
+            <Can permission={PERMISSIONS.EMPLOYEE_MANAGE}>
+              <Link
+                to="/staff/create"
+                className="mt-4 inline-flex rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
+              >
+                {t("pages:staff.addFirstStaff")}
+              </Link>
+            </Can>
+          )}
         </div>
       )}
 

@@ -73,12 +73,24 @@ export type CalculateDiscountParams = {
   productId?: number
 }
 
-export type BestDiscountResponse = Discount | null
+export type BestDiscountResponse = {
+  discountId: number
+  discountName: string
+  discountNameAr?: string | null
+  type: DiscountType
+  scope: DiscountScope
+  subtotal?: string | number
+  discountAmount?: number
+  total?: number
+} | null
 
 export type CalculateDiscountResponse = {
   discountAmount?: number
   finalAmount?: number
-  subtotal?: number
+  total?: number
+  subtotal?: number | string
+  discountId?: number
+  discountName?: string
   discount?: Discount
 } & Record<string, unknown>
 

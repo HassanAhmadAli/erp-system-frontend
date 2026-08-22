@@ -16,12 +16,36 @@ import {
   type UserRole,
   type UsersQuery,
 } from "@/services/user-service"
+import { toEnglishDigits } from "@/utils/number-formatters"
 
 export type StaffRole = Exclude<UserRole, "CUSTOMER" | "STORE_MANAGER">
 
 export type StaffProfile = UserProfile
 
 export type StaffQuery = UsersQuery & PaginationParams
+
+function normalizeSearchValue(value: string | number | null | undefined) {
+  return toEnglishDigits(value ?? "")
+    .trim()
+    .toLowerCase()
+}
+
+export function matchesStaffSearch(staff: StaffProfile, search?: string) {
+  const query = normalizeSearchValue(search)
+
+  if (!query) return true
+
+  return [
+    staff.id,
+    staff.fullName,
+    staff.fullNameAr,
+    staff.email,
+    staff.phoneNumber,
+    staff.nationalId,
+    staff.jobTitle,
+    staff.jobTitleAr,
+  ].some((value) => normalizeSearchValue(value).includes(query))
+}
 
 export const STAFF_ROLES: readonly StaffRole[] = [
   "CASHIER",
@@ -58,8 +82,13 @@ export function normalizeStaffList(
 }
 
 export function getStaffProfiles(params?: StaffQuery) {
-  const { page, ...rest } = params ?? {}
-  const pagination = toPaginationQuery({ ...rest, page })
+  const { page, search, ...rest } = params ?? {}
+  const pagination = toPaginationQuery({
+    ...rest,
+    page,
+    search: undefined,
+  })
+  void search
 
   return apiRequest<PaginatedResponse<StaffProfile> | StaffProfile[]>(
     `/user${buildQuery({ ...rest, ...pagination })}`

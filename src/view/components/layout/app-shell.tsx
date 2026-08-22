@@ -74,26 +74,30 @@ export function AppShell() {
 
   return (
     <div
-      className="flex h-svh flex-col overflow-hidden bg-[var(--erp-page)] text-[var(--erp-text)]"
+      className="flex h-svh flex-col overflow-hidden bg-[var(--erp-page)] text-[var(--erp-text)] print:h-auto print:overflow-visible"
       dir={dir}
       lang={language}
     >
       <TopBar title={headerTitle} onMenuClick={() => setMobileNavOpen(true)} />
 
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden print:h-auto print:overflow-visible">
         <AppSidebar
           collapsed={sidebarCollapsed}
           onToggle={toggleSidebar}
           className="hidden min-h-0 lg:flex"
         />
 
-        <main className="erp-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--erp-bg)] px-5 py-8 sm:px-10 lg:py-10">
+        <main className="erp-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[var(--erp-bg)] px-5 py-8 sm:px-10 lg:py-10 print:h-auto print:overflow-visible print:bg-white print:p-0">
           <Outlet />
         </main>
       </div>
 
       {mobileNavOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal>
+        <div
+          className="fixed inset-0 z-50 lg:hidden print:hidden"
+          role="dialog"
+          aria-modal
+        >
           <button
             type="button"
             aria-label={t("closeMenu")}
