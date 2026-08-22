@@ -46,6 +46,7 @@ import { CalculateDiscountPage } from "@/view/pages/discounts/calculate-discount
 import { AdsPage } from "@/view/pages/ads/ads-page"
 import { CreateAdPage } from "@/view/pages/ads/create-ad-page"
 import { AdDetailsPage } from "@/view/pages/ads/ad-details-page"
+import { EditAdPage } from "@/view/pages/ads/edit-ad-page"
 
 import { OrdersPage } from "@/view/pages/orders/orders-page"
 import { OrderDetailsPage } from "@/view/pages/orders/order-details-page"
@@ -86,6 +87,8 @@ import { AuditLogDetailsPage } from "@/view/pages/audit-logs/audit-log-details-p
 import { NotificationsPage } from "@/view/pages/notifications/notifications-page"
 import { NotificationDetailsPage } from "@/view/pages/notifications/notification-details-page"
 import { SettingsPage } from "@/view/pages/settings/settings-page"
+import { ProfilePage } from "@/view/pages/profile/profile-page"
+import { EditProfilePage } from "@/view/pages/profile/edit-profile-page"
 
 function CreateCategoryPage() {
   const navigate = useNavigate()
@@ -160,6 +163,7 @@ export function AppRoutes() {
           <Route path="ads" element={<AdsPage />} />
           <Route path="ads/create" element={<CreateAdPage />} />
           <Route path="ads/:id" element={<AdDetailsPage />} />
+          <Route path="ads/:id/edit" element={<EditAdPage />} />
 
           {/* Inventory */}
           <Route path="inventory" element={<InventoryPage />} />
@@ -247,6 +251,10 @@ export function AppRoutes() {
             path="notifications/details/:source/:id"
             element={<NotificationDetailsPage />}
           />
+
+          {/* Profile — any authenticated staff user */}
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="profile/edit" element={<EditProfilePage />} />
 
           {/* Settings */}
           <Route path="settings" element={<SettingsPage />} />

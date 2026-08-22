@@ -24,6 +24,20 @@ export function useMyNotifications(params?: MyNotificationsQuery) {
   })
 }
 
+export function useUnreadNotificationCount() {
+  return useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: async () => {
+      const response = await getMyNotifications({
+        unreadOnly: true,
+        limit: 1,
+        offset: 0,
+      })
+      return normalizeInboxNotifications(response).total
+    },
+  })
+}
+
 export function useNotificationHistory(
   params?: NotificationHistoryQuery,
   enabled = true

@@ -115,6 +115,14 @@
     "jobTitleMax": "Job title must not exceed 100 characters",
     "jobTitleArMax": "Arabic job title must not exceed 100 characters"
   },
+  "profile": {
+    "nameRequired": "Full name is required",
+    "nameMin": "Full name must be at least 2 characters",
+    "nameMax": "Full name must not exceed 100 characters",
+    "nationalIdRequired": "National ID is required",
+    "nationalIdMin": "National ID must be at least 5 characters",
+    "nationalIdMax": "National ID must not exceed 50 characters"
+  },
   "notification": {
     "titleRequired": "Notification title is required",
     "titleMin": "Notification title must be at least 2 characters",

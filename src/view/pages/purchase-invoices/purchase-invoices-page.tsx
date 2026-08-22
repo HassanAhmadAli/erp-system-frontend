@@ -1,36 +1,83 @@
-import { useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Plus, ReceiptText, RefreshCw, X } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import { cn } from "@/lib/utils"
+import { toApiDateRange } from "@/lib/report-parsers"
 import { PERMISSIONS } from "@/auth/permissions"
 import { usePermissions } from "@/hooks/usePermissions"
 import { usePurchaseInvoices } from "@/hooks/usePurchaseInvoices"
 import { CreatePurchaseInvoiceForm } from "@/view/components/purchase-invoices/create-purchase-invoice-form"
+import { PurchaseInvoicesListToolbar } from "@/view/components/purchase-invoices/purchase-invoices-list-toolbar"
 import { PurchaseInvoicesTable } from "@/view/components/purchase-invoices/purchase-invoices-table"
-import {
-  formatNumber,
-  NumberText,
-} from "@/view/components/purchase-invoices/purchase-invoice-format"
+import { getSupplierName } from "@/view/components/purchase-invoices/purchase-invoice-format"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
+import { isPurchaseInvoiceStatus } from "@/validation/purchase-invoice-schema"
+import type { PurchaseInvoice } from "@/services/purchase-invoices-service"
+import { toEnglishDigits } from "@/utils/number-formatters"
 
 const PAGE_SIZE = 10
+
+function matchesPurchaseSearch(
+  invoice: PurchaseInvoice,
+  search: string,
+  supplierName: string
+) {
+  const query = toEnglishDigits(search).trim().toLowerCase()
+
+  if (!query) return true
+
+  const haystack = [
+    String(invoice.id),
+    invoice.supplierId != null ? String(invoice.supplierId) : "",
+    supplierName,
+    invoice.supplier?.fullName,
+    invoice.supplier?.fullNameAr,
+    invoice.supplier?.name,
+    invoice.supplier?.companyName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+
+  return haystack.includes(query)
+}
 
 export function PurchaseInvoicesPage() {
   const { t } = useTranslation(["common", "pages"])
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [page, setPage] = useState(1)
+  const [search, setSearch] = useState("")
+  const [status, setStatus] = useState("")
+  const [from, setFrom] = useState("")
+  const [to, setTo] = useState("")
   const { can } = usePermissions()
   const canCreate = can(PERMISSIONS.PURCHASES_CREATE)
+  const range = toApiDateRange(from, to)
+
+  useEffect(() => {
+    setPage(1)
+  }, [search, status, from, to])
 
   const { data, isLoading, isError, refetch, isFetching } = usePurchaseInvoices(
     {
       page,
       limit: PAGE_SIZE,
+      status: isPurchaseInvoiceStatus(status) ? status : undefined,
+      from: range.from,
+      to: range.to,
     }
   )
 
   const invoices = data?.data ?? []
+
+  const filteredInvoices = useMemo(
+    () =>
+      invoices.filter((invoice) =>
+        matchesPurchaseSearch(invoice, search, getSupplierName(invoice, t))
+      ),
+    [invoices, search, t]
+  )
 
   return (
     <main className="space-y-6">
@@ -80,29 +127,22 @@ export function PurchaseInvoicesPage() {
       )}
 
       <section className="rounded-[24px] bg-[var(--erp-card)] p-6 shadow-[var(--erp-shadow)]">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="text-start">
-            <h2 className="text-lg font-bold text-[var(--erp-text)]">
-              {t("pages:purchaseInvoices.list")}
-            </h2>
-
-            <p className="mt-1 text-sm text-[var(--erp-muted)]">
-              {t("common:shownInvoices")}:{" "}
-              <NumberText value={formatNumber(invoices.length)} />
-              {data?.total != null ? (
-                <>
-                  {" "}
-                  {t("common:grandTotalSuffix", {
-                    count: formatNumber(data.total),
-                  })}
-                </>
-              ) : null}
-            </p>
-          </div>
-        </div>
+        <PurchaseInvoicesListToolbar
+          search={search}
+          status={status}
+          from={from}
+          to={to}
+          totalCount={invoices.length}
+          filteredCount={filteredInvoices.length}
+          listTotal={data?.total}
+          onSearchChange={setSearch}
+          onStatusChange={setStatus}
+          onFromChange={setFrom}
+          onToChange={setTo}
+        />
 
         <PurchaseInvoicesTable
-          invoices={invoices}
+          invoices={filteredInvoices}
           isLoading={isLoading}
           isError={isError}
         />

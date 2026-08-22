@@ -59,23 +59,21 @@ export function useUpdateCurrentProfile() {
       const current = queryClient.getQueryData<UserProfile>(["currentUser"])
 
       if (current?.role === "STORE_MANAGER") {
-        try {
-          return await updateStoreManagerProfile(payload)
-        } catch {
-          return updateCurrentUserProfile(payload)
-        }
+        return updateStoreManagerProfile(payload)
       }
 
       return updateCurrentUserProfile(payload)
     },
     onSuccess: async (profile, payload) => {
+      queryClient.setQueryData<UserProfile>(["currentUser"], (current) =>
+        current ? { ...current, ...profile } : profile
+      )
+
       if (payload.language) {
-        queryClient.setQueryData<UserProfile>(["currentUser"], (current) =>
-          current ? { ...current, language: payload.language } : current
-        )
         setLanguage(payload.language)
         await refreshAccessTokenAfterLanguageChange()
       }
+
       void queryClient.invalidateQueries({ queryKey: ["currentUser"] })
       return profile
     },

@@ -1,12 +1,11 @@
 import {
   ArrowRight,
   Calendar,
-  ExternalLink,
   Hash,
-  Image,
   LinkIcon,
   MapPin,
   Megaphone,
+  Pencil,
   ToggleLeft,
   Trash2,
 } from "lucide-react"
@@ -19,6 +18,7 @@ import { usePermissions } from "@/hooks/usePermissions"
 import { isValidId } from "@/validation/helpers"
 import { formatDateTime, formatId } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
+import { AdImagePanel } from "@/view/components/ads/ad-image-panel"
 import type { AdPlacement } from "@/validation/ad-schema"
 
 export function AdDetailsPage() {
@@ -111,6 +111,15 @@ export function AdDetailsPage() {
           </Link>
 
           {canManage && (
+            <Link to={`/ads/${ad.id}/edit`}>
+              <Button type="button" className="gap-2">
+                <Pencil className="size-4" />
+                {t("ads.edit", { ns: "pages" })}
+              </Button>
+            </Link>
+          )}
+
+          {canManage && (
             <Button
               type="button"
               variant="destructive"
@@ -198,39 +207,13 @@ export function AdDetailsPage() {
         </section>
 
         <section className="space-y-6">
-          <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
-            <div className="mb-5 flex items-center justify-end gap-2">
-              <h2 className="text-xl font-semibold text-[var(--erp-text)]">
-                {t("image")}
-              </h2>
-
-              <Image className="size-5 text-[var(--erp-brand-solid)]" />
-            </div>
-
-            {ad.imageUrl ? (
-              <div className="space-y-3">
-                <img
-                  src={ad.imageUrl}
-                  alt={ad.title}
-                  className="max-h-[260px] w-full rounded-2xl border border-[var(--erp-border)] object-cover"
-                />
-
-                <a
-                  href={ad.imageUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center gap-2 text-sm font-medium text-[var(--erp-brand-solid)] hover:underline"
-                >
-                  {t("openImage")}
-                  <ExternalLink className="size-4" />
-                </a>
-              </div>
-            ) : (
-              <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-center text-sm text-[var(--erp-muted)]">
-                {t("noImage")}
-              </div>
-            )}
-          </section>
+          <AdImagePanel
+            adId={ad.id}
+            imageUrl={ad.imageUrl}
+            storedFileId={ad.storedFileId}
+            title={ad.title}
+            readOnly={!canManage}
+          />
 
           <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
             <div className="mb-5 flex items-center justify-end gap-2">

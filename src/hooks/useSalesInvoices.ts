@@ -36,15 +36,22 @@ function patchSalesInvoiceInLists(
 }
 
 export function useSalesInvoices(params?: SalesInvoicesQuery) {
-  const query = toPaginationQuery(params ?? { limit: 100 })
+  const pagination = toPaginationQuery(params ?? { limit: 100 })
+  const query = {
+    ...pagination,
+    status: params?.status,
+    cashierId: params?.cashierId,
+    from: params?.from,
+    to: params?.to,
+  }
 
   return useQuery({
     queryKey: ["sales-invoices", query],
     queryFn: async () =>
       normalizeSalesInvoicesList(
-        await getSalesInvoices({ ...params, ...query }),
-        query.limit,
-        query.offset
+        await getSalesInvoices({ ...params, ...pagination }),
+        pagination.limit,
+        pagination.offset
       ),
   })
 }

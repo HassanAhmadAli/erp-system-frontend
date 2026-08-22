@@ -280,6 +280,9 @@ function rowAmount(row: Record<string, unknown>): number | null {
   return (
     toNumber(row.amount) ??
     toNumber(row.total) ??
+    toNumber(row.totalAmount) ??
+    toNumber(row.finalAmount) ??
+    toNumber(row.subtotal) ??
     toNumber(row.value) ??
     toNumber(row.sales) ??
     toNumber(row.revenue) ??

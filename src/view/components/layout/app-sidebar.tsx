@@ -21,28 +21,30 @@ import {
   TrendingUp,
   Truck,
   UserCog,
+  UserRound,
   Users,
 } from "lucide-react"
 import { NavLink, useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { SIDEBAR_ACCESS } from "@/auth/route-access"
+import { useUnreadNotificationCount } from "@/hooks/Notifications/useNotifications"
 import { usePermissions } from "@/hooks/usePermissions"
 import { cn } from "@/lib/utils"
 import { clearTokens } from "@/utils/auth-storage"
+import { UnreadCountBadge } from "@/view/components/layout/unread-count-badge"
 
 type NavItem = {
   icon: ComponentType<{ className?: string }>
   labelKey: string
   to: string
-  showDot?: boolean
 }
 
 type NavItemProps = {
   icon: ComponentType<{ className?: string }>
   label: string
   to: string
-  showDot?: boolean
+  unreadCount?: number
   collapsed: boolean
   onNavigate?: () => void
 }
@@ -76,6 +78,7 @@ const sidebarItems: NavItem[] = [
   { icon: FileText, labelKey: "reports", to: "/reports" },
   { icon: TrendingUp, labelKey: "financial", to: "/financial" },
   { icon: Gift, labelKey: "loyaltyRewards", to: "/loyalty-rewards" },
+  { icon: UserRound, labelKey: "profile", to: "/profile" },
   { icon: Settings, labelKey: "settings", to: "/settings" },
 ]
 
@@ -83,15 +86,22 @@ function SidebarNavItem({
   icon: Icon,
   label,
   to,
-  showDot,
+  unreadCount = 0,
   collapsed,
   onNavigate,
 }: NavItemProps) {
+  const { t } = useTranslation("common")
+
   return (
     <NavLink
       to={to}
       end={to === "/overview" || to === "/accountant/overview"}
       title={collapsed ? label : undefined}
+      aria-label={
+        unreadCount > 0
+          ? `${label}, ${t("unreadNotificationsCount", { count: unreadCount })}`
+          : undefined
+      }
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
@@ -107,9 +117,7 @@ function SidebarNavItem({
 
       <span className="relative inline-flex shrink-0">
         <Icon className="size-[18px]" />
-        {showDot && (
-          <span className="absolute -start-1 -top-1 size-2 rounded-full bg-red-500" />
-        )}
+        <UnreadCountBadge count={unreadCount} />
       </span>
     </NavLink>
   )
@@ -125,6 +133,7 @@ export function AppSidebar({
   const { t } = useTranslation(["nav", "common"])
   const navigate = useNavigate()
   const { canSeeSidebarItem } = usePermissions()
+  const { data: unreadCount = 0 } = useUnreadNotificationCount()
 
   const visibleItems = sidebarItems.filter((item) => {
     const access = SIDEBAR_ACCESS.find((entry) => entry.to === item.to)
@@ -189,7 +198,7 @@ export function AppSidebar({
             icon={item.icon}
             label={t(`nav:${item.labelKey}`)}
             to={item.to}
-            showDot={item.showDot}
+            unreadCount={item.to === "/notifications" ? unreadCount : 0}
             collapsed={collapsed}
             onNavigate={onNavigate}
           />

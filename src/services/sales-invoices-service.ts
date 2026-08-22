@@ -94,7 +94,12 @@ export type CreateSalesInvoiceItem = SalesInvoiceItemPayload
 
 export type CreateSalesInvoicePayload = SalesInvoicePayload
 
-export type SalesInvoicesQuery = PaginationParams
+export type SalesInvoicesQuery = PaginationParams & {
+  status?: SalesInvoiceStatus
+  cashierId?: number
+  from?: string
+  to?: string
+}
 
 export function normalizeSalesInvoices(response?: unknown): SalesInvoice[] {
   if (!response) return []
@@ -145,9 +150,16 @@ export function normalizeSalesInvoicesList(
 export async function getSalesInvoices(
   params?: SalesInvoicesQuery
 ): Promise<SalesInvoicesResponse> {
-  const query = toPaginationQuery(params)
+  const pagination = toPaginationQuery(params)
+
   return apiRequest<SalesInvoicesResponse>(
-    `${SALES_INVOICES_ENDPOINT}${buildQuery(query)}`
+    `${SALES_INVOICES_ENDPOINT}${buildQuery({
+      ...pagination,
+      status: params?.status,
+      cashierId: params?.cashierId,
+      from: params?.from,
+      to: params?.to,
+    })}`
   )
 }
 
