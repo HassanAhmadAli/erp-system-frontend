@@ -7,7 +7,6 @@ export type LoginResponse = {
 /** Path segments for POST /authentication/{role}/signin */
 export const AUTH_USER_TYPES = [
   "store-manager",
-  "manager",
   "accountant",
   "warehouse-worker",
   "cashier",

@@ -4,6 +4,7 @@ import type { PaginatedResponse } from "@/api/client"
 import {
   getStaffProfiles,
   isStaffRole,
+  matchesStaffSearch,
   normalizeStaffList,
   STAFF_ROLES,
   type StaffProfile,
@@ -13,11 +14,13 @@ import { toPaginationQuery } from "@/lib/pagination"
 
 export function useStaff(params?: StaffQuery) {
   const query = toPaginationQuery(params)
+  const search = params?.search?.trim()
+  const hasSearch = Boolean(search)
 
   return useQuery({
     queryKey: ["staff", params?.role ?? "ALL", query],
     queryFn: async (): Promise<PaginatedResponse<StaffProfile>> => {
-      if (params?.role) {
+      if (params?.role && !hasSearch) {
         const response = await getStaffProfiles({
           ...params,
           ...query,
@@ -25,15 +28,15 @@ export function useStaff(params?: StaffQuery) {
         return normalizeStaffList(response, query.limit, query.offset)
       }
 
+      const roles = params?.role ? [params.role] : STAFF_ROLES
       const pages = await Promise.all(
-        STAFF_ROLES.map((role) =>
-          getStaffProfiles({ role, limit: 100, offset: 0 })
-        )
+        roles.map((role) => getStaffProfiles({ role, limit: 100, offset: 0 }))
       )
 
       const merged = pages
         .flatMap((page) => normalizeStaffList(page, 100, 0).data)
         .filter((user) => isStaffRole(user.role))
+        .filter((user) => matchesStaffSearch(user, search))
         .sort((a, b) => b.id - a.id)
 
       const data = merged.slice(query.offset, query.offset + query.limit)

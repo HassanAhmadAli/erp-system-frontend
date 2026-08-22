@@ -8,7 +8,7 @@ import { PERMISSIONS } from "@/auth/permissions"
 import { useLocale } from "@/i18n/locale-provider"
 import { localizedFullName } from "@/lib/localized"
 import { Can } from "@/view/components/auth/can"
-import { formatNumber } from "@/utils/number-formatters"
+import { formatNumber, toEnglishDigits } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
 
@@ -16,16 +16,24 @@ const PAGE_SIZE = 10
 
 export function SuppliersTable() {
   const { t } = useTranslation(["common", "pages"])
+  const [search, setSearch] = useState("")
   const [page, setPage] = useState(1)
   const { language } = useLocale()
   const { data, isLoading, error, isFetching } = useSuppliers({
     page,
     limit: PAGE_SIZE,
+    search: search || undefined,
   })
   const deleteMutation = useDeleteSupplier()
 
   const suppliers = data?.data ?? []
   const isFinalPage = data?.isFinalPage ?? suppliers.length < PAGE_SIZE
+  const hasSearch = search.trim().length > 0
+
+  function handleSearch(value: string) {
+    setSearch(toEnglishDigits(value))
+    setPage(1)
+  }
 
   function handleDeleteSupplier(id: number) {
     const shouldDelete = window.confirm(t("pages:suppliers.confirmDelete"))
@@ -37,7 +45,7 @@ export function SuppliersTable() {
 
   return (
     <section className="rounded-3xl border border-[var(--erp-border)] bg-[var(--erp-card)] p-6 text-[var(--erp-text)] shadow-[var(--erp-shadow)]">
-      <div className="mb-5 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold text-[var(--erp-text)]">
             {t("pages:suppliers.supplierList")}
@@ -54,6 +62,14 @@ export function SuppliersTable() {
                 })}
           </p>
         </div>
+
+        <input
+          type="search"
+          value={search}
+          onChange={(event) => handleSearch(event.target.value)}
+          placeholder={t("pages:suppliers.searchPlaceholder")}
+          className="w-full rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-2.5 text-start text-sm text-[var(--erp-text)] transition outline-none placeholder:text-[var(--erp-muted)] focus:border-[var(--erp-brand-solid)] focus:ring-2 focus:ring-[var(--erp-brand-solid)]/20 md:max-w-sm"
+        />
       </div>
 
       {isLoading && (
@@ -69,17 +85,21 @@ export function SuppliersTable() {
       {!isLoading && !error && suppliers.length === 0 && (
         <div className="rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-8 text-center">
           <p className="text-sm text-[var(--erp-muted)]">
-            {t("pages:suppliers.noSuppliers")}
+            {hasSearch
+              ? t("pages:suppliers.noMatching")
+              : t("pages:suppliers.noSuppliers")}
           </p>
 
-          <Can permission={PERMISSIONS.SUPPLIER_MANAGE}>
-            <Link
-              to="/suppliers/create"
-              className="mt-4 inline-flex rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
-            >
-              {t("pages:suppliers.addFirstSupplier")}
-            </Link>
-          </Can>
+          {!hasSearch && (
+            <Can permission={PERMISSIONS.SUPPLIER_MANAGE}>
+              <Link
+                to="/suppliers/create"
+                className="mt-4 inline-flex rounded-2xl bg-[var(--erp-brand-solid)] px-4 py-2 text-sm font-semibold text-white transition hover:opacity-90 dark:!text-[#24114f]"
+              >
+                {t("pages:suppliers.addFirstSupplier")}
+              </Link>
+            </Can>
+          )}
         </div>
       )}
 
