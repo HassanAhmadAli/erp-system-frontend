@@ -9,12 +9,10 @@ import {
   extractSummaryFinancialMetrics,
   extractSummaryPeriodLabel,
   extractTimeSeries,
-  isCompositionData,
 } from "@/lib/report-chart-data"
 import { extractTableRows } from "@/lib/report-parsers"
 import { formatNumber } from "@/utils/number-formatters"
 import { BarChart } from "@/view/components/charts/bar-chart"
-import { DonutChart } from "@/view/components/charts/donut-chart"
 import { LineChart } from "@/view/components/charts/line-chart"
 import { ExportReportButton } from "@/view/components/reports/export-report-button"
 import { ReportDateFilter } from "@/view/components/reports/report-date-filter"
@@ -31,6 +29,10 @@ export function ReportSummaryPage() {
   const revenueCostComparison = extractRevenueCostComparison(data)
   const profitComparison = extractProfitComparison(data)
   const costComposition = extractSummaryCostComposition(data)
+  const costCompositionRows = costComposition.map((point) => ({
+    item: point.label,
+    amount: point.value,
+  }))
   const timeSeries = extractTimeSeries(data)
   const breakdownRows = extractTableRows(data)
   const periodLabel = extractSummaryPeriodLabel(data)
@@ -86,11 +88,10 @@ export function ReportSummaryPage() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        {isCompositionData(costComposition) && (
-          <DonutChart
+        {costCompositionRows.length > 0 && (
+          <ReportTable
             title={t("reports.costExpenseDistribution", { ns: "pages" })}
-            data={costComposition}
-            unit="SP"
+            rows={costCompositionRows}
           />
         )}
 

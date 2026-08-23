@@ -243,6 +243,15 @@
   #root {
     @apply h-svh overflow-hidden;
   }
+
+  /*
+    Chrome paints a selected image at its intrinsic size inside <input type="file">,
+    even when the input is visually hidden with sr-only. That overflows the page
+    as a large white (light) or black (dark) block. Fully remove it from layout.
+  */
+  input[type="file"] {
+    display: none !important;
+  }
 }
 
 @media print {

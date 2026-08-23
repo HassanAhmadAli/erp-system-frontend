@@ -7,6 +7,7 @@ import { useUnreadNotificationCount } from "@/hooks/Notifications/useNotificatio
 import { usePermissions } from "@/hooks/usePermissions"
 import { ThemeToggle } from "@/view/components/layout/theme-toggle"
 import { UnreadCountBadge } from "@/view/components/layout/unread-count-badge"
+import { AppLogo } from "@/view/components/layout/app-logo"
 import { cn } from "@/lib/utils"
 
 type TopBarProps = {
@@ -40,13 +41,13 @@ export function TopBar({ title, className, onMenuClick }: TopBarProps) {
             <Menu className="size-5" />
           </button>
         )}
+        <AppLogo
+          size={38}
+          className="rounded-[10px] ring-[3px] ring-white/35"
+        />
         <span className="truncate text-base font-semibold tracking-tight">
           {title}
         </span>
-        <div
-          className="size-[38px] shrink-0 rounded-full bg-white/20 ring-[3px] ring-white/35"
-          aria-hidden
-        />
       </div>
 
       <div className="flex shrink-0 items-center gap-2">

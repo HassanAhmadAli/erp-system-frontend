@@ -245,7 +245,7 @@ export function CreateAdPage() {
 
             <label
               htmlFor="ad-image"
-              className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-6 text-center transition hover:border-[var(--erp-brand-solid)]/50 hover:bg-[var(--erp-nav-active-bg)]"
+              className="relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-6 text-center transition hover:border-[var(--erp-brand-solid)]/50 hover:bg-[var(--erp-nav-active-bg)]"
             >
               <UploadCloud className="mb-2 size-7 text-[var(--erp-brand-solid)]" />
               <span className="text-sm font-medium text-[var(--erp-text)]">
@@ -266,7 +266,7 @@ export function CreateAdPage() {
                 id="ad-image"
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
-                className="sr-only"
+                className="hidden"
                 disabled={createAdMutation.isPending}
                 onChange={(event) => {
                   handleFileChange(event.target.files?.[0] ?? null)

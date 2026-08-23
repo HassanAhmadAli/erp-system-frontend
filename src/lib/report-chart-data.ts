@@ -1010,3 +1010,103 @@ export function extractSupplierReportMetrics(payload: unknown): MetricItem[] {
     },
   ]
 }
+
+export type StoreOverviewTopProduct = {
+  productId: number
+  name: string
+  nameAr: string | null
+  quantitySold: number
+  revenue: string
+}
+
+export type StoreOverviewWeek = {
+  week: number
+  salesCount: number
+}
+
+export type StoreOverviewSummary = {
+  customerCount: number
+  salesCount: number
+  netProfit: number
+  revenue: number
+  topProducts: StoreOverviewTopProduct[]
+  salesByWeek: StoreOverviewWeek[]
+}
+
+const EMPTY_STORE_OVERVIEW: StoreOverviewSummary = {
+  customerCount: 0,
+  salesCount: 0,
+  netProfit: 0,
+  revenue: 0,
+  topProducts: [],
+  salesByWeek: [],
+}
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  const data = unwrapData(value)
+
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null
+
+  return data as Record<string, unknown>
+}
+
+function extractOverviewTopProducts(value: unknown): StoreOverviewTopProduct[] {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return []
+
+    const product = item as Record<string, unknown>
+    const productId = toNumber(product.productId)
+    const quantitySold = toNumber(product.quantitySold) ?? 0
+    const name = typeof product.name === "string" ? product.name : ""
+    const nameAr = typeof product.nameAr === "string" ? product.nameAr : null
+    const revenue =
+      typeof product.revenue === "string" || typeof product.revenue === "number"
+        ? String(product.revenue)
+        : "0"
+
+    if (productId === null) return []
+
+    return [
+      {
+        productId,
+        name,
+        nameAr,
+        quantitySold,
+        revenue,
+      },
+    ]
+  })
+}
+
+function extractOverviewSalesByWeek(value: unknown): StoreOverviewWeek[] {
+  if (!Array.isArray(value)) return []
+
+  return value.flatMap((item) => {
+    if (!item || typeof item !== "object") return []
+
+    const week = item as Record<string, unknown>
+    const weekNumber = toNumber(week.week)
+    const salesCount = toNumber(week.salesCount) ?? 0
+
+    if (weekNumber === null) return []
+
+    return [{ week: weekNumber, salesCount }]
+  })
+}
+
+export function extractStoreOverview(payload: unknown): StoreOverviewSummary {
+  const source = asRecord(payload)
+
+  if (!source) return EMPTY_STORE_OVERVIEW
+
+  return {
+    customerCount: toNumber(source.customerCount) ?? 0,
+    salesCount: toNumber(source.salesCount) ?? 0,
+    netProfit: toNumber(source.netProfit) ?? 0,
+    revenue: toNumber(source.revenue) ?? 0,
+    topProducts: extractOverviewTopProducts(source.topProducts).slice(0, 3),
+    salesByWeek: extractOverviewSalesByWeek(source.salesByWeek),
+  }
+}

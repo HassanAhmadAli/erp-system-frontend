@@ -4,6 +4,7 @@ import {
   toPaginationQuery,
   type PaginationParams,
 } from "@/lib/pagination"
+import { unwrapData } from "@/lib/report-parsers"
 import {
   SALES_INVOICE_STATUS_OPTIONS,
   isSalesInvoiceStatus,
@@ -24,6 +25,7 @@ export type SalesInvoiceItem = {
   quantity: number
   unitPrice?: string | number
   totalPrice?: string | number
+  subtotal?: string | number
   product?: {
     id: number
     name?: string
@@ -168,7 +170,14 @@ export async function getSalesInvoice(id: number): Promise<SalesInvoice> {
     throw new Error("Invalid sales invoice id")
   }
 
-  return apiRequest<SalesInvoice>(`${SALES_INVOICES_ENDPOINT}/${id}`)
+  const response = await apiRequest<unknown>(`${SALES_INVOICES_ENDPOINT}/${id}`)
+  const invoice = unwrapData(response) as SalesInvoice | null
+
+  if (!invoice || typeof invoice !== "object" || !isValidId(invoice.id)) {
+    throw new Error("Invalid sales invoice response")
+  }
+
+  return invoice
 }
 
 export async function createSalesInvoice(

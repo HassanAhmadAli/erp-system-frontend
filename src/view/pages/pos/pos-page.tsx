@@ -1,8 +1,12 @@
 import { useMemo, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import { useCreateSaleInvoice, usePosProducts } from "@/hooks/usePos"
-import type { PosProduct } from "@/services/pos-service"
+import {
+  getCreatedSaleInvoiceId,
+  type PosProduct,
+} from "@/services/pos-service"
 import {
   posCheckoutValuesToPayload,
   posCheckoutZodErrorToFormErrors,
@@ -20,6 +24,7 @@ import type { CartItem } from "@/view/components/pos/types"
 
 export function PosPage() {
   const { t } = useTranslation(["common", "pages"])
+  const navigate = useNavigate()
   const [search, setSearch] = useState("")
   const [customerId, setCustomerId] = useState("")
   const [amountPaid, setAmountPaid] = useState("")
@@ -201,10 +206,20 @@ export function PosPage() {
     const payload = posCheckoutValuesToPayload(validationResult.data)
 
     createInvoiceMutation.mutate(payload, {
-      onSuccess: () => {
+      onSuccess: (invoice) => {
+        const invoiceId = getCreatedSaleInvoiceId(invoice)
+
         clearCart()
         setCustomerId("")
         setCompleteInvoice(true)
+
+        if (invoiceId == null) {
+          return
+        }
+
+        navigate(`/sales-invoices/${invoiceId}`, {
+          state: { from: "/pos" },
+        })
       },
     })
   }

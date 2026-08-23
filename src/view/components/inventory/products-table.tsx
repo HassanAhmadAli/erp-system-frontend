@@ -1,7 +1,7 @@
 import { useState } from "react"
-import { ImageOff } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
+import { EntityImage } from "@/view/components/common/entity-image"
 import {
   StatusBadge,
   type StockStatus,
@@ -10,7 +10,11 @@ import { useLocale } from "@/i18n/locale-provider"
 import type { AppLanguage } from "@/i18n/types"
 import { localizedName } from "@/lib/localized"
 import { useLowStockProducts } from "@/hooks/Products/useLowStockProducts"
-import { getProductImageSrc, type Product } from "@/services/product-service"
+import {
+  getProductImageSrc,
+  getProductStoredFileId,
+  type Product,
+} from "@/services/product-service"
 import { formatCurrency, formatNumber } from "@/utils/number-formatters"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
 
@@ -105,7 +109,13 @@ export function ProductsTable() {
 
                 <tbody>
                   {products.map((product) => {
-                    const imageSrc = getProductImageSrc(product.imageUrl)
+                    const imageSrc = getProductImageSrc(
+                      product.imageUrl,
+                      getProductStoredFileId(
+                        product.imageUrl,
+                        product.productPhotos
+                      )
+                    )
                     const displayName = localizedName(product, language)
 
                     return (
@@ -116,15 +126,11 @@ export function ProductsTable() {
                         <td className="px-4 py-3">
                           <div className="flex min-w-0 items-center gap-3">
                             <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
-                              {imageSrc ? (
-                                <img
-                                  src={imageSrc}
-                                  alt={displayName}
-                                  className="size-full object-cover"
-                                />
-                              ) : (
-                                <ImageOff className="size-4 text-[var(--erp-muted)]" />
-                              )}
+                              <EntityImage
+                                src={imageSrc}
+                                alt={displayName}
+                                className="size-full object-cover"
+                              />
                             </div>
 
                             <span className="truncate font-semibold text-[var(--erp-text)]">

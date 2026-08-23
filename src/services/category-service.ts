@@ -1,5 +1,5 @@
-import { apiRequest, BASE_URL } from "@/api/client"
-import { getAccessToken } from "@/utils/auth-storage"
+import { apiRequest } from "@/api/client"
+import { resolveMediaUrl, resolveStoredFileUrl } from "@/lib/media-url"
 import type { CategoryRequestPayload } from "@/validation/category-schema"
 import { isValidId, normalizeText, optionalText } from "@/validation/helpers"
 
@@ -181,20 +181,6 @@ export function deleteCategory(id: number) {
   })
 }
 
-function authorizedFetch(url: string, options: RequestInit = {}) {
-  const headers = new Headers(options.headers || {})
-  const token = getAccessToken()
-
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`)
-  }
-
-  return fetch(url, {
-    ...options,
-    headers,
-  })
-}
-
 /**
  * Builds an absolute URL for a category image.
  * Backend stores relative paths like `/category/image/download/{storedFileId}`.
@@ -203,18 +189,10 @@ export function getCategoryImageSrc(
   imageUrl?: string | null,
   storedFileId?: string | null
 ) {
-  if (imageUrl?.trim()) {
-    const trimmed = imageUrl.trim()
-    if (/^https?:\/\//i.test(trimmed)) return trimmed
-    if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`
-    return `${BASE_URL}/${trimmed}`
-  }
-
-  if (storedFileId?.trim()) {
-    return `${BASE_URL}/category/image/download/${storedFileId.trim()}`
-  }
-
-  return null
+  return (
+    resolveMediaUrl(imageUrl) ??
+    resolveStoredFileUrl("/category/image/download", storedFileId)
+  )
 }
 
 export async function uploadCategoryImage(categoryId: number, file: File) {
@@ -225,42 +203,12 @@ export async function uploadCategoryImage(categoryId: number, file: File) {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await authorizedFetch(
-    `${BASE_URL}/category/${categoryId}/image`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  )
+  const uploaded = await apiRequest<Category>(`/category/${categoryId}/image`, {
+    method: "POST",
+    body: formData,
+  })
 
-  const bodyText = await response.text()
-
-  if (!response.ok) {
-    let message = `Failed to upload category image (${response.status})`
-
-    try {
-      const parsed = JSON.parse(bodyText) as { message?: string | string[] }
-      if (Array.isArray(parsed.message)) message = parsed.message.join("\n")
-      else if (typeof parsed.message === "string") message = parsed.message
-      else if (bodyText.trim()) message = bodyText
-    } catch {
-      if (bodyText.trim()) message = bodyText
-    }
-
-    throw new Error(message)
-  }
-
-  if (!bodyText.trim()) {
-    return { id: categoryId } as Category
-  }
-
-  try {
-    return JSON.parse(bodyText) as Category
-  } catch {
-    return { id: categoryId, message: bodyText } as Category & {
-      message?: string
-    }
-  }
+  return uploaded ?? ({ id: categoryId } as Category)
 }
 
 export function deleteCategoryImage(categoryId: number) {

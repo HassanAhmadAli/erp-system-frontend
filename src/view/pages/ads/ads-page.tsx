@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Eye, ImageOff, Megaphone, Pencil, Plus, Trash2 } from "lucide-react"
+import { Eye, Megaphone, Pencil, Plus, Trash2 } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
@@ -11,6 +11,7 @@ import { localizedTitle } from "@/lib/localized"
 import { usePermissions } from "@/hooks/usePermissions"
 import { formatDateTime, formatNumber } from "@/utils/number-formatters"
 import { Button } from "@/view/components/ui/button"
+import { EntityImage } from "@/view/components/common/entity-image"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
 import type { AdPlacement } from "@/validation/ad-schema"
 
@@ -152,15 +153,11 @@ export function AdsPage() {
                       >
                         <td className="px-3 py-3">
                           <div className="flex size-12 items-center justify-center overflow-hidden rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
-                            {imageSrc ? (
-                              <img
-                                src={imageSrc}
-                                alt={displayTitle}
-                                className="size-full object-cover"
-                              />
-                            ) : (
-                              <ImageOff className="size-4 text-[var(--erp-muted)]" />
-                            )}
+                            <EntityImage
+                              src={imageSrc}
+                              alt={displayTitle}
+                              className="size-full object-cover"
+                            />
                           </div>
                         </td>
 

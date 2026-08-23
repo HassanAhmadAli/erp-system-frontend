@@ -1,10 +1,14 @@
-import { apiRequest, BASE_URL, buildQuery } from "@/api/client"
+import { apiRequest, apiRequestBlob, buildQuery } from "@/api/client"
+import {
+  asTrimmedText,
+  resolveMediaUrl,
+  resolveStoredFileUrl,
+} from "@/lib/media-url"
 import {
   normalizePaginatedResponse,
   toPaginationQuery,
   type PaginationParams,
 } from "@/lib/pagination"
-import { getAccessToken } from "@/utils/auth-storage"
 
 export type ProductPhoto = {
   id: number
@@ -147,7 +151,15 @@ function isProductPhotoLike(value: unknown): value is ProductPhoto {
   if (!value || typeof value !== "object") return false
 
   const photo = value as Record<string, unknown>
-  return typeof photo.id === "number" || typeof photo.id === "string"
+  if (photo.id != null && photo.id !== "") return true
+  if (typeof photo.storedFileId === "string" && photo.storedFileId.trim()) {
+    return true
+  }
+  if (photo.storedFile && typeof photo.storedFile === "object") {
+    const storedId = (photo.storedFile as { id?: unknown }).id
+    return typeof storedId === "string" && storedId.trim().length > 0
+  }
+  return typeof photo.url === "string" && photo.url.trim().length > 0
 }
 
 function asProductPhotoArray(response: unknown): ProductPhoto[] {
@@ -168,6 +180,14 @@ function asProductPhotoArray(response: unknown): ProductPhoto[] {
     }
   }
 
+  if (
+    record.data &&
+    typeof record.data === "object" &&
+    !Array.isArray(record.data)
+  ) {
+    return asProductPhotoArray(record.data)
+  }
+
   if (isProductPhotoLike(record)) {
     return [record]
   }
@@ -175,28 +195,52 @@ function asProductPhotoArray(response: unknown): ProductPhoto[] {
   return []
 }
 
+function hydrateProductPhoto(photo: ProductPhoto): ProductPhoto {
+  const storedFileId =
+    asTrimmedText(photo.storedFileId) || asTrimmedText(photo.storedFile?.id)
+  if (!storedFileId) return photo
+  if (photo.url?.includes("/product-photo/download/")) {
+    return { ...photo, storedFileId }
+  }
+
+  return {
+    ...photo,
+    storedFileId,
+    url: `/product-photo/download/${storedFileId}`,
+  }
+}
+
 export function normalizeProductPhotos(response: unknown): ProductPhoto[] {
-  return asProductPhotoArray(response).filter((photo) => !photo.deletedAt)
+  return asProductPhotoArray(response)
+    .filter((photo) => !photo.deletedAt)
+    .map(hydrateProductPhoto)
 }
 
 export function isPersistedProductPhoto(photo: ProductPhoto) {
-  return Number.isSafeInteger(photo.id) && photo.id > 0
+  const id = Number(photo.id)
+  return Number.isSafeInteger(id) && id > 0
 }
 
 export function photoFromProductImageUrl(
   imageUrl?: string | null
 ): ProductPhoto | null {
-  if (!imageUrl?.trim()) return null
+  const trimmed = asTrimmedText(imageUrl)
+  if (!trimmed) return null
 
-  const trimmed = imageUrl.trim()
   const storedFileId =
-    trimmed.match(/product-photo\/download\/([^/?#]+)/i)?.[1] ?? undefined
+    trimmed.match(/product-photo\/download\/([^/?#]+)/i)?.[1] ??
+    (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      trimmed
+    )
+      ? trimmed
+      : undefined)
+  const url = storedFileId ? `/product-photo/download/${storedFileId}` : trimmed
   const fileName = trimmed.split("/").filter(Boolean).pop() ?? null
 
   return {
     id: 0,
     storedFileId,
-    url: trimmed,
+    url,
     fileName,
   }
 }
@@ -208,8 +252,10 @@ export function resolveProductPhotos(
 ): ProductPhoto[] {
   if (listed?.length) return listed
 
-  const nested = normalizeProductPhotos(fallbackPhotos)
-  if (nested.length) return nested
+  if (listed === undefined) {
+    const nested = normalizeProductPhotos(fallbackPhotos)
+    if (nested.length) return nested
+  }
 
   const fromImage = photoFromProductImageUrl(imageUrl)
   return fromImage ? [fromImage] : []
@@ -219,28 +265,46 @@ export function resolveProductPhotos(
  * Builds an absolute URL for a product's primary image.
  * Backend stores relative paths like `/product-photo/download/{storedFileId}` on `product.imageUrl`.
  */
-export function getProductImageSrc(imageUrl?: string | null) {
-  if (!imageUrl?.trim()) return null
-
-  const trimmed = imageUrl.trim()
-  if (/^https?:\/\//i.test(trimmed)) return trimmed
-  if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`
-  return `${BASE_URL}/${trimmed}`
+export function getProductImageSrc(
+  imageUrl?: string | null,
+  storedFileId?: string | null
+) {
+  return (
+    resolveStoredFileUrl("/product-photo/download", storedFileId) ??
+    resolveMediaUrl(imageUrl)
+  )
 }
 
 export function getProductPhotoStoredFileId(photo: ProductPhoto) {
-  const fromField = photo.storedFileId?.trim()
-  if (fromField) return fromField
+  return (
+    asTrimmedText(photo.storedFileId) ||
+    asTrimmedText(photo.storedFile?.id) ||
+    null
+  )
+}
 
-  const fromNested = photo.storedFile?.id?.trim()
-  if (fromNested) return fromNested
+export function getProductStoredFileId(
+  imageUrl?: string | null,
+  photos?: ProductPhoto[] | null
+) {
+  const fromImage = photoFromProductImageUrl(imageUrl)?.storedFileId ?? null
+  const listed = [...(photos ?? [])].sort(
+    (left, right) => Number(right.id) - Number(left.id)
+  )
+  const listedIds = listed
+    .map((photo) => getProductPhotoStoredFileId(photo))
+    .filter((id): id is string => Boolean(id))
 
-  return null
+  if (fromImage && listedIds.includes(fromImage)) return fromImage
+  if (listedIds[0]) return listedIds[0]
+  return fromImage
 }
 
 export function getProductPhotoFileName(photo: ProductPhoto) {
   return (
-    photo.storedFile?.originalname?.trim() || photo.fileName?.trim() || null
+    asTrimmedText(photo.storedFile?.originalname) ||
+    asTrimmedText(photo.fileName) ||
+    null
   )
 }
 
@@ -249,19 +313,12 @@ export function getProductPhotoFileName(photo: ProductPhoto) {
  * Download endpoint is public and keyed by storedFileId (UUID), not photo id.
  */
 export function getProductPhotoSrc(photo: ProductPhoto) {
-  if (photo.url?.trim()) {
-    const trimmed = photo.url.trim()
-    if (/^https?:\/\//i.test(trimmed)) return trimmed
-    if (trimmed.startsWith("/")) return `${BASE_URL}${trimmed}`
-    return `${BASE_URL}/${trimmed}`
-  }
-
-  const storedFileId = getProductPhotoStoredFileId(photo)
-  if (storedFileId) {
-    return `${BASE_URL}/product-photo/download/${storedFileId}`
-  }
-
-  return null
+  return (
+    resolveStoredFileUrl(
+      "/product-photo/download",
+      getProductPhotoStoredFileId(photo)
+    ) ?? resolveMediaUrl(photo.url)
+  )
 }
 
 export function normalizeImportJobs(response: unknown): ImportJob[] {
@@ -331,22 +388,6 @@ export function deleteProduct(id: number) {
   })
 }
 
-async function authorizedFetch(url: string, options: RequestInit) {
-  const token = getAccessToken()
-  const headers = new Headers(options.headers || {})
-
-  if (token) {
-    headers.set("Authorization", `Bearer ${token}`)
-  }
-
-  return fetch(url, {
-    ...options,
-    headers,
-  })
-}
-
-// Multipart upload uses FormData; we intentionally do not reuse apiRequest here
-// to avoid coupling to JSON Content-Type behavior.
 export async function uploadProductPhoto(
   productId: number,
   file: File
@@ -354,37 +395,34 @@ export async function uploadProductPhoto(
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await authorizedFetch(
-    `${BASE_URL}/product-photo/upload/${productId}`,
+  const uploaded = await apiRequest<ProductPhoto | { message?: string }>(
+    `/product-photo/upload/${productId}`,
     {
       method: "POST",
       body: formData,
     }
   )
 
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(errorText || `Failed to upload photo (${response.status})`)
-  }
-
-  // Some backends may return the created photo object, or just a message.
-  const bodyText = await response.text()
-
-  if (!bodyText) {
-    return { message: "Uploaded" }
-  }
-
-  try {
-    return JSON.parse(bodyText)
-  } catch {
-    return { message: bodyText }
-  }
+  return uploaded ?? { message: "Uploaded" }
 }
 
 export async function listProductPhotos(productId: number) {
   // This endpoint is JSON, so apiRequest is fine.
   return apiRequest<ProductPhotoListResponse>(
     `/product-photo/product/${productId}`
+  )
+}
+
+export async function deleteProductImage(productId: number) {
+  if (!Number.isSafeInteger(productId) || productId <= 0) {
+    throw new Error("Invalid product id")
+  }
+
+  return apiRequest<{ message: string }>(
+    `/product-photo/product/${productId}`,
+    {
+      method: "DELETE",
+    }
   )
 }
 
@@ -397,37 +435,19 @@ export async function deleteProductPhoto(photoId: number | string) {
 // Returns a Blob so the UI can trigger a download.
 // Backend download is public and expects storedFileId (UUID), not photo id.
 export async function downloadProductPhoto(storedFileId: string) {
-  const response = await fetch(
-    `${BASE_URL}/product-photo/download/${storedFileId}`,
-    { method: "GET" }
+  return apiRequestBlob(
+    `/product-photo/download/${encodeURIComponent(storedFileId)}`
   )
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(
-      errorText || `Failed to download photo (${response.status})`
-    )
-  }
-
-  return response.blob()
 }
 
 export async function importProducts(file: File) {
   const formData = new FormData()
   formData.append("file", file)
 
-  const response = await authorizedFetch(`${BASE_URL}/product/import`, {
+  return apiRequest<ImportJob | Record<string, never>>("/product/import", {
     method: "POST",
     body: formData,
   })
-
-  if (!response.ok) {
-    const errorText = await response.text()
-    throw new Error(errorText || `Import failed (${response.status})`)
-  }
-
-  // Backend likely returns JSON about the created job.
-  return response.json().catch(() => ({}))
 }
 
 export async function getProductImportJobs() {

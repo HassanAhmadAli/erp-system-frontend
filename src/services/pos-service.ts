@@ -1,4 +1,6 @@
 import { apiRequest, buildQuery } from "@/api/client"
+import { unwrapData } from "@/lib/report-parsers"
+import { isValidId } from "@/validation/helpers"
 import type {
   PosCheckoutItemPayload,
   PosCheckoutPayload,
@@ -56,8 +58,36 @@ export async function getPosProducts() {
 }
 
 export async function createSaleInvoice(payload: CreateSaleInvoicePayload) {
-  return apiRequest<SaleInvoice>("/sales/invoices", {
+  const response = await apiRequest<unknown>("/sales/invoices", {
     method: "POST",
     body: JSON.stringify(payload),
   })
+
+  const invoice = getCreatedSaleInvoice(response)
+
+  if (!invoice) {
+    throw new Error("Invalid sales invoice response")
+  }
+
+  return invoice
+}
+
+export function getCreatedSaleInvoice(response: unknown): SaleInvoice | null {
+  const invoice = unwrapData(response)
+
+  if (!invoice || typeof invoice !== "object") {
+    return null
+  }
+
+  const id = Number((invoice as { id?: unknown }).id)
+
+  if (!isValidId(id)) {
+    return null
+  }
+
+  return invoice as SaleInvoice
+}
+
+export function getCreatedSaleInvoiceId(response: unknown): number | null {
+  return getCreatedSaleInvoice(response)?.id ?? null
 }

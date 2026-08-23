@@ -1,35 +1,27 @@
+import { useMemo, useState } from "react"
 import { useTranslation } from "react-i18next"
 
 import { useProfitMargins } from "@/hooks/Financial/useFinancial"
-import {
-  extractLowProfitMargins,
-  extractProfitMarginHistogram,
-  extractProfitMarginMetrics,
-  extractProfitMarginSeries,
-  extractProfitMarginTierComposition,
-  extractTopProfitMargins,
-  profitMarginBarColor,
-} from "@/lib/report-chart-data"
-import { extractTableRows } from "@/lib/report-parsers"
-import { BarChart } from "@/view/components/charts/bar-chart"
-import { DonutChart } from "@/view/components/charts/donut-chart"
-import { HorizontalBarChart } from "@/view/components/charts/horizontal-bar-chart"
+import { DEFAULT_PAGE_SIZE, pageToOffset } from "@/lib/pagination"
+import { extractPaginationMeta, extractTableRows } from "@/lib/report-parsers"
 import { ExportReportButton } from "@/view/components/reports/export-report-button"
 import { ReportLayout } from "@/view/components/reports/report-layout"
-import { ReportMetrics } from "@/view/components/reports/report-metrics"
 import { ReportTable } from "@/view/components/reports/report-table"
 
 export function ReportProfitMarginsPage() {
   const { t } = useTranslation(["common", "pages"])
-  const { data, isLoading, isError } = useProfitMargins()
+  const [page, setPage] = useState(1)
+  const params = useMemo(
+    () => ({
+      limit: DEFAULT_PAGE_SIZE,
+      offset: pageToOffset(page, DEFAULT_PAGE_SIZE),
+    }),
+    [page]
+  )
+  const { data, isLoading, isError, isFetching } = useProfitMargins(params)
 
-  const margins = extractProfitMarginSeries(data)
-  const metrics = extractProfitMarginMetrics(margins)
-  const topMargins = extractTopProfitMargins(margins, 10)
-  const lowMargins = extractLowProfitMargins(margins, 10)
-  const tierComposition = extractProfitMarginTierComposition(margins)
-  const histogram = extractProfitMarginHistogram(margins)
   const rows = extractTableRows(data)
+  const { total, isFinalPage } = extractPaginationMeta(data)
 
   return (
     <ReportLayout
@@ -37,99 +29,24 @@ export function ReportProfitMarginsPage() {
       description={t("reports.profitMarginsReportDesc", { ns: "pages" })}
       backTo="/reports"
       backLabel={t("reports.allReports", { ns: "pages" })}
-      loading={isLoading}
+      loading={isLoading && !data}
       error={isError}
       actions={
         <ExportReportButton type="profit-margins" label={t("exportCsv")} />
       }
     >
-      <ReportMetrics metrics={metrics} />
-
-      <MarginLegend />
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <HorizontalBarChart
-          title={t("reports.top10Margin", { ns: "pages" })}
-          data={topMargins}
-          unit="%"
-          maxScale={100}
-          maxItems={10}
-          getBarColor={profitMarginBarColor}
-          emptyMessage={t("reports.noMarginData", { ns: "pages" })}
-        />
-
-        <HorizontalBarChart
-          title={t("reports.bottom10Margin", { ns: "pages" })}
-          data={lowMargins}
-          unit="%"
-          maxScale={100}
-          maxItems={10}
-          getBarColor={profitMarginBarColor}
-          emptyMessage={t("reports.noMarginData", { ns: "pages" })}
-        />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        {tierComposition.length > 0 && (
-          <DonutChart
-            title={t("reports.marginDistribution", { ns: "pages" })}
-            data={tierComposition}
-            unit={t("reports.productUnit", { ns: "pages" })}
-          />
-        )}
-
-        <BarChart
-          title={t("reports.productsPerMarginRange", { ns: "pages" })}
-          data={histogram}
-          unit=""
-          emptyMessage={t("reports.noMarginDistribution", { ns: "pages" })}
-        />
-      </div>
-
-      <HorizontalBarChart
-        title={t("reports.allProductsByMargin", { ns: "pages" })}
-        data={margins}
-        unit="%"
-        maxScale={100}
-        maxItems={20}
-        getBarColor={profitMarginBarColor}
-        emptyMessage={t("reports.noMarginData", { ns: "pages" })}
-      />
-
       <ReportTable
         title={t("reports.productDetails", { ns: "pages" })}
         rows={rows}
+        pagination={{
+          page,
+          isFinalPage: isFinalPage ?? rows.length < DEFAULT_PAGE_SIZE,
+          isLoading: isFetching,
+          total,
+          onPrevious: () => setPage((current) => Math.max(1, current - 1)),
+          onNext: () => setPage((current) => current + 1),
+        }}
       />
     </ReportLayout>
-  )
-}
-
-function MarginLegend() {
-  const { t } = useTranslation(["common", "pages"])
-
-  const items = [
-    { color: "#22a06b", label: t("reports.marginHigh", { ns: "pages" }) },
-    { color: "#4b22b5", label: t("reports.marginMedium", { ns: "pages" }) },
-    { color: "#f0ad34", label: t("reports.marginLow", { ns: "pages" }) },
-    { color: "#d52b45", label: t("reports.marginNegative", { ns: "pages" }) },
-  ]
-
-  return (
-    <section className="flex flex-wrap justify-end gap-4 rounded-2xl border border-[var(--erp-sidebar-divider)] bg-[var(--erp-card)] px-4 py-3 text-sm">
-      <span className="text-[var(--erp-muted)]">
-        {t("reports.colorLegend", { ns: "pages" })}
-      </span>
-
-      {items.map((item) => (
-        <span key={item.label} className="inline-flex items-center gap-2">
-          <span
-            className="size-3 rounded-full"
-            style={{ backgroundColor: item.color }}
-          />
-
-          {item.label}
-        </span>
-      ))}
-    </section>
   )
 }

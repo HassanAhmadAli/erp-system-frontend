@@ -29,10 +29,12 @@ export function useCreateSaleInvoice() {
   return useMutation({
     mutationFn: (payload: CreateSaleInvoicePayload) =>
       createSaleInvoice(payload),
-    onSuccess: () => {
+    onSuccess: (invoice) => {
+      queryClient.setQueryData(["sales-invoice", invoice.id], invoice)
       queryClient.invalidateQueries({ queryKey: ["sales-invoices"] })
       queryClient.invalidateQueries({ queryKey: ["pos-products"] })
       queryClient.invalidateQueries({ queryKey: ["products"] })
+      queryClient.invalidateQueries({ queryKey: ["report-summary"] })
     },
   })
 }

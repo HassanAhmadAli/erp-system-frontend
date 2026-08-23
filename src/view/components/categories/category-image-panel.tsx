@@ -15,6 +15,7 @@ import {
 import { getCategoryImageSrc } from "@/services/category-service"
 import { toEnglishDigits } from "@/utils/number-formatters"
 import { isAllowedFileType, isWithinMaxFileSize } from "@/validation/helpers"
+import { EntityImage } from "@/view/components/common/entity-image"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
 import { Button } from "@/view/components/ui/button"
 
@@ -151,10 +152,11 @@ export function CategoryImagePanel({
       <div className="grid gap-4 lg:grid-cols-2">
         <div className="flex min-h-[220px] items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-4">
           {previewUrl || currentImageSrc ? (
-            <img
-              src={previewUrl ?? currentImageSrc!}
+            <EntityImage
+              src={previewUrl ?? currentImageSrc}
               alt={t("pages:categories.categoryImage")}
               className="max-h-56 w-full rounded-xl object-contain"
+              fallbackIconClassName="size-12"
             />
           ) : (
             <div className="text-center">
@@ -170,7 +172,7 @@ export function CategoryImagePanel({
           <div className="space-y-4 rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4">
             <label
               htmlFor={`category-image-upload-${categoryId}`}
-              className={`flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-8 text-center transition hover:border-[var(--erp-brand-solid)]/50 hover:bg-[var(--erp-nav-active-bg)] ${
+              className={`relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-8 text-center transition hover:border-[var(--erp-brand-solid)]/50 hover:bg-[var(--erp-nav-active-bg)] ${
                 uploadMutation.isPending ? "pointer-events-none opacity-60" : ""
               }`}
             >
@@ -193,7 +195,7 @@ export function CategoryImagePanel({
                 id={`category-image-upload-${categoryId}`}
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
-                className="sr-only"
+                className="hidden"
                 disabled={uploadMutation.isPending}
                 onChange={(event) => {
                   handleFileChange(event.target.files?.[0] ?? null)

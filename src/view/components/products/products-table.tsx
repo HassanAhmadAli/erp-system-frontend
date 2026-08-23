@@ -1,12 +1,5 @@
 import { useMemo, useState } from "react"
-import {
-  Eye,
-  ImageOff,
-  PackageOpen,
-  Pencil,
-  Search,
-  Trash2,
-} from "lucide-react"
+import { Eye, PackageOpen, Pencil, Search, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -20,7 +13,11 @@ import { useSuppliers } from "@/hooks/Suppliers/useSuppliers"
 import { useLocale } from "@/i18n/locale-provider"
 import type { AppLanguage } from "@/i18n/types"
 import { localizedFullName, localizedName } from "@/lib/localized"
-import { getProductImageSrc, type Product } from "@/services/product-service"
+import {
+  getProductImageSrc,
+  getProductStoredFileId,
+  type Product,
+} from "@/services/product-service"
 import {
   formatCurrency,
   formatInteger,
@@ -30,6 +27,7 @@ import {
   StatusBadge,
   type StockStatus,
 } from "@/view/components/common/status-badge"
+import { EntityImage } from "@/view/components/common/entity-image"
 import { Button } from "@/view/components/ui/button"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
 import { PaginationControls } from "@/view/components/ui/pagination-controls"
@@ -140,7 +138,10 @@ function ProductMobileCard({
 }) {
   const { t } = useTranslation(["common", "pages"])
   const { language } = useLocale()
-  const imageSrc = getProductImageSrc(product.imageUrl)
+  const imageSrc = getProductImageSrc(
+    product.imageUrl,
+    getProductStoredFileId(product.imageUrl, product.productPhotos)
+  )
   const displayName = localizedName(product, language)
 
   return (
@@ -148,15 +149,11 @@ function ProductMobileCard({
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-3 text-start">
           <div className="flex size-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
-            {imageSrc ? (
-              <img
-                src={imageSrc}
-                alt={displayName}
-                className="size-full object-cover"
-              />
-            ) : (
-              <ImageOff className="size-4 text-[var(--erp-muted)]" />
-            )}
+            <EntityImage
+              src={imageSrc}
+              alt={displayName}
+              className="size-full object-cover"
+            />
           </div>
 
           <div className="min-w-0 flex-1">
@@ -526,7 +523,13 @@ export function ProductsTable() {
 
               <tbody>
                 {products.map((product) => {
-                  const imageSrc = getProductImageSrc(product.imageUrl)
+                  const imageSrc = getProductImageSrc(
+                    product.imageUrl,
+                    getProductStoredFileId(
+                      product.imageUrl,
+                      product.productPhotos
+                    )
+                  )
                   const displayName = localizedName(product, language)
 
                   return (
@@ -536,15 +539,11 @@ export function ProductsTable() {
                     >
                       <td className="px-4 py-4">
                         <div className="flex size-12 items-center justify-center overflow-hidden rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
-                          {imageSrc ? (
-                            <img
-                              src={imageSrc}
-                              alt={displayName}
-                              className="size-full object-cover"
-                            />
-                          ) : (
-                            <ImageOff className="size-4 text-[var(--erp-muted)]" />
-                          )}
+                          <EntityImage
+                            src={imageSrc}
+                            alt={displayName}
+                            className="size-full object-cover"
+                          />
                         </div>
                       </td>
 

@@ -246,8 +246,24 @@ export function parseCommaSeparatedPositiveIntegers(value: string) {
     .map((part) => requirePositiveInteger(part))
 }
 
+const IMAGE_EXTENSION_MIME: Record<string, string[]> = {
+  jpg: ["image/jpeg", "image/jpg"],
+  jpeg: ["image/jpeg", "image/jpg"],
+  png: ["image/png"],
+  webp: ["image/webp"],
+  gif: ["image/gif"],
+}
+
 export function isAllowedFileType(file: File, allowedTypes: readonly string[]) {
-  return allowedTypes.includes(file.type)
+  if (file.type) {
+    return allowedTypes.includes(file.type)
+  }
+
+  const extension = file.name.split(".").pop()?.toLowerCase()
+  if (!extension) return false
+
+  const inferredTypes = IMAGE_EXTENSION_MIME[extension]
+  return inferredTypes?.some((type) => allowedTypes.includes(type)) ?? false
 }
 
 export function isWithinMaxFileSize(file: File, maxBytes: number) {

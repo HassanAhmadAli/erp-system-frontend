@@ -2,10 +2,21 @@ import { useTranslation } from "react-i18next"
 
 import { formatNumber, inferTableColumns, toNumber } from "@/lib/report-parsers"
 import { formatDate, formatDateTime } from "@/utils/number-formatters"
+import { PaginationControls } from "@/view/components/ui/pagination-controls"
+
+type ReportTablePagination = {
+  page: number
+  isFinalPage: boolean
+  isLoading?: boolean
+  total?: number
+  onPrevious: () => void
+  onNext: () => void
+}
 
 type ReportTableProps = {
   title?: string
   rows: Record<string, unknown>[]
+  pagination?: ReportTablePagination
 }
 
 const DATE_COLUMN_KEYS = new Set([
@@ -53,7 +64,7 @@ function formatCell(value: unknown, columnKey: string) {
   return String(value)
 }
 
-export function ReportTable({ title, rows }: ReportTableProps) {
+export function ReportTable({ title, rows, pagination }: ReportTableProps) {
   const { t } = useTranslation("common")
   const columns = inferTableColumns(rows)
 
@@ -116,6 +127,19 @@ export function ReportTable({ title, rows }: ReportTableProps) {
           </table>
         </div>
       </div>
+
+      {pagination && (
+        <div className="mt-4">
+          <PaginationControls
+            page={pagination.page}
+            isFinalPage={pagination.isFinalPage}
+            isLoading={pagination.isLoading}
+            total={pagination.total}
+            onPrevious={pagination.onPrevious}
+            onNext={pagination.onNext}
+          />
+        </div>
+      )}
     </section>
   )
 }
