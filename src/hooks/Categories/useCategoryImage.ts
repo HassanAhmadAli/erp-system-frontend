@@ -3,7 +3,36 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import {
   deleteCategoryImage,
   uploadCategoryImage,
+  type Category,
+  type CategoryDetails,
 } from "@/services/category-service"
+
+type CategoryRecord = Category | CategoryDetails
+
+function patchCategoryImage(
+  queryClient: ReturnType<typeof useQueryClient>,
+  categoryId: number,
+  patch: Partial<Pick<Category, "imageUrl" | "storedFileId">> | CategoryRecord
+) {
+  const apply = (current: CategoryRecord | undefined) =>
+    current ? { ...current, ...patch } : current
+
+  queryClient.setQueryData(["category", categoryId], apply)
+  queryClient.setQueryData(["category", String(categoryId)], apply)
+}
+
+function invalidateCategoryImage(
+  queryClient: ReturnType<typeof useQueryClient>,
+  categoryId: number
+) {
+  void queryClient.invalidateQueries({ queryKey: ["categories"] })
+  void queryClient.invalidateQueries({
+    queryKey: ["category", String(categoryId)],
+  })
+  void queryClient.invalidateQueries({
+    queryKey: ["category", categoryId],
+  })
+}
 
 export function useUploadCategoryImage() {
   const queryClient = useQueryClient()
@@ -12,14 +41,11 @@ export function useUploadCategoryImage() {
     mutationFn: ({ categoryId, file }: { categoryId: number; file: File }) =>
       uploadCategoryImage(categoryId, file),
 
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] })
-      queryClient.invalidateQueries({
-        queryKey: ["category", String(variables.categoryId)],
-      })
-      queryClient.invalidateQueries({
-        queryKey: ["category", variables.categoryId],
-      })
+    onSuccess: (data, variables) => {
+      if (data && typeof data === "object" && "id" in data) {
+        patchCategoryImage(queryClient, variables.categoryId, data)
+      }
+      invalidateCategoryImage(queryClient, variables.categoryId)
     },
   })
 }
@@ -30,14 +56,24 @@ export function useDeleteCategoryImage() {
   return useMutation({
     mutationFn: (categoryId: number) => deleteCategoryImage(categoryId),
 
-    onSuccess: (_data, categoryId) => {
-      queryClient.invalidateQueries({ queryKey: ["categories"] })
-      queryClient.invalidateQueries({
+    onMutate: async (categoryId) => {
+      await queryClient.cancelQueries({ queryKey: ["category", categoryId] })
+      await queryClient.cancelQueries({
         queryKey: ["category", String(categoryId)],
       })
-      queryClient.invalidateQueries({
-        queryKey: ["category", categoryId],
+
+      patchCategoryImage(queryClient, categoryId, {
+        imageUrl: null,
+        storedFileId: null,
       })
+    },
+
+    onSuccess: (_data, categoryId) => {
+      patchCategoryImage(queryClient, categoryId, {
+        imageUrl: null,
+        storedFileId: null,
+      })
+      invalidateCategoryImage(queryClient, categoryId)
     },
   })
 }

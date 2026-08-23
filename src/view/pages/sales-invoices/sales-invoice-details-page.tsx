@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { ArrowRight, Loader2, ReceiptText, Undo2 } from "lucide-react"
-import { useNavigate, useParams } from "react-router-dom"
+import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -32,10 +32,16 @@ import {
 export function SalesInvoiceDetailsPage() {
   const { t } = useTranslation(["common", "pages"])
   const navigate = useNavigate()
+  const location = useLocation()
   const { id } = useParams()
 
   const invoiceId = Number(id)
   const [statusError, setStatusError] = useState("")
+  const fromPos = (location.state as { from?: string } | null)?.from === "/pos"
+
+  function goBack() {
+    navigate(fromPos ? "/pos" : "/sales-invoices")
+  }
 
   const { data: invoice, isLoading, isError } = useSalesInvoice(invoiceId)
   const { canManageSalesInvoice } = usePermissions()
@@ -92,10 +98,10 @@ export function SalesInvoiceDetailsPage() {
 
           <button
             type="button"
-            onClick={() => navigate("/sales-invoices")}
+            onClick={goBack}
             className="mt-4 rounded-2xl border px-4 py-2 text-sm"
           >
-            {t("common:backToInvoices")}
+            {fromPos ? t("pages:pos.backToPos") : t("common:backToInvoices")}
           </button>
         </section>
       </main>
@@ -132,11 +138,13 @@ export function SalesInvoiceDetailsPage() {
 
           <button
             type="button"
-            onClick={() => navigate("/sales-invoices")}
+            onClick={goBack}
             className="inline-flex items-center gap-2 rounded-2xl border px-4 py-2 text-sm font-medium transition hover:bg-[var(--erp-nav-active-bg)]"
           >
             <ArrowRight className="size-4 ltr:rotate-180" />
-            {t("pages:salesInvoices.backToList")}
+            {fromPos
+              ? t("pages:pos.backToPos")
+              : t("pages:salesInvoices.backToList")}
           </button>
         </div>
       </section>
@@ -269,6 +277,8 @@ export function SalesInvoiceDetailsPage() {
                 <p className="mt-2 font-semibold">
                   {invoice.discount?.name ||
                     invoice.discount?.title ||
+                    invoice.appliedDiscount?.name ||
+                    invoice.appliedDiscountId ||
                     invoice.discountId ||
                     t("common:none")}
                 </p>

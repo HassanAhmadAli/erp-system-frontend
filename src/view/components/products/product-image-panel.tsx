@@ -8,8 +8,15 @@ import {
 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
-import { useDeleteAdImage, useUploadAdImage } from "@/hooks/useAdImage"
-import { getAdImageSrc } from "@/services/ads-service"
+import {
+  useDeleteProductImage,
+  useProductPhotos,
+  useUploadProductPhoto,
+} from "@/hooks/Products/useProductPhotos"
+import {
+  getProductImageSrc,
+  getProductStoredFileId,
+} from "@/services/product-service"
 import { toEnglishDigits } from "@/utils/number-formatters"
 import { isAllowedFileType, isWithinMaxFileSize } from "@/validation/helpers"
 import { EntityImage } from "@/view/components/common/entity-image"
@@ -26,24 +33,25 @@ const ALLOWED_IMAGE_TYPES = [
 
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024
 
-type AdImagePanelProps = {
-  adId: number
+type ProductImagePanelProps = {
+  productId: number
   imageUrl?: string | null
   storedFileId?: string | null
   title?: string
   readOnly?: boolean
 }
 
-export function AdImagePanel({
-  adId,
+export function ProductImagePanel({
+  productId,
   imageUrl,
   storedFileId,
   title,
   readOnly = false,
-}: AdImagePanelProps) {
+}: ProductImagePanelProps) {
   const { t } = useTranslation(["common", "pages"])
-  const uploadMutation = useUploadAdImage()
-  const deleteMutation = useDeleteAdImage()
+  const { data: photos } = useProductPhotos(productId)
+  const uploadMutation = useUploadProductPhoto()
+  const deleteMutation = useDeleteProductImage()
 
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -51,7 +59,9 @@ export function AdImagePanel({
   const [messageTone, setMessageTone] = useState<"success" | "error" | "">("")
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const currentImageSrc = getAdImageSrc(imageUrl, storedFileId)
+  const liveStoredFileId =
+    getProductStoredFileId(imageUrl, photos) ?? storedFileId
+  const currentImageSrc = getProductImageSrc(imageUrl, liveStoredFileId)
   const hasImage = Boolean(currentImageSrc)
 
   function clearSelection() {
@@ -97,14 +107,16 @@ export function AdImagePanel({
 
     try {
       await uploadMutation.mutateAsync({
-        adId,
+        productId,
         file: selectedFile,
       })
 
       clearSelection()
       setMessageTone("success")
       setMessage(
-        hasImage ? t("pages:ads.imageReplaced") : t("pages:ads.imageUploaded")
+        hasImage
+          ? t("pages:products.imageReplaced")
+          : t("pages:products.imageUploaded")
       )
     } catch (error: unknown) {
       setMessageTone("error")
@@ -115,11 +127,11 @@ export function AdImagePanel({
   }
 
   function handleConfirmDelete() {
-    deleteMutation.mutate(adId, {
+    deleteMutation.mutate(productId, {
       onSuccess: () => {
         setConfirmDelete(false)
         setMessageTone("success")
-        setMessage(t("pages:ads.imageDeleted"))
+        setMessage(t("pages:products.imageDeleted"))
       },
       onError: (error: unknown) => {
         setMessageTone("error")
@@ -135,12 +147,12 @@ export function AdImagePanel({
       <div className="flex items-center justify-end gap-2">
         <div>
           <h3 className="text-xl font-semibold text-[var(--erp-text)]">
-            {t("pages:ads.adImage")}
+            {t("pages:products.productImage")}
           </h3>
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
             {readOnly
-              ? t("pages:ads.adImageViewHint")
-              : t("pages:ads.adImageManageHint")}
+              ? t("pages:products.productImageViewHint")
+              : t("pages:products.productImageManageHint")}
           </p>
         </div>
         <ImageIcon className="size-5 text-[var(--erp-brand-solid)]" />
@@ -150,8 +162,9 @@ export function AdImagePanel({
         <div className="flex min-h-[220px] min-w-0 items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] p-4">
           {previewUrl || currentImageSrc ? (
             <EntityImage
+              key={currentImageSrc ?? "empty"}
               src={previewUrl ?? currentImageSrc}
-              alt={title || t("pages:ads.adImage")}
+              alt={title || t("pages:products.productImage")}
               className="max-h-56 w-full rounded-xl object-contain"
               fallbackIconClassName="size-12"
             />
@@ -159,7 +172,7 @@ export function AdImagePanel({
             <div className="text-center">
               <ImageIcon className="mx-auto size-12 text-[var(--erp-muted)]" />
               <p className="mt-3 text-sm text-[var(--erp-muted)]">
-                {t("pages:ads.noAdImage")}
+                {t("pages:products.noProductImage")}
               </p>
             </div>
           )}
@@ -168,7 +181,7 @@ export function AdImagePanel({
         {!readOnly && (
           <div className="min-w-0 space-y-4 overflow-hidden rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)] p-4">
             <label
-              htmlFor={`ad-image-upload-${adId}`}
+              htmlFor={`product-image-upload-${productId}`}
               className={`relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-card)] px-4 py-8 text-center transition hover:border-[var(--erp-brand-solid)]/50 hover:bg-[var(--erp-nav-active-bg)] ${
                 uploadMutation.isPending ? "pointer-events-none opacity-60" : ""
               }`}
@@ -189,7 +202,7 @@ export function AdImagePanel({
                   : t("common:noFileSelected")}
               </span>
               <input
-                id={`ad-image-upload-${adId}`}
+                id={`product-image-upload-${productId}`}
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif"
                 className="hidden"
@@ -259,8 +272,8 @@ export function AdImagePanel({
 
       <ConfirmDialog
         open={confirmDelete}
-        title={t("pages:ads.deleteAdImage")}
-        description={t("pages:ads.deleteAdImageConfirm")}
+        title={t("pages:products.deleteProductImage")}
+        description={t("pages:products.deleteProductImageConfirm")}
         confirmLabel={t("common:deleteImage")}
         cancelLabel={t("common:cancel")}
         isLoading={deleteMutation.isPending}

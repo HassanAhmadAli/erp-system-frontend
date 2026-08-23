@@ -78,7 +78,7 @@ export function ProductImportPage() {
                 id="csv-upload"
                 type="file"
                 accept=".csv,text/csv"
-                className="sr-only"
+                className="hidden"
                 disabled={importMutation.isPending}
                 onChange={(e) => {
                   const file = e.target.files?.[0] ?? null

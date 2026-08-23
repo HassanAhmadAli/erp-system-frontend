@@ -4,7 +4,6 @@ import {
   Barcode,
   Boxes,
   CalendarClock,
-  ImageOff,
   Package,
   Pencil,
   Tag,
@@ -14,7 +13,13 @@ import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 
 import { useProductById } from "@/hooks/Products/useProductById"
-import { getProductImageSrc, type Product } from "@/services/product-service"
+import { usePermissions } from "@/hooks/usePermissions"
+import { PERMISSIONS } from "@/auth/permissions"
+import {
+  getProductImageSrc,
+  getProductStoredFileId,
+  type Product,
+} from "@/services/product-service"
 import {
   formatCurrency,
   formatInteger,
@@ -25,6 +30,8 @@ import {
   StatusBadge,
   type StockStatus,
 } from "@/view/components/common/status-badge"
+import { EntityImage } from "@/view/components/common/entity-image"
+import { ProductImagePanel } from "@/view/components/products/product-image-panel"
 import { Button } from "@/view/components/ui/button"
 
 function getStockStatus(product: Product): StockStatus {
@@ -96,6 +103,8 @@ export function ProductDetailsPage() {
   const { t } = useTranslation(["common", "pages"])
   const { id } = useParams()
   const navigate = useNavigate()
+  const { can } = usePermissions()
+  const canManage = can(PERMISSIONS.PRODUCT_MANAGE)
 
   const productId = id ? Number(id) : null
   const isValidProductId =
@@ -184,7 +193,11 @@ export function ProductDetailsPage() {
   }
 
   const status = getStockStatus(product)
-  const imageSrc = getProductImageSrc(product.imageUrl)
+  const storedFileId = getProductStoredFileId(
+    product.imageUrl,
+    product.productPhotos
+  )
+  const imageSrc = getProductImageSrc(product.imageUrl, storedFileId)
 
   return (
     <main className="space-y-6 text-[var(--erp-text)]">
@@ -231,15 +244,12 @@ export function ProductDetailsPage() {
         <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
           <div className="flex min-w-0 items-start gap-4 text-start">
             <div className="flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
-              {imageSrc ? (
-                <img
-                  src={imageSrc}
-                  alt={formatText(product.name)}
-                  className="size-full object-cover"
-                />
-              ) : (
-                <ImageOff className="size-8 text-[var(--erp-muted)]" />
-              )}
+              <EntityImage
+                src={imageSrc}
+                alt={formatText(product.name)}
+                className="size-full object-cover"
+                fallbackIconClassName="size-8"
+              />
             </div>
 
             <div className="min-w-0">
@@ -400,6 +410,14 @@ export function ProductDetailsPage() {
           </div>
         </ProductInfoCard>
       </section>
+
+      <ProductImagePanel
+        productId={product.id}
+        imageUrl={product.imageUrl}
+        storedFileId={storedFileId}
+        title={product.name}
+        readOnly={!canManage}
+      />
     </main>
   )
 }

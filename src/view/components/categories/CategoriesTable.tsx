@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Eye, ImageOff, Pencil, Trash2 } from "lucide-react"
+import { Eye, Pencil, Trash2 } from "lucide-react"
 import { useTranslation } from "react-i18next"
 import { useNavigate } from "react-router-dom"
 
@@ -12,6 +12,7 @@ import { useLocale } from "@/i18n/locale-provider"
 import { localizedDescription, localizedName } from "@/lib/localized"
 import { getCategoryImageSrc } from "@/services/category-service"
 import { Can } from "@/view/components/auth/can"
+import { EntityImage } from "@/view/components/common/entity-image"
 import { formatNumber } from "@/utils/number-formatters"
 import { CategoriesSkeleton } from "./categories-skeleton"
 import { ConfirmDialog } from "@/view/components/ui/confirm-dialog"
@@ -129,15 +130,11 @@ export function CategoriesTable() {
                 >
                   <td className="px-3 py-3">
                     <div className="flex size-12 items-center justify-center overflow-hidden rounded-xl border border-[var(--erp-border)] bg-[var(--erp-bg)]">
-                      {imageSrc ? (
-                        <img
-                          src={imageSrc}
-                          alt={displayName}
-                          className="size-full object-cover"
-                        />
-                      ) : (
-                        <ImageOff className="size-4 text-[var(--erp-muted)]" />
-                      )}
+                      <EntityImage
+                        src={imageSrc}
+                        alt={displayName}
+                        className="size-full object-cover"
+                      />
                     </div>
                   </td>
 

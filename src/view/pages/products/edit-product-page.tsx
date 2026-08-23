@@ -4,8 +4,9 @@ import { useNavigate, useParams } from "react-router-dom"
 
 import { useProductById } from "@/hooks/Products/useProductById"
 import { toEnglishDigits } from "@/utils/number-formatters"
+import { getProductStoredFileId } from "@/services/product-service"
 import { ProductForm } from "@/view/components/products/product-form"
-import { ProductPhotosPanel } from "@/view/components/products/product-photos-panel"
+import { ProductImagePanel } from "@/view/components/products/product-image-panel"
 import { Button } from "@/view/components/ui/button"
 
 export function EditProductPage() {
@@ -155,10 +156,11 @@ export function EditProductPage() {
         />
       </section>
 
-      <ProductPhotosPanel
+      <ProductImagePanel
         productId={data.id}
-        fallbackPhotos={data.productPhotos}
         imageUrl={data.imageUrl}
+        storedFileId={getProductStoredFileId(data.imageUrl, data.productPhotos)}
+        title={data.name}
       />
     </main>
   )

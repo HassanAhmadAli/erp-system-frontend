@@ -80,6 +80,10 @@ export function getItemTotal(item: SalesInvoiceItem) {
     return item.totalPrice
   }
 
+  if (item.subtotal !== undefined && item.subtotal !== null) {
+    return item.subtotal
+  }
+
   const unitPrice = Number(
     item.unitPrice ?? item.product?.sellingPrice ?? item.product?.price
   )

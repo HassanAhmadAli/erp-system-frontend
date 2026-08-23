@@ -9,10 +9,14 @@ import {
   type ReportExportType,
 } from "@/services/report-service"
 
-export function useReportSummary(params?: ReportDateRange) {
+export function useReportSummary(
+  params?: ReportDateRange,
+  options?: { refetchInterval?: number | false }
+) {
   return useQuery({
     queryKey: ["report-summary", params],
     queryFn: () => getReportSummary(params),
+    refetchInterval: options?.refetchInterval,
   })
 }
 

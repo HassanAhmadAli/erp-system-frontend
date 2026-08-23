@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { keepPreviousData, useMutation, useQuery } from "@tanstack/react-query"
 
 import {
   getCostBreakdown,
@@ -15,6 +15,7 @@ export function useProfitMargins(params?: FinancialPagination) {
   return useQuery({
     queryKey: ["profit-margins", params],
     queryFn: () => getProfitMargins(params),
+    placeholderData: keepPreviousData,
   })
 }
 

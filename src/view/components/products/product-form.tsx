@@ -118,10 +118,17 @@ export function ProductForm({
   const [errors, setErrors] = useState<ProductFormErrors>({})
   const [submitError, setSubmitError] = useState("")
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
   useEffect(() => {
     if (mode === "edit") setForm(toFormState(initialValues))
   }, [mode, initialValues])
+
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl)
+    }
+  }, [previewUrl])
 
   const {
     data: categoriesData,
@@ -147,7 +154,12 @@ export function ProductForm({
   }
 
   function handleFileChange(file: File | null) {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+    }
+
     setSelectedFile(null)
+    setPreviewUrl(null)
     setSubmitError("")
 
     if (!file) return
@@ -163,6 +175,7 @@ export function ProductForm({
     }
 
     setSelectedFile(file)
+    setPreviewUrl(URL.createObjectURL(file))
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -208,6 +221,10 @@ export function ProductForm({
         }
 
         setSelectedFile(null)
+        if (previewUrl) {
+          URL.revokeObjectURL(previewUrl)
+          setPreviewUrl(null)
+        }
       } else if (isValidId(productId)) {
         await updateMutation.mutateAsync({
           id: productId,
@@ -418,9 +435,19 @@ export function ProductForm({
 
           <label
             htmlFor="product-image"
-            className="flex cursor-pointer flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--erp-sidebar-divider)] bg-[var(--erp-bg)] px-4 py-6 text-center transition hover:border-[var(--erp-accent)]/50 hover:bg-[var(--erp-nav-active-bg)]"
+            className="relative flex cursor-pointer flex-col items-center justify-center overflow-hidden rounded-2xl border border-dashed border-[var(--erp-border)] bg-[var(--erp-bg)] px-4 py-6 text-center transition hover:border-[var(--erp-brand-solid)]/50 hover:bg-[var(--erp-nav-active-bg)]"
           >
-            <UploadCloud className="mb-2 size-7 text-[var(--erp-accent)]" />
+            {previewUrl ? (
+              <img
+                src={previewUrl}
+                alt={
+                  selectedFile?.name || t("pages:products.productImageOptional")
+                }
+                className="mb-3 max-h-40 max-w-full rounded-xl object-contain"
+              />
+            ) : (
+              <UploadCloud className="mb-2 size-7 text-[var(--erp-brand-solid)]" />
+            )}
             <span className="text-sm font-medium text-[var(--erp-text)]">
               {t("common:clickToSelectImage")}
             </span>
@@ -439,7 +466,7 @@ export function ProductForm({
               id="product-image"
               type="file"
               accept="image/jpeg,image/png,image/webp,image/gif"
-              className="sr-only"
+              className="hidden"
               disabled={isSaving}
               onChange={(event) => {
                 handleFileChange(event.target.files?.[0] ?? null)

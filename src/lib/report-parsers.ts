@@ -79,6 +79,7 @@ const SKIP_KEYS = new Set([
   "limit",
   "offset",
   "isFinalPage",
+  "salesByWeek",
 ])
 
 export function toNumber(value: unknown): number | null {
@@ -290,6 +291,25 @@ export function extractTableRows(payload: unknown): Record<string, unknown>[] {
   return []
 }
 
+export function extractPaginationMeta(payload: unknown) {
+  if (!payload || typeof payload !== "object") {
+    return {
+      total: undefined as number | undefined,
+      isFinalPage: undefined as boolean | undefined,
+    }
+  }
+
+  const obj = payload as Record<string, unknown>
+  const total = toNumber(obj.total)
+  const isFinalPage =
+    typeof obj.isFinalPage === "boolean" ? obj.isFinalPage : undefined
+
+  return {
+    total: total ?? undefined,
+    isFinalPage,
+  }
+}
+
 export function inferTableColumns(
   rows: Record<string, unknown>[]
 ): TableColumn[] {
@@ -308,4 +328,26 @@ export function toApiDateRange(from: string, to: string) {
     from: from ? new Date(`${from}T00:00:00`).toISOString() : undefined,
     to: to ? new Date(`${to}T23:59:59.999`).toISOString() : undefined,
   }
+}
+
+export function currentYearMonth() {
+  const now = new Date()
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+}
+
+export function yearMonthToApiRange(yearMonth: string) {
+  const match = /^(\d{4})-(\d{2})$/.exec(yearMonth)
+
+  if (!match) {
+    return toApiDateRange("", "")
+  }
+
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const lastDay = new Date(year, month, 0).getDate()
+
+  return toApiDateRange(
+    `${yearMonth}-01`,
+    `${yearMonth}-${String(lastDay).padStart(2, "0")}`
+  )
 }

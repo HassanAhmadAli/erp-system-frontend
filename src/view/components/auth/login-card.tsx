@@ -14,6 +14,7 @@ import { saveTokens } from "@/utils/auth-storage"
 import { loginSchema } from "@/validation/auth-schema"
 import { useLocale } from "@/i18n/locale-provider"
 import { isAppLanguage } from "@/i18n/types"
+import { AppLogo } from "@/view/components/layout/app-logo"
 
 export function LoginCard() {
   const { t } = useTranslation(["auth", "common"])
@@ -72,14 +73,12 @@ export function LoginCard() {
   return (
     <section className="w-full max-w-md rounded-[24px] bg-[var(--erp-card)] p-8 shadow-[var(--erp-shadow)]">
       <div className="mb-6 flex flex-col items-center gap-3">
+        <AppLogo size={72} className="shadow-[var(--erp-shadow)]" />
         <div className="text-center">
           <h1 className="text-2xl font-bold">{t("auth:welcomeBack")}</h1>
           <p className="text-sm text-[var(--erp-muted)]">
             {t("auth:signInSubtitle")}
           </p>
-        </div>
-        <div className="flex size-12 items-center justify-center rounded-2xl bg-[var(--erp-top-bar)] text-white">
-          ERP
         </div>
       </div>
 

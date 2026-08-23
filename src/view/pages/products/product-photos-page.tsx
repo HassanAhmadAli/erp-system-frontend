@@ -3,8 +3,8 @@ import { useTranslation } from "react-i18next"
 import { useNavigate, useParams } from "react-router-dom"
 
 import { useProductById } from "@/hooks/Products/useProductById"
-import { toEnglishDigits } from "@/utils/number-formatters"
-import { ProductPhotosPanel } from "@/view/components/products/product-photos-panel"
+import { getProductStoredFileId } from "@/services/product-service"
+import { ProductImagePanel } from "@/view/components/products/product-image-panel"
 import { Button } from "@/view/components/ui/button"
 
 export function ProductPhotosPage() {
@@ -54,17 +54,15 @@ export function ProductPhotosPage() {
       <section className="flex flex-col gap-4 rounded-[24px] border border-[var(--erp-border)] bg-[var(--erp-card)] p-5 shadow-[var(--erp-shadow)] sm:flex-row sm:items-center sm:justify-between">
         <div className="text-start">
           <div className="flex items-center gap-2">
-            <ImageIcon className="size-6 text-[var(--erp-accent)]" />
+            <ImageIcon className="size-6 text-[var(--erp-brand-solid)]" />
 
             <h1 className="text-2xl font-bold text-[var(--erp-text)]">
-              {t("pages:products.managePhotos")}
+              {t("pages:products.productImage")}
             </h1>
           </div>
 
           <p className="mt-1 text-sm text-[var(--erp-muted)]">
-            {t("pages:products.managePhotosFor", {
-              id: toEnglishDigits(String(productId)),
-            })}
+            {t("pages:products.productImageManageHint")}
           </p>
         </div>
 
@@ -79,10 +77,14 @@ export function ProductPhotosPage() {
         </Button>
       </section>
 
-      <ProductPhotosPanel
+      <ProductImagePanel
         productId={productId}
-        fallbackPhotos={product?.productPhotos}
         imageUrl={product?.imageUrl}
+        storedFileId={getProductStoredFileId(
+          product?.imageUrl,
+          product?.productPhotos
+        )}
+        title={product?.name}
       />
     </main>
   )

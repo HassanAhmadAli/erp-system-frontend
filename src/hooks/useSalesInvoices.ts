@@ -72,6 +72,7 @@ export function useCreateSalesInvoice() {
       createSalesInvoice(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["sales-invoices"] })
+      queryClient.invalidateQueries({ queryKey: ["report-summary"] })
     },
   })
 }
@@ -92,6 +93,7 @@ export function useUpdateSalesInvoiceStatus() {
       queryClient.invalidateQueries({
         queryKey: ["sales-invoice", variables.id],
       })
+      queryClient.invalidateQueries({ queryKey: ["report-summary"] })
     },
   })
 }
