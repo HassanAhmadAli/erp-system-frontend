@@ -22,7 +22,23 @@ export type LiveNotification = {
 }
 
 let socket: Socket | null = null
-let connectedToken: string | null = null
+
+function handshakeAuth() {
+  const token = getAccessToken()
+  return token ? { token } : {}
+}
+
+function bindReconnectAuth(target: Socket) {
+  target.io.off("reconnect_attempt")
+  target.io.on("reconnect_attempt", () => {
+    const token = getAccessToken()
+    if (!token) {
+      disconnectNotificationSocket()
+      return
+    }
+    target.auth = { token }
+  })
+}
 
 export function connectNotificationSocket() {
   const token = getAccessToken()
@@ -32,25 +48,30 @@ export function connectNotificationSocket() {
     return null
   }
 
-  if (socket && connectedToken === token) {
+  if (socket) {
+    socket.auth = { token }
+    if (!socket.connected) {
+      socket.connect()
+    }
     return socket
   }
 
-  disconnectNotificationSocket()
-
   socket = io(`${BASE_URL}/notifications`, {
-    query: { token },
+    auth: handshakeAuth(),
     autoConnect: true,
     reconnection: true,
+    transports: ["websocket", "polling"],
   })
-  connectedToken = token
+  bindReconnectAuth(socket)
 
   return socket
 }
 
 export function disconnectNotificationSocket() {
-  socket?.removeAllListeners()
-  socket?.disconnect()
+  if (!socket) return
+
+  socket.io.off("reconnect_attempt")
+  socket.removeAllListeners()
+  socket.disconnect()
   socket = null
-  connectedToken = null
 }

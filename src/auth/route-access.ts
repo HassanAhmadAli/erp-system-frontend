@@ -266,10 +266,6 @@ export const SIDEBAR_ACCESS: SidebarAccess[] = [
     rolesOnly: ["STORE_MANAGER"],
   },
   {
-    to: "/accountant/overview",
-    permissions: [PERMISSIONS.REPORTS_VIEW],
-  },
-  {
     to: "/pos",
     permissions: [PERMISSIONS.SALES_CREATE],
   },

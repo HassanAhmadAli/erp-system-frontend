@@ -196,7 +196,7 @@ export function getDefaultRouteForRole(role: UserRole | undefined): string {
     case "STORE_MANAGER":
       return "/overview"
     case "ACCOUNTANT":
-      return "/accountant/overview"
+      return "/financial"
     case "CASHIER":
       return "/pos"
     case "WAREHOUSE_WORKER":

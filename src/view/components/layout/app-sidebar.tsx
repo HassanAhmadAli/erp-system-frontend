@@ -59,7 +59,6 @@ type AppSidebarProps = {
 
 const sidebarItems: NavItem[] = [
   { icon: Home, labelKey: "overview", to: "/overview" },
-  { icon: Home, labelKey: "accountantOverview", to: "/accountant/overview" },
   { icon: Calculator, labelKey: "pos", to: "/pos" },
   { icon: Users, labelKey: "customers", to: "/customers" },
   { icon: UserCog, labelKey: "staff", to: "/staff" },
@@ -95,7 +94,7 @@ function SidebarNavItem({
   return (
     <NavLink
       to={to}
-      end={to === "/overview" || to === "/accountant/overview"}
+      end={to === "/overview"}
       title={collapsed ? label : undefined}
       aria-label={
         unreadCount > 0
