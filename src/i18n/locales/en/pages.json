@@ -580,19 +580,6 @@
     "liveFallbackTitle": "New notification",
     "liveFallbackBody": "You have a new notification."
   },
-  "inventory": {
-    "title": "Inventory",
-    "overviewTitle": "Inventory overview",
-    "overviewSubtitle": "Here is a summary of inventory",
-    "stockValue": "Stock value",
-    "lowStockProducts": "Low stock products",
-    "totalProductCount": "Total product count",
-    "unitProduct": "product",
-    "unitPiece": "piece",
-    "lowStockSubtitle": "Low stock products or those needing attention.",
-    "loadLowStockFailed": "Failed to load low stock products",
-    "noLowStockProducts": "No low stock products currently"
-  },
   "pos": {
     "title": "Point of sale",
     "checkout": "Checkout",

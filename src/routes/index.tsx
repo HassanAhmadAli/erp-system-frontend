@@ -8,8 +8,6 @@ import { LoginPage } from "@/view/pages/login-page"
 import { StoreManagerOverviewPage } from "@/view/pages/overview/store-manager-ov"
 import { AccountantOverviewPage } from "@/view/pages/overview/accountant-ov"
 
-import { InventoryPage } from "@/view/pages/inventory-page"
-
 import { CategoriesPage } from "@/view/pages/categories/categories-page"
 import { CreateCategoryForm } from "@/view/pages/categories/create-category-form"
 import { EditCategoryPage } from "@/view/pages/categories/EditCategoryPage"
@@ -79,7 +77,6 @@ import { ProfitMarginsPage } from "@/view/pages/financial/profit-margins-page"
 import { CostBreakdownPage } from "@/view/pages/financial/cost-breakdown-page"
 import { CostTrendsPage } from "@/view/pages/financial/cost-trends-page"
 import { SupplierReportPage } from "@/view/pages/financial/supplier-report-page"
-import { RecalculateCostsPage } from "@/view/pages/financial/recalculate-costs-page"
 
 import { AuditLogsPage } from "@/view/pages/audit-logs/audit-logs-page"
 import { AuditLogDetailsPage } from "@/view/pages/audit-logs/audit-log-details-page"
@@ -165,9 +162,6 @@ export function AppRoutes() {
           <Route path="ads/:id" element={<AdDetailsPage />} />
           <Route path="ads/:id/edit" element={<EditAdPage />} />
 
-          {/* Inventory */}
-          <Route path="inventory" element={<InventoryPage />} />
-
           {/* Categories */}
           <Route path="categories" element={<CategoriesPage />} />
           <Route path="categories/create" element={<CreateCategoryPage />} />
@@ -232,10 +226,6 @@ export function AppRoutes() {
           <Route
             path="financial/supplier-report"
             element={<SupplierReportPage />}
-          />
-          <Route
-            path="financial/recalculate"
-            element={<RecalculateCostsPage />}
           />
 
           {/* Loyalty */}

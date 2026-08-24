@@ -1,10 +1,4 @@
-import {
-  Building2,
-  LineChart,
-  PieChart,
-  RefreshCw,
-  TrendingUp,
-} from "lucide-react"
+import { Building2, LineChart, PieChart, TrendingUp } from "lucide-react"
 import { useTranslation } from "react-i18next"
 
 import {
@@ -39,12 +33,6 @@ export function FinancialPage() {
       description: t("financial.supplierReportDesc", { ns: "pages" }),
       to: "/financial/supplier-report",
       icon: Building2,
-    },
-    {
-      title: t("financial.recalculate", { ns: "pages" }),
-      description: t("financial.recalculateDesc", { ns: "pages" }),
-      to: "/financial/recalculate",
-      icon: RefreshCw,
     },
   ]
 

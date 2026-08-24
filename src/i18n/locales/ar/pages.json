@@ -580,19 +580,6 @@
     "liveFallbackTitle": "إشعار جديد",
     "liveFallbackBody": "لديك إشعار جديد."
   },
-  "inventory": {
-    "title": "المخزون",
-    "overviewTitle": "نظرة عامة عن المخزون",
-    "overviewSubtitle": "إليك ملخص عن المخزون",
-    "stockValue": "قيمة المخزون",
-    "lowStockProducts": "منتجات منخفضة المخزون",
-    "totalProductCount": "إجمالي عدد المنتجات",
-    "unitProduct": "منتج",
-    "unitPiece": "قطعة",
-    "lowStockSubtitle": "المنتجات منخفضة المخزون أو التي تحتاج إلى متابعة.",
-    "loadLowStockFailed": "حدث خطأ أثناء تحميل المنتجات منخفضة المخزون",
-    "noLowStockProducts": "لا توجد منتجات منخفضة المخزون حالياً"
-  },
   "pos": {
     "title": "نقطة البيع",
     "checkout": "إتمام البيع",

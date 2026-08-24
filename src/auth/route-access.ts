@@ -126,14 +126,6 @@ const ROUTE_ACCESS_RULES: RouteAccessRule[] = [
   },
 
   /**
-   * Inventory
-   */
-  {
-    test: (path) => isExact(path, "/inventory"),
-    permissions: [PERMISSIONS.PRODUCT_MANAGE],
-  },
-
-  /**
    * Categories
    */
   {
@@ -216,10 +208,6 @@ const ROUTE_ACCESS_RULES: RouteAccessRule[] = [
    * Financial
    */
   {
-    test: (path) => isExact(path, "/financial/recalculate"),
-    permissions: [PERMISSIONS.FINANCIALS_MANAGE],
-  },
-  {
     test: (path) => path === "/financial" || path.startsWith("/financial/"),
     permissions: [PERMISSIONS.FINANCIALS_VIEW],
   },
@@ -296,10 +284,6 @@ export const SIDEBAR_ACCESS: SidebarAccess[] = [
   {
     to: "/audit-logs",
     permissions: [PERMISSIONS.AUDIT_LOGS_VIEW],
-  },
-  {
-    to: "/inventory",
-    permissions: [PERMISSIONS.PRODUCT_MANAGE],
   },
   {
     to: "/categories",

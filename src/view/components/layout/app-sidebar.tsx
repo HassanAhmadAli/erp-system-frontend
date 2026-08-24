@@ -1,7 +1,6 @@
 import type { ComponentType } from "react"
 import {
   Bell,
-  Boxes,
   Calculator,
   ChevronLeft,
   ChevronRight,
@@ -68,7 +67,6 @@ const sidebarItems: NavItem[] = [
   { icon: Bell, labelKey: "notifications", to: "/notifications" },
   { icon: Megaphone, labelKey: "ads", to: "/ads" },
   { icon: ClipboardList, labelKey: "auditLogs", to: "/audit-logs" },
-  { icon: Boxes, labelKey: "inventory", to: "/inventory" },
   { icon: Tags, labelKey: "categories", to: "/categories" },
   { icon: Package, labelKey: "products", to: "/products" },
   { icon: Truck, labelKey: "suppliers", to: "/suppliers" },

@@ -200,7 +200,7 @@ export function getDefaultRouteForRole(role: UserRole | undefined): string {
     case "CASHIER":
       return "/pos"
     case "WAREHOUSE_WORKER":
-      return "/inventory"
+      return "/products"
     default:
       return "/login"
   }
